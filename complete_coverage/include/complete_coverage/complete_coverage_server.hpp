@@ -15,6 +15,8 @@
 #ifndef COMPLETE_COVERAGE__COMPLETE_COVERAGE_SERVER_HPP_
 #define COMPLETE_COVERAGE__COMPLETE_COVERAGE_SERVER_HPP_
 
+#include <vector>
+
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 

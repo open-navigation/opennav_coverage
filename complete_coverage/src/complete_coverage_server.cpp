@@ -25,14 +25,12 @@ CompleteCoverageServer::CompleteCoverageServer(const rclcpp::NodeOptions & optio
 : nav2_util::LifecycleNode("complete_coverage_server", "", options)
 {
   RCLCPP_INFO(get_logger(), "Creating %s", get_name());
-
 }
 
 nav2_util::CallbackReturn
 CompleteCoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Configuring %s", get_name());
-
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
@@ -69,7 +67,6 @@ nav2_util::CallbackReturn
 CompleteCoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Cleaning up %s", get_name());
-
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
@@ -89,7 +86,7 @@ CompleteCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter>
     // const auto & type = parameter.get_type();
     // const auto & name = parameter.get_name();
 
-    //TODO
+    // TODO(sm)
   }
 
   result.successful = true;
