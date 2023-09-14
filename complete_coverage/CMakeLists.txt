@@ -15,6 +15,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(complete_coverage_msgs REQUIRED)
+find_package(Fields2Cover REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wdeprecated -fPIC -Wshadow -Wnull-dereference)
@@ -49,6 +50,8 @@ add_library(${library_name} SHARED
 ament_target_dependencies(${library_name}
   ${dependencies}
 )
+
+target_link_libraries(${library_name} Fields2Cover)
 
 add_executable(${executable_name}
   src/main.cpp
