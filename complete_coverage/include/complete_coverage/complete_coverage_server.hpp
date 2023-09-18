@@ -19,7 +19,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
-#include "fields2cover.h"
+#include "complete_coverage/types.hpp"
 
 namespace complete_coverage
 {
