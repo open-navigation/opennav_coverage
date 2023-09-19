@@ -19,7 +19,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
-#include "complete_coverage/types.hpp"
+#include "complete_coverage/headland_mode.hpp"
+#include "complete_coverage/swath_mode.hpp"
+#include "complete_coverage/route_mode.hpp"
+#include "complete_coverage/path_mode.hpp"
 
 namespace complete_coverage
 {

@@ -26,7 +26,7 @@
 namespace complete_coverage
 {
 
-inline void toUpper(const std::string & string)
+inline void toUpper(std::string & string)
 {
   std::transform(string.begin(), string.end(), string.begin(), ::toupper);
 }

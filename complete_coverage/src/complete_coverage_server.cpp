@@ -77,28 +77,6 @@ CompleteCoverageServer::on_shutdown(const rclcpp_lifecycle::State &)
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-
-
- // VisualizerNode::rqt_callback(fields2cover_ros::F2CConfig &config, uint32_t level) {
- //      robot_.op_width = config.op_width;
- //      robot_.setMinRadius(config.turn_radius);
- //      optim_.best_angle = config.swath_angle;
- //      optim_.headland_width = config.headland_width;
-
- //    }
-
-
-
-
-
-
-
-
-
-
-
-
-
 rcl_interfaces::msg::SetParametersResult
 CompleteCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
 {
@@ -108,7 +86,7 @@ CompleteCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter>
     // const auto & type = parameter.get_type();
     // const auto & name = parameter.get_name();
 
-    // TODO(sm)
+    // TODO(sm) dynamic params including internal default params
   }
 
   result.successful = true;

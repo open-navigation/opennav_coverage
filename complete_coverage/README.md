@@ -50,3 +50,13 @@ Questions
 https://github.com/Fields2Cover/Fields2Cover/issues/73
 https://github.com/Fields2Cover/fields2cover_ros/blob/master/src/Fields2CoverVisualizerNode.cpp
 https://github.com/open-navigation/bonsai_nav2_coverage_server/issues/1
+
+
+// TODO(sm) headlands dist/spiral_n/order/swath angle part of action if provided
+// TODO(sm) missing robot param get
+// TODO(sm) missing robot opt parms get
+// TODO(sm) overlap what?
+// TODO(sm) convert to F2C types (and/or replace to store that way?). method to get as API woul expect
+    // --> or this wraps it entirely! does the API calls eithin the Mode.
+    // could also then have the disambiguation of action vs params happen here too
+
