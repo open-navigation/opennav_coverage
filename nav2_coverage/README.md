@@ -2,6 +2,8 @@
 
 This package contains the Complete Coverage Task server utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find 
 
+TODO bonsai, more details on library
+
 ## Interfaces
 
 
@@ -42,53 +44,36 @@ If you use this work, please make sure to cite both Nav2 and Fields2Cover:
 ## Notes of Wisdom
 
 Document: if using non-default params, must fully specify in action message. Uses all or none.
+Document: F2C still has some things to add - please follow up there and ping me if implemented to add here. Want to hire us to do it?
 
 
 Questions
 	- coordinate system / frame stuff. consistency, transformation, store, datem. 
 	- setting up for convertion to map coords
+  - humble defaults in messages. remove params since fully setup?
+
 
 https://github.com/Fields2Cover/fields2cover_ros/blob/master/src/Fields2CoverVisualizerNode.cpp
 https://github.com/Fields2Cover/Fields2Cover/blob/main/include/fields2cover/utils/parser.h#L21
 
 
-// TODO visualization (outer polygon; inner polygon; path; swath vs turn coloring)
 
 
 
 
-TODO Action Definition:
-// TODO return of path, segments, etc how it would be desired for use
-// TODO each step optional
-// TODO action exception error codes
-// TODO use request fields
-// TODO file parsing / itnerface definition for types / cartesian. To F2C types
-
-
-Request
-  - If to remove headlands
-  - If to make swath into a route
-  - If to make route into a path
-
-  - File to use with GPS field or GPS list
-  
-  - Headlands mode to use (+ width to use)
-  - swath mode to use (objective, type, best angle if set, whether to allow overlap)
-  - route mode to use (+spiral_n / custom order)
-  - path mode to use (cont / mode)
-
-
-Response:
-  - nav_msgs/path (total blind just path without distinguishing swath vs turns)
-  - A separate structure containing ordered swaths + array of paths connecting to them via turns in path (if enabled)
-  - error code (if any)
-
-
-EXCEPTIONS
-  - Invalid request modes
-  - Invalid request steps
-  - Internal F2C
-  - Invalid request field
 
 
 
+
+
+
+
+
+...
+
+
+# NExt steps
+  - convert GPS LLA to euclidean in request like WPF? Accept both.
+  - BT node for interpolating line segment. Other BT nodes or util functions?
+  - method to take swath/turn and iterate to get next and identify path of which type it is
+  - TODO Update https://navigation.ros.org/tutorials/docs/adding_a_nav2_task_server.html wit hcoverage 400s

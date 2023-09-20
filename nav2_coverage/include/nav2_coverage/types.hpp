@@ -95,6 +95,12 @@ enum class PathContinuityType
   DISCONTINUOUS = 2
 };
 
+class CoverageException : public std::runtime_error
+{
+public:
+  explicit CoverageException(const std::string & description)
+  : std::runtime_error(description) {}
+};
 
 }  // namespace nav2_coverage
 

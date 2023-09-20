@@ -24,6 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
+#include "nav2_complete_coverage_msgs/msg/swath_mode.hpp"
 #include "nav2_coverage/utils.hpp"
 #include "nav2_coverage/types.hpp"
 #include "nav2_coverage/robot.hpp"
@@ -76,7 +77,8 @@ public:
    * @param field Field to generate swaths from
    * @param request Action request information
    */
-  Swaths generateSwaths(const Field & field /*, request*/);
+  Swaths generateSwaths(
+    const Field & field, const nav2_complete_coverage_msgs::msg::SwathMode & settings);
   /**
    * @brief Sets the mode manually of the swath for dynamic parameters
    * @param mode String for mode to use
@@ -88,6 +90,18 @@ public:
    * @param mode String for mode to use
    */
   void setSwathAngleMode(const std::string & new_mode);
+
+  /**
+   * @brief Sets the best swath angle manually for dynamic parameters
+   * @param mode String for mode to use
+   */
+  void setSwathAngle(const double & best_angle) {default_swath_angle_ = best_angle;}
+
+  /**
+   * @brief Sets whether overlap is ok manually for dynamic parameters
+   * @param mode String for mode to use
+   */
+  void setOVerlap(const bool & setting) {default_allow_overlap_ = setting;}
 
 protected:
   /**
@@ -110,14 +124,15 @@ protected:
    * @param str Type string to convert
    * @return Type of mode
    */
-  SwathType toType(std::string & str);
+  SwathType toType(const std::string & str);
 
   /**
    * @brief Converts the swatch angle string into a type for handling
    * @param str Type string to convert
    * @return Type of mode
    */
-  SwathAngleType toAngleType(std::string & str);
+  SwathAngleType toAngleType(const std::string & str);
+
   SwathType default_type_;
   SwathAngleType default_angle_type_;
   SwathObjectivePtr default_objective_;

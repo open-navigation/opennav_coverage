@@ -1,0 +1,35 @@
+#goal definition
+
+# Whether to perform all 4 stages: Headlands, Swath (Required), Route, Path
+bool generate_headland True
+bool generate_route True
+bool generate_path True
+
+# The field specification to use
+bool use_gml_file False
+string gml_field
+nav2_complete_coverage_msgs/Coordinate[] coordinates
+
+# Modes of operation of each stage, if used
+nav2_complete_coverage_msgs/HeadlandMode headland_mode
+nav2_complete_coverage_msgs/SwathMode swath_mode
+nav2_complete_coverage_msgs/RouteMode route_mode
+nav2_complete_coverage_msgs/PathMode path_mode
+
+---
+#result definition
+
+# Error codes
+# Note: The expected priority order of the errors should match the message order
+uint16 NONE=0
+uint16 INTERNAL_F2C_ERROR=401
+uint16 INVALID_MODE_SET=402
+uint16 INVALID_REQUEST=403
+
+nav_msgs/Path nav_path
+nav2_complete_coverage_msgs/PathComponents coverage_path
+builtin_interfaces/Duration planning_time
+uint16 error_code
+
+---
+#feedback definition

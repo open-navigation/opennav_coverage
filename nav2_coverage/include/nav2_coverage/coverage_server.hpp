@@ -20,6 +20,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
+#include "nav2_util/node_utils.hpp"
+#include "nav2_util/simple_action_server.hpp"
+#include "nav2_complete_coverage_msgs/action/compute_coverage_path.hpp"
 #include "nav2_coverage/headland_generator.hpp"
 #include "nav2_coverage/swath_generator.hpp"
 #include "nav2_coverage/route_generator.hpp"
@@ -35,6 +38,9 @@ namespace nav2_coverage
 class CoverageServer : public nav2_util::LifecycleNode
 {
 public:
+  typedef nav2_complete_coverage_msgs::action::ComputeCoveragePath ComputeCoveragePath;
+  using ActionServer = nav2_util::SimpleActionServer<ComputeCoveragePath>;
+
   /**
    * @brief A constructor for nav2_coverage::CoverageServer
    * @param options Additional options to control creation of the node.
@@ -46,9 +52,27 @@ public:
    */
   ~CoverageServer() = default;
 
-  void test();
-
 protected:
+  /**
+   * @brief Main action callback method to complete action request
+   */
+  void computeCoveragePath();
+
+  /**
+   * @brief Validate the goal settings to know if valid to execute
+   * @param Goal request to validate
+   * @return SUCCESS or FAILURE
+   */
+  bool validateGoal(typename std::shared_ptr<const typename ComputeCoveragePath::Goal> req);
+
+  /**
+   * @brief Gets a preempted goal if immediately requested
+   * @param Goal goal to check or replace if required with preemption
+   * @return SUCCESS or FAILURE
+   */
+  void getPreemptedGoalIfRequested(
+    typename std::shared_ptr<const typename ComputeCoveragePath::Goal> goal);
+
   /**
    * @brief Configure member variables
    * @param state Reference to LifeCycle node state
@@ -94,6 +118,8 @@ protected:
   // Dynamic parameters handler
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
   std::mutex dynamic_params_lock_;
+
+  std::unique_ptr<ActionServer> action_server_;
 
   std::unique_ptr<RobotParams> robot_;
   std::unique_ptr<HeadlandGenerator> headland_gen_;

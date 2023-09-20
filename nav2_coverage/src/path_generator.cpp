@@ -20,10 +20,11 @@
 namespace nav2_coverage
 {
 
-Path PathGenerator::generatePath(const Swaths & swaths /*, (void) request*/)
+Path PathGenerator::generatePath(
+  const Swaths & swaths, const nav2_complete_coverage_msgs::msg::PathMode & settings)
 {
-  PathType action_type;  // = toType(request->path_type);
-  PathContinuityType action_continuity_type;  // = toType(request->path_continuity_type);
+  PathType action_type = toType(settings.mode);
+  PathContinuityType action_continuity_type = toContinuityType(settings.continuity_mode);
   std::shared_ptr<f2c::pp::TurningBase> curve{nullptr};
 
   // If not set by action, use default mode
@@ -47,15 +48,13 @@ Path PathGenerator::generatePath(const Swaths & swaths /*, (void) request*/)
 
 void PathGenerator::setPathMode(const std::string & new_mode)
 {
-  std::string mode = new_mode;
-  default_type_ = toType(mode);
+  default_type_ = toType(new_mode);
   default_curve_ = createCurve(default_type_, default_continuity_type_);
 }
 
 void PathGenerator::setPathContinuityMode(const std::string & new_mode)
 {
-  std::string mode = new_mode;
-  default_continuity_type_ = toContinuityType(mode);
+  default_continuity_type_ = toContinuityType(new_mode);
   default_curve_ = createCurve(default_type_, default_continuity_type_);
 }
 
@@ -117,24 +116,26 @@ std::string PathGenerator::toString(const PathType & type, const PathContinuityT
   return str;
 }
 
-PathType PathGenerator::toType(std::string & str)
+PathType PathGenerator::toType(const std::string & str)
 {
-  toUpper(str);
-  if (str == "REEDS_SHEPP") {
+  std::string mode_str = str;
+  toUpper(mode_str);
+  if (mode_str == "REEDS_SHEPP") {
     return PathType::REEDS_SHEPP;
-  } else if (str == "DUBIN") {
+  } else if (mode_str == "DUBIN") {
     return PathType::DUBIN;
   } else {
     return PathType::UNKNOWN;
   }
 }
 
-PathContinuityType PathGenerator::toContinuityType(std::string & str)
+PathContinuityType PathGenerator::toContinuityType(const std::string & str)
 {
-  toUpper(str);
-  if (str == "CONTINUOUS") {
+  std::string mode_str = str;
+  toUpper(mode_str);
+  if (mode_str == "CONTINUOUS") {
     return PathContinuityType::CONTINUOUS;
-  } else if (str == "DISCONTINUOUS") {
+  } else if (mode_str == "DISCONTINUOUS") {
     return PathContinuityType::DISCONTINUOUS;
   } else {
     return PathContinuityType::UNKNOWN;

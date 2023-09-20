@@ -23,6 +23,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
+#include "nav2_complete_coverage_msgs/msg/route_mode.hpp"
 #include "nav2_coverage/utils.hpp"
 #include "nav2_coverage/types.hpp"
 
@@ -72,13 +73,29 @@ public:
    * @param request Action request information
    * @return Swaths ordered swaths
    */
-  Swaths generateRoute(const Swaths & swaths /*, (void) request*/);
+  Swaths generateRoute(
+    const Swaths & swaths, const nav2_complete_coverage_msgs::msg::RouteMode & settings);
 
   /**
    * @brief Sets the mode manually of the Route for dynamic parameters
    * @param mode String for mode to use
    */
   void setMode(const std::string & new_mode);
+
+  /**
+   * @brief Sets the spiral N manually for dynamic parameters
+   * @param mode String for mode to use
+   */
+  void setSpiralN(const int & n) {default_spiral_n_ = n;}
+
+  /**
+   * @brief Sets the custom order manually for dynamic parameters
+   * @param mode String for mode to use
+   */
+  void setCustomOrder(const std::vector<long int> & order)  // NOLINT
+  {
+    default_custom_order_ = std::vector<size_t>(order.begin(), order.end());
+  }
 
 protected:
   /**
@@ -100,7 +117,7 @@ protected:
    * @param String of mode
    * @return Type of mode
    */
-  RouteType toType(std::string & str);
+  RouteType toType(const std::string & str);
 
   RouteType default_type_;
   std::vector<size_t> default_custom_order_;

@@ -20,10 +20,11 @@
 namespace nav2_coverage
 {
 
-Swaths SwathGenerator::generateSwaths(const Field & field /*, request*/)
+Swaths SwathGenerator::generateSwaths(
+  const Field & field, const nav2_complete_coverage_msgs::msg::SwathMode & settings)
 {
-  SwathType action_type;  // = toType(request->swath_type)
-  SwathAngleType action_angle_type;  // = toAngleType(request->swath_angle_type)
+  SwathType action_type = toType(settings.objective);
+  SwathAngleType action_angle_type = toAngleType(settings.mode);
   SwathObjectivePtr objective{nullptr};
   float swath_angle = 0.0f;
 
@@ -35,7 +36,7 @@ Swaths SwathGenerator::generateSwaths(const Field & field /*, request*/)
     swath_angle = default_swath_angle_;
   } else {
     objective = createObjective(action_type);
-    // swath_angle = request->swath_angle;
+    swath_angle = settings.best_angle;
   }
 
   RCLCPP_INFO(
@@ -57,15 +58,13 @@ Swaths SwathGenerator::generateSwaths(const Field & field /*, request*/)
 
 void SwathGenerator::setSwathMode(const std::string & new_mode)
 {
-  std::string mode = new_mode;
-  default_type_ = toType(mode);
+  default_type_ = toType(new_mode);
   default_objective_ = createObjective(default_type_);
 }
 
 void SwathGenerator::setSwathAngleMode(const std::string & new_mode)
 {
-  std::string mode = new_mode;
-  default_angle_type_ = toAngleType(mode);
+  default_angle_type_ = toAngleType(new_mode);
 }
 
 SwathObjectivePtr SwathGenerator::createObjective(const SwathType & type)
@@ -119,26 +118,28 @@ std::string SwathGenerator::toString(const SwathType & type, const SwathAngleTyp
   return str;
 }
 
-SwathType SwathGenerator::toType(std::string & str)
+SwathType SwathGenerator::toType(const std::string & str)
 {
-  toUpper(str);
-  if (str == "LENGTH") {
+  std::string mode_str = str;
+  toUpper(mode_str);
+  if (mode_str == "LENGTH") {
     return SwathType::LENGTH;
-  } else if (str == "NUMBER") {
+  } else if (mode_str == "NUMBER") {
     return SwathType::NUMBER;
-  } else if (str == "COVERAGE") {
+  } else if (mode_str == "COVERAGE") {
     return SwathType::COVERAGE;
   } else {
     return SwathType::UNKNOWN;
   }
 }
 
-SwathAngleType SwathGenerator::toAngleType(std::string & str)
+SwathAngleType SwathGenerator::toAngleType(const std::string & str)
 {
-  toUpper(str);
-  if (str == "SET_ANGLE") {
+  std::string mode_str = str;
+  toUpper(mode_str);
+  if (mode_str == "SET_ANGLE") {
     return SwathAngleType::SET_ANGLE;
-  } else if (str == "BRUTE_FORCE") {
+  } else if (mode_str == "BRUTE_FORCE") {
     return SwathAngleType::BRUTE_FORCE;
   } else {
     return SwathAngleType::UNKNOWN;

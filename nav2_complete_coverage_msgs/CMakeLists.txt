@@ -9,12 +9,17 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(action_msgs REQUIRED)
 
-#rosidl_generate_interfaces(${PROJECT_NAME}
-#  "msg/CollisionMonitorState.msg"
-#  "srv/GetCostmap.srv"
-#  "action/AssistedTeleop.action"
-#  DEPENDENCIES builtin_interfaces geometry_msgs std_msgs action_msgs nav_msgs
-#)
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Coordinate.msg"
+  "msg/HeadlandMode.msg"
+  "msg/SwathMode.msg"
+  "msg/RouteMode.msg"
+  "msg/PathMode.msg"
+  "msg/Swath.msg"
+  "msg/PathComponents.msg"
+  "action/ComputeCoveragePath.action"
+  DEPENDENCIES builtin_interfaces geometry_msgs std_msgs action_msgs nav_msgs
+)
 
 ament_export_dependencies(rosidl_default_runtime)
 

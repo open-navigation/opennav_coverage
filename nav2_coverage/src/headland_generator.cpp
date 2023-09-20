@@ -20,9 +20,10 @@
 namespace nav2_coverage
 {
 
-Field HeadlandGenerator::generateHeadlands(const Fields & field /*, (void) request*/)
+Field HeadlandGenerator::generateHeadlands(
+  const Fields & field, const nav2_complete_coverage_msgs::msg::HeadlandMode & settings)
 {
-  HeadlandType action_type;  // = toType(request->headland_type);
+  HeadlandType action_type = toType(settings.mode);
   HeadlandGeneratorPtr generator{nullptr};
   float width = 0.0f;
 
@@ -33,7 +34,7 @@ Field HeadlandGenerator::generateHeadlands(const Fields & field /*, (void) reque
     width = default_headland_width_;
   } else {
     generator = createGenerator(action_type);
-    // width = request->headland_width;
+    width = settings.width;
   }
 
   if (!generator) {
@@ -47,8 +48,7 @@ Field HeadlandGenerator::generateHeadlands(const Fields & field /*, (void) reque
 
 void HeadlandGenerator::setMode(const std::string & new_mode)
 {
-  std::string mode = new_mode;
-  default_type_ = toType(mode);
+  default_type_ = toType(new_mode);
   default_generator_ = createGenerator(default_type_);
 }
 
@@ -73,10 +73,11 @@ std::string HeadlandGenerator::toString(const HeadlandType & type)
   }
 }
 
-HeadlandType HeadlandGenerator::toType(std::string & str)
+HeadlandType HeadlandGenerator::toType(const std::string & str)
 {
-  toUpper(str);
-  if (str == "CONSTANT") {
+  std::string mode_str = str;
+  toUpper(mode_str);
+  if (mode_str == "CONSTANT") {
     return HeadlandType::CONSTANT;
   } else {
     return HeadlandType::UNKNOWN;

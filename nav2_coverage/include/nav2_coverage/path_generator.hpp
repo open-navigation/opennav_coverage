@@ -24,6 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
+#include "nav2_complete_coverage_msgs/msg/path_mode.hpp"
 #include "nav2_coverage/utils.hpp"
 #include "nav2_coverage/types.hpp"
 #include "nav2_coverage/robot.hpp"
@@ -68,7 +69,8 @@ public:
    * @param request Action request information
    * @return Path complete path
    */
-  Path generatePath(const Swaths & swaths /*, (void) request*/);
+  Path generatePath(
+    const Swaths & swaths, const nav2_complete_coverage_msgs::msg::PathMode & settings);
 
   /**
    * @brief Sets the mode manually of the paths for dynamic parameters
@@ -101,14 +103,14 @@ protected:
    * @param String of mode
    * @return Type of mode
    */
-  PathType toType(std::string & str);
+  PathType toType(const std::string & str);
 
   /**
    * @brief Converts the Path string into a mode for handling
    * @param String of mode
    * @return Type of mode
    */
-  PathContinuityType toContinuityType(std::string & str);
+  PathContinuityType toContinuityType(const std::string & str);
 
   PathType default_type_;
   PathContinuityType default_continuity_type_;

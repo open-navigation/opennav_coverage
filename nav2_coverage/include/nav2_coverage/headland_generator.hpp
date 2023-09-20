@@ -23,6 +23,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
+#include "nav2_complete_coverage_msgs/msg/headland_mode.hpp"
 #include "nav2_coverage/utils.hpp"
 #include "nav2_coverage/types.hpp"
 
@@ -58,15 +59,22 @@ public:
   /**
    * @brief Main method to generate headlands
    * @param field Field to generate headlands from
-   * @param request Action request information
+   * @param settings Action request information
    */
-  Field generateHeadlands(const Fields & field /*, (void) request*/);
+  Field generateHeadlands(
+    const Fields & field, const nav2_complete_coverage_msgs::msg::HeadlandMode & settings);
 
   /**
    * @brief Sets the mode manually of the Headland for dynamic parameters
    * @param mode String for mode to use
    */
   void setMode(const std::string & new_mode);
+
+  /**
+   * @brief Sets the headland width manually for dynamic parameters
+   * @param mode String for mode to use
+   */
+  void setWidth(const double & width) {default_headland_width_ = width;}
 
 protected:
   /**
@@ -88,7 +96,7 @@ protected:
    * @param String of mode
    * @return Type of mode
    */
-  HeadlandType toType(std::string & str);
+  HeadlandType toType(const std::string & str);
 
   HeadlandType default_type_;
   double default_headland_width_;

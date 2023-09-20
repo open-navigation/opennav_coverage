@@ -20,9 +20,10 @@
 namespace nav2_coverage
 {
 
-Swaths RouteGenerator::generateRoute(const Swaths & swaths /*, (void) request*/)
+Swaths RouteGenerator::generateRoute(
+  const Swaths & swaths, const nav2_complete_coverage_msgs::msg::RouteMode & settings)
 {
-  RouteType action_type;  // = toType(request->swaths_type);
+  RouteType action_type = toType(settings.mode);
   std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> generator{nullptr};
   size_t spiral_n;
   std::vector<size_t> custom_order;
@@ -35,8 +36,8 @@ Swaths RouteGenerator::generateRoute(const Swaths & swaths /*, (void) request*/)
     custom_order = default_custom_order_;
   } else {
     generator = createGenerator(action_type);
-    // spiral_n = request->spiral_n;
-    // custom_order = request->custom_order;
+    spiral_n = settings.spiral_n;
+    custom_order = std::vector<size_t>(settings.custom_order.begin(), settings.custom_order.end());
   }
 
   if (!generator) {
@@ -54,8 +55,7 @@ Swaths RouteGenerator::generateRoute(const Swaths & swaths /*, (void) request*/)
 
 void RouteGenerator::setMode(const std::string & new_mode)
 {
-  std::string mode = new_mode;
-  default_type_ = toType(mode);
+  default_type_ = toType(new_mode);
   default_generator_ = createGenerator(default_type_);
 }
 
@@ -92,16 +92,17 @@ std::string RouteGenerator::toString(const RouteType & type)
   }
 }
 
-RouteType RouteGenerator::toType(std::string & str)
+RouteType RouteGenerator::toType(const std::string & str)
 {
-  toUpper(str);
-  if (str == "BOUSTROPHEDON") {
+  std::string mode_str = str;
+  toUpper(mode_str);
+  if (mode_str == "BOUSTROPHEDON") {
     return RouteType::BOUSTROPHEDON;
-  } else if (str == "SNAKE") {
+  } else if (mode_str == "SNAKE") {
     return RouteType::SNAKE;
-  } else if (str == "SPIRAL") {
+  } else if (mode_str == "SPIRAL") {
     return RouteType::SPIRAL;
-  } else if (str == "CUSTOM") {
+  } else if (mode_str == "CUSTOM") {
     return RouteType::CUSTOM;
   } else {
     return RouteType::UNKNOWN;

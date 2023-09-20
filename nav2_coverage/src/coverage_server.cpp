@@ -38,6 +38,24 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   swath_gen_ = std::make_unique<SwathGenerator>(node, robot_.get());
   route_gen_ = std::make_unique<RouteGenerator>(node);
   path_gen_ = std::make_unique<PathGenerator>(node, robot_.get());
+
+
+  double action_server_result_timeout;
+  nav2_util::declare_parameter_if_not_declared(
+    node, "action_server_result_timeout", rclcpp::ParameterValue(10.0));
+  get_parameter("action_server_result_timeout", action_server_result_timeout);
+  rcl_action_server_options_t server_options = rcl_action_server_get_default_options();
+  server_options.result_timeout.nanoseconds = RCL_S_TO_NS(action_server_result_timeout);
+
+  // Create the action servers for path planning to a pose and through poses
+  action_server_ = std::make_unique<ActionServer>(
+    shared_from_this(),
+    "compute_coverage_path",
+    std::bind(&CoverageServer::computeCoveragePath, this),
+    nullptr,
+    std::chrono::milliseconds(500),
+    true, server_options);
+
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
@@ -46,6 +64,7 @@ CoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Activating %s", get_name());
   auto node = shared_from_this();
+  action_server_->activate();
 
   // Add callback for dynamic parameters
   dyn_params_handler_ = node->add_on_set_parameters_callback(
@@ -61,7 +80,7 @@ nav2_util::CallbackReturn
 CoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Deactivating %s", get_name());
-
+  action_server_->deactivate();
   dyn_params_handler_.reset();
 
   // destroy bond connection
@@ -74,6 +93,7 @@ nav2_util::CallbackReturn
 CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Cleaning up %s", get_name());
+  action_server_.reset();
   path_gen_.reset();
   route_gen_.reset();
   swath_gen_.reset();
@@ -89,15 +109,82 @@ CoverageServer::on_shutdown(const rclcpp_lifecycle::State &)
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-void CoverageServer::test()
-{
-  Fields fields;  // get a field // Ring object. File / request field.
 
-  // Uses request for type / width where possible
-  Field remaining_field = headland_gen_->generateHeadlands(fields);  //, request);
-  Swaths swaths = swath_gen_->generateSwaths(remaining_field);  //, request);
-  Swaths route = route_gen_->generateRoute(swaths);  //, request);
-  Path path = path_gen_->generatePath(route);   //, request);
+void CoverageServer::getPreemptedGoalIfRequested(
+  typename std::shared_ptr<const typename ComputeCoveragePath::Goal> goal)
+{
+  if (action_server_->is_preempt_requested()) {
+    goal = action_server_->accept_pending_goal();
+  }
+}
+
+bool CoverageServer::validateGoal(
+  typename std::shared_ptr<const typename ComputeCoveragePath::Goal> req)
+{
+  if (req->generate_path && !req->generate_route) {
+    return false;
+  }
+  return true;
+}
+
+void CoverageServer::computeCoveragePath()
+{
+  std::lock_guard<std::mutex> lock(dynamic_params_lock_);
+  auto start_time = this->now();
+
+  auto goal = action_server_->get_current_goal();
+  auto result = std::make_shared<ComputeCoveragePath::Result>();
+
+  if (!action_server_ || !action_server_->is_server_active()) {
+    RCLCPP_DEBUG(get_logger(), "Action server unavailable or inactive. Stopping.");
+    return;
+  }
+
+  if (action_server_->is_cancel_requested()) {
+    RCLCPP_INFO(get_logger(), "Goal was canceled. Canceling coverage planning action.");
+    action_server_->terminate_all();
+    return;
+  }
+
+  getPreemptedGoalIfRequested(goal);
+
+  if (!validateGoal(goal)) {
+    result->error_code = ComputeCoveragePath::Result::INVALID_REQUEST;
+    action_server_->terminate_current(result);
+  }
+
+  Fields fields;  // TODO(SM) get from File / request field. -> convert to type
+
+  try {
+    // TODO(SM) incremental visualization?
+    Field field_to_cover = fields.getGeometry(0);
+    if (goal->generate_headland) {
+      field_to_cover = headland_gen_->generateHeadlands(fields, goal->headland_mode);
+    }
+
+    Swaths swaths = swath_gen_->generateSwaths(field_to_cover, goal->swath_mode);
+
+    if (goal->generate_route) {
+      Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
+
+      if (goal->generate_path) {
+        Path path = path_gen_->generatePath(route, goal->path_mode);
+      }
+    }
+
+    auto cycle_duration = this->now() - start_time;
+    result->planning_time = cycle_duration;
+    // TODO(SM) populate data: path, segments
+    action_server_->succeeded_current(result);
+  } catch (CoverageException & e) {
+    RCLCPP_ERROR(get_logger(), "Invalid mode set: %s", e.what());
+    result->error_code = ComputeCoveragePath::Result::INVALID_MODE_SET;
+  } catch (std::exception & e) {
+    RCLCPP_ERROR(get_logger(), "Internal Fields2Cover error: %s", e.what());
+    result->error_code = ComputeCoveragePath::Result::INTERNAL_F2C_ERROR;
+  }
+
+  action_server_->terminate_current(result);
 }
 
 rcl_interfaces::msg::SetParametersResult
@@ -106,10 +193,42 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
   std::lock_guard<std::mutex> lock(dynamic_params_lock_);
   rcl_interfaces::msg::SetParametersResult result;
   for (auto parameter : parameters) {
-    // const auto & type = parameter.get_type();
-    // const auto & name = parameter.get_name();
+    const auto & type = parameter.get_type();
+    const auto & name = parameter.get_name();
 
-    // TODO(sm) dynamic params including internal default params
+    if (type == ParameterType::PARAMETER_DOUBLE) {
+      if (name == "default_headland_width") {
+        headland_gen_->setWidth(parameter.as_double());
+      } else if (name == "default_swath_angle") {
+        swath_gen_->setSwathAngle(parameter.as_double());
+      }
+    } else if (type == ParameterType::PARAMETER_STRING) {
+      if (name == "default_headland_type") {
+        headland_gen_->setMode(parameter.as_string());
+      } else if (name == "default_path_type") {
+        path_gen_->setPathMode(parameter.as_string());
+      } else if (name == "default_path_continuity_type") {
+        path_gen_->setPathContinuityMode(parameter.as_string());
+      } else if (name == "default_route_type") {
+        route_gen_->setMode(parameter.as_string());
+      } else if (name == "default_swath_type") {
+        swath_gen_->setSwathMode(parameter.as_string());
+      } else if (name == "default_swath_angle_type") {
+        swath_gen_->setSwathAngleMode(parameter.as_string());
+      }
+    } else if (type == ParameterType::PARAMETER_BOOL) {
+      if (name == "default_allow_overlap") {
+        swath_gen_->setOVerlap(parameter.as_bool());
+      }
+    } else if (type == ParameterType::PARAMETER_INTEGER) {
+      if (name == "default_spiral_n") {
+        route_gen_->setSpiralN(parameter.as_int());
+      }
+    } else if (type == ParameterType::PARAMETER_INTEGER_ARRAY) {
+      if (name == "default_custom_order") {
+        route_gen_->setCustomOrder(parameter.as_integer_array());
+      }
+    }
   }
 
   result.successful = true;
