@@ -12,38 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPLETE_COVERAGE__COMPLETE_COVERAGE_SERVER_HPP_
-#define COMPLETE_COVERAGE__COMPLETE_COVERAGE_SERVER_HPP_
+#ifndef NAV2_COVERAGE__COVERAGE_SERVER_HPP_
+#define NAV2_COVERAGE__COVERAGE_SERVER_HPP_
 
 #include <vector>
+#include <memory>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
-#include "complete_coverage/headland_mode.hpp"
-#include "complete_coverage/swath_mode.hpp"
-#include "complete_coverage/route_mode.hpp"
-#include "complete_coverage/path_mode.hpp"
+#include "nav2_coverage/headland_mode.hpp"
+#include "nav2_coverage/swath_mode.hpp"
+#include "nav2_coverage/route_mode.hpp"
+#include "nav2_coverage/path_mode.hpp"
 
-namespace complete_coverage
+namespace nav2_coverage
 {
 /**
- * @class complete_coverage::CompleteCoverageServer
+ * @class nav2_coverage::CoverageServer
  * @brief An action server which implements highly reconfigurable complete
  * coverage planning using the Fields2Cover library
  */
-class CompleteCoverageServer : public nav2_util::LifecycleNode
+class CoverageServer : public nav2_util::LifecycleNode
 {
 public:
   /**
-   * @brief A constructor for complete_coverage::CompleteCoverageServer
+   * @brief A constructor for nav2_coverage::CoverageServer
    * @param options Additional options to control creation of the node.
    */
-  explicit CompleteCoverageServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit CoverageServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
   /**
-   * @brief A destructor for complete_coverage::CompleteCoverageServer
+   * @brief A destructor for nav2_coverage::CoverageServer
    */
-  ~CompleteCoverageServer() = default;
+  ~CoverageServer() = default;
+
+  void test();
 
 protected:
   /**
@@ -91,8 +94,14 @@ protected:
   // Dynamic parameters handler
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
   std::mutex dynamic_params_lock_;
+
+  std::unique_ptr<RobotMode> robot_;
+  std::unique_ptr<HeadlandMode> headland_gen_;
+  std::unique_ptr<SwathMode> swath_gen_;
+  std::unique_ptr<RouteMode> route_gen_;
+  std::unique_ptr<PathMode> path_gen_;
 };
 
-}  // namespace complete_coverage
+}  // namespace nav2_coverage
 
-#endif  // COMPLETE_COVERAGE__COMPLETE_COVERAGE_SERVER_HPP_
+#endif  // NAV2_COVERAGE__COVERAGE_SERVER_HPP_

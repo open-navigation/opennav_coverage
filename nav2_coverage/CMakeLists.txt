@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(complete_coverage)
+project(nav2_coverage)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -14,9 +14,10 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(complete_coverage_msgs REQUIRED)
+find_package(nav2_complete_coverage_msgs REQUIRED)
 find_package(Fields2Cover REQUIRED)
 
+# potentially replace with nav2_common, nav2_package()
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wdeprecated -fPIC -Wshadow -Wnull-dereference)
 
@@ -24,7 +25,7 @@ include_directories(
   include
 )
 
-set(executable_name complete_coverage)
+set(executable_name nav2_coverage)
 set(library_name ${executable_name}_core)
 
 set(dependencies
@@ -40,11 +41,15 @@ set(dependencies
   geometry_msgs
   builtin_interfaces
   tf2_ros
-  complete_coverage_msgs
+  nav2_complete_coverage_msgs
 )
 
 add_library(${library_name} SHARED
-  src/complete_coverage_server.cpp
+  src/coverage_server.cpp
+  src/headland_mode.cpp
+  src/swath_mode.cpp
+  src/route_mode.cpp
+  src/path_mode.cpp
 )
 
 ament_target_dependencies(${library_name}
@@ -63,7 +68,7 @@ ament_target_dependencies(${executable_name}
   ${dependencies}
 )
 
-rclcpp_components_register_nodes(${library_name} "complete_coverage::CompleteCoverageServer")
+rclcpp_components_register_nodes(${library_name} "nav2_coverage::CoverageServer")
 
 install(TARGETS ${library_name}
   ARCHIVE DESTINATION lib

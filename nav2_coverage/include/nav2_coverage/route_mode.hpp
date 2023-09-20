@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPLETE_COVERAGE__ROUTE_MODE_HPP_
-#define COMPLETE_COVERAGE__ROUTE_MODE_HPP_
+#ifndef NAV2_COVERAGE__ROUTE_MODE_HPP_
+#define NAV2_COVERAGE__ROUTE_MODE_HPP_
 
 #include <vector>
 #include <string>
@@ -23,10 +23,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
-#include "complete_coverage/utils.hpp"
-#include "complete_coverage/types.hpp"
+#include "nav2_coverage/utils.hpp"
+#include "nav2_coverage/types.hpp"
 
-namespace complete_coverage
+namespace nav2_coverage
 {
 
 /**
@@ -34,6 +34,7 @@ namespace complete_coverage
  */
 class RouteMode
 {
+public:
   /**
    * @brief Constructor for swath mode
    * @param node A node to get the swath type from
@@ -42,21 +43,10 @@ class RouteMode
   explicit RouteMode(const NodeT & node)
   {
     nav2_util::declare_parameter_if_not_declared(
-      node, "RouteType", rclcpp::ParameterValue("BOUSTROPHEDON"));
-    std::string type_str = node->get_parameter("RouteType").as_string();
-    toUpper(type_str);
-
-    if (type_str == "BOUSTROPHEDON") {
-      type_ = RouteType::BOUSTROPHEDON;
-    } else if (type_str == "SNAKE") {
-      type_ = RouteType::SNAKE;
-    } else if (type_str == "SPIRAL") {
-      type_ = RouteType::SPIRAL;
-    } else if (type_str == "CUSTOM") {
-      type_ = RouteType::CUSTOM;
-    } else {
-      type_ = RouteType::UNKNOWN;
-    }
+      node, "default_route_type", rclcpp::ParameterValue("BOUSTROPHEDON"));
+    std::string type_str = node->get_parameter("default_route_type").as_string();
+    default_type_ = toType(type_str);
+    default_generator_ = createGenerator(default_type_);
 
     nav2_util::declare_parameter_if_not_declared(
       node, "default_spiral_n", rclcpp::ParameterValue(4));
@@ -65,7 +55,9 @@ class RouteMode
     nav2_util::declare_parameter_if_not_declared(
       node, "default_custom_order", rclcpp::PARAMETER_INTEGER_ARRAY);
     try {
-      default_custom_order_ = node->get_parameter("default_custom_order").as_int_array();
+      // Get the custom order and cast to size_t
+      auto order = node->get_parameter("default_custom_order").as_integer_array();
+      default_custom_order_ = std::vector<size_t>(order.begin(), order.end());
     } catch (...) {
       RCLCPP_WARN(
         node->get_logger(),
@@ -75,49 +67,48 @@ class RouteMode
   }
 
   /**
-   * @brief Sets the mode manually of the route for dynamic parameters
+   * @brief Main method to generate route
+   * @param Swaths swaths to generate route from
+   * @param request Action request information
+   * @return Swaths ordered swaths
+   */
+  Swaths generateRoute(const Swaths & swaths /*, (void) request*/);
+
+  /**
+   * @brief Sets the mode manually of the Route for dynamic parameters
    * @param mode String for mode to use
    */
-  void setMode(const std::string & mode)
-  {
-    if (mode == "BOUSTROPHEDON") {
-      type_ = RouteType::BOUSTROPHEDON;
-    } else if (mode == "SNAKE") {
-      type_ = RouteType::SNAKE;
-    } else if (mode == "SPIRAL") {
-      type_ = RouteType::SPIRAL;
-    } else if (mode == "CUSTOM") {
-      type_ = RouteType::CUSTOM;
-    } else {
-      type_ = RouteType::UNKNOWN;
-    }
-  }
+  void setMode(const std::string & new_mode);
+
+protected:
+  /**
+   * @brief Creates generator pointer of a requested type
+   * @param type Route generator type to create
+   * @return Generator to use
+   */
+  RouteGeneratorPtr createGenerator(const RouteType & type);
 
   /**
    * @brief Converts the route mode into a string for publication
+   * @param Type of mode
    * @return String of mode
    */
-  std::string toString()
-  {
-    switch (type_) {
-      case RouteType::BOUSTROPHEDON:
-        return "Boustrophedon";
-      case RouteType::SNAKE:
-        return "Snake";
-      case RouteType::SPIRAL:
-        return "Spiral";
-      case RouteType::CUSTOM:
-        return "Custom";
-      default:
-        return "Unknown";
-    }
-  }
+  std::string toString(const RouteType & type);
 
-  RouteType type_;
+  /**
+   * @brief Converts the route string into a mode for handling
+   * @param String of mode
+   * @return Type of mode
+   */
+  RouteType toType(std::string & str);
+
+  RouteType default_type_;
   std::vector<size_t> default_custom_order_;
   size_t default_spiral_n_;
+  RouteGeneratorPtr default_generator_{nullptr};
+  rclcpp::Logger logger_{rclcpp::get_logger("RouteGenerator")};
 };
 
-}  // namespace complete_coverage
+}  // namespace nav2_coverage
 
-#endif  // COMPLETE_COVERAGE__ROUTE_MODE_HPP_
+#endif  // NAV2_COVERAGE__ROUTE_MODE_HPP_

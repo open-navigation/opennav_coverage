@@ -12,14 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPLETE_COVERAGE__TYPES_HPP_
-#define COMPLETE_COVERAGE__TYPES_HPP_
+#ifndef NAV2_COVERAGE__TYPES_HPP_
+#define NAV2_COVERAGE__TYPES_HPP_
 
 #include <vector>
 #include <string>
+#include <memory>
 
-namespace complete_coverage
+namespace nav2_coverage
 {
+
+typedef F2CCells Fields;
+typedef F2CCell Field;
+typedef F2CSwaths Swaths;
+typedef F2CPath Path;
+typedef F2CRobot Robot;
+
+typedef std::shared_ptr<f2c::hg::HeadlandGeneratorBase> HeadlandGeneratorPtr;
+typedef std::shared_ptr<f2c::obj::SGObjective> SwathObjectivePtr;
+typedef std::shared_ptr<f2c::pp::TurningBase> TurningBasePtr;
+typedef std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> RouteGeneratorPtr;
 
 /**
  * @enum Headland computations types
@@ -84,6 +96,6 @@ enum class PathContinuityType
 };
 
 
-}  // namespace complete_coverage
+}  // namespace nav2_coverage
 
-#endif  // COMPLETE_COVERAGE__TYPES_HPP_
+#endif  // NAV2_COVERAGE__TYPES_HPP_

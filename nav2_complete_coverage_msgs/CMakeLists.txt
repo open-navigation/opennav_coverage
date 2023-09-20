@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(complete_coverage_msgs)
+project(nav2_complete_coverage_msgs)
 
 find_package(ament_cmake REQUIRED)
 find_package(builtin_interfaces REQUIRED)

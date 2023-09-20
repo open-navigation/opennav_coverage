@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPLETE_COVERAGE__UTILS_HPP_
-#define COMPLETE_COVERAGE__UTILS_HPP_
+#ifndef NAV2_COVERAGE__UTILS_HPP_
+#define NAV2_COVERAGE__UTILS_HPP_
 
 #include <vector>
 #include <string>
@@ -23,7 +23,7 @@
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
 
-namespace complete_coverage
+namespace nav2_coverage
 {
 
 inline void toUpper(std::string & string)
@@ -31,6 +31,6 @@ inline void toUpper(std::string & string)
   std::transform(string.begin(), string.end(), string.begin(), ::toupper);
 }
 
-}  // namespace complete_coverage
+}  // namespace nav2_coverage
 
-#endif  // COMPLETE_COVERAGE__UTILS_HPP_
+#endif  // NAV2_COVERAGE__UTILS_HPP_

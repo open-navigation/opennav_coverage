@@ -41,22 +41,57 @@ If you use this work, please make sure to cite both Nav2 and Fields2Cover:
 
 ## Notes of Wisdom
 
+Document: if using non-default params, must fully specify in action message. Uses all or none.
+
 
 Questions
-	- Make sure to validate that all of the objective functions, options are exposed for use
 	- coordinate system / frame stuff. consistency, transformation, store, datem. 
 	- setting up for convertion to map coords
 
-https://github.com/Fields2Cover/Fields2Cover/issues/73
 https://github.com/Fields2Cover/fields2cover_ros/blob/master/src/Fields2CoverVisualizerNode.cpp
-https://github.com/open-navigation/bonsai_nav2_coverage_server/issues/1
+https://github.com/Fields2Cover/Fields2Cover/blob/main/include/fields2cover/utils/parser.h#L21
 
 
-// TODO(sm) headlands dist/spiral_n/order/swath angle part of action if provided
-// TODO(sm) missing robot param get
-// TODO(sm) missing robot opt parms get
-// TODO(sm) overlap what?
-// TODO(sm) convert to F2C types (and/or replace to store that way?). method to get as API woul expect
-    // --> or this wraps it entirely! does the API calls eithin the Mode.
-    // could also then have the disambiguation of action vs params happen here too
+// TODO visualization (outer polygon; inner polygon; path; swath vs turn coloring)
+
+// TODO rename files, classes
+
+
+
+
+
+TODO Action Definition:
+// TODO return of path, segments, etc how it would be desired for use
+// TODO each step optional
+// TODO action exception error codes
+// TODO use request fields
+// TODO file parsing / itnerface definition for types / cartesian. To F2C types
+
+
+Request
+  - If to remove headlands
+  - If to make swath into a route
+  - If to make route into a path
+
+  - File to use with GPS field or GPS list
+  
+  - Headlands mode to use (+ width to use)
+  - swath mode to use (objective, type, best angle if set, whether to allow overlap)
+  - route mode to use (+spiral_n / custom order)
+  - path mode to use (cont / mode)
+
+
+Response:
+  - nav_msgs/path (total blind just path without distinguishing swath vs turns)
+  - A separate structure containing ordered swaths + array of paths connecting to them via turns in path (if enabled)
+  - error code (if any)
+
+
+EXCEPTIONS
+  - Invalid request modes
+  - Invalid request steps
+  - Internal F2C
+  - Invalid request field
+
+
 

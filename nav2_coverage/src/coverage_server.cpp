@@ -12,37 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "complete_coverage/complete_coverage_server.hpp"
+#include "nav2_coverage/coverage_server.hpp"
 
 using namespace std::chrono_literals;
 using rcl_interfaces::msg::ParameterType;
 using std::placeholders::_1;
 
-namespace complete_coverage
+namespace nav2_coverage
 {
 
-CompleteCoverageServer::CompleteCoverageServer(const rclcpp::NodeOptions & options)
-: nav2_util::LifecycleNode("complete_coverage_server", "", options)
+CoverageServer::CoverageServer(const rclcpp::NodeOptions & options)
+: nav2_util::LifecycleNode("coverage_server", "", options)
 {
   RCLCPP_INFO(get_logger(), "Creating %s", get_name());
 }
 
 nav2_util::CallbackReturn
-CompleteCoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
+CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Configuring %s", get_name());
+  auto node = shared_from_this();
+
+  robot_ = std::make_unique<RobotMode>(node);
+  headland_gen_ = std::make_unique<HeadlandMode>(node);
+  swath_gen_ = std::make_unique<SwathMode>(node, robot_.get());
+  route_gen_ = std::make_unique<RouteMode>(node);
+  path_gen_ = std::make_unique<PathMode>(node, robot_.get());
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
 nav2_util::CallbackReturn
-CompleteCoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
+CoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Activating %s", get_name());
   auto node = shared_from_this();
 
   // Add callback for dynamic parameters
   dyn_params_handler_ = node->add_on_set_parameters_callback(
-    std::bind(&CompleteCoverageServer::dynamicParametersCallback, this, _1));
+    std::bind(&CoverageServer::dynamicParametersCallback, this, _1));
 
   // create bond connection
   createBond();
@@ -51,7 +58,7 @@ CompleteCoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
 }
 
 nav2_util::CallbackReturn
-CompleteCoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
+CoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Deactivating %s", get_name());
 
@@ -64,21 +71,37 @@ CompleteCoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 }
 
 nav2_util::CallbackReturn
-CompleteCoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
+CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Cleaning up %s", get_name());
+  path_gen_.reset();
+  route_gen_.reset();
+  swath_gen_.reset();
+  headland_gen_.reset();
+  robot_.reset();
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
 nav2_util::CallbackReturn
-CompleteCoverageServer::on_shutdown(const rclcpp_lifecycle::State &)
+CoverageServer::on_shutdown(const rclcpp_lifecycle::State &)
 {
   RCLCPP_INFO(get_logger(), "Shutting down %s", get_name());
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
+void CoverageServer::test()
+{
+  Fields fields;  // get a field // Ring object. File / request field.
+
+  // Uses request for type / width where possible
+  Field remaining_field = headland_gen_->generateHeadlands(fields);  //, request);
+  Swaths swaths = swath_gen_->generateSwaths(remaining_field);  //, request);
+  Swaths route = route_gen_->generateRoute(swaths);  //, request);
+  Path path = path_gen_->generatePath(route);   //, request);
+}
+
 rcl_interfaces::msg::SetParametersResult
-CompleteCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
+CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
 {
   std::lock_guard<std::mutex> lock(dynamic_params_lock_);
   rcl_interfaces::msg::SetParametersResult result;
@@ -93,11 +116,11 @@ CompleteCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter>
   return result;
 }
 
-}  // namespace complete_coverage
+}  // namespace nav2_coverage
 
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader.
 // This acts as a sort of entry point, allowing the component to be discoverable when its library
 // is being loaded into a running process.
-RCLCPP_COMPONENTS_REGISTER_NODE(complete_coverage::CompleteCoverageServer)
+RCLCPP_COMPONENTS_REGISTER_NODE(nav2_coverage::CoverageServer)
