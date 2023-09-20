@@ -42,7 +42,7 @@ public:
    * @param node A node to get the swath type from
    */
   template<typename NodeT>
-  explicit SwathGenerator(const NodeT & node, RobotWrapper * robot)
+  explicit SwathGenerator(const NodeT & node, RobotParams * robot)
   {
     logger_ = node->get_logger();
     robot_ = robot;
@@ -124,7 +124,7 @@ protected:
   double default_swath_angle_;
   bool default_allow_overlap_;
   std::unique_ptr<f2c::sg::BruteForce> generator_;
-  RobotWrapper * robot_;
+  RobotParams * robot_;
   rclcpp::Logger logger_{rclcpp::get_logger("SwathGenerator")};
 };
 

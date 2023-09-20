@@ -95,7 +95,7 @@ protected:
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
   std::mutex dynamic_params_lock_;
 
-  std::unique_ptr<RobotWrapper> robot_;
+  std::unique_ptr<RobotParams> robot_;
   std::unique_ptr<HeadlandGenerator> headland_gen_;
   std::unique_ptr<SwathGenerator> swath_gen_;
   std::unique_ptr<RouteGenerator> route_gen_;

@@ -42,7 +42,7 @@ public:
    * @param node A node to get the swath type from
    */
   template<typename NodeT>
-  explicit PathGenerator(const NodeT & node, RobotWrapper * robot)
+  explicit PathGenerator(const NodeT & node, RobotParams * robot)
   {
     logger_ = node->get_logger();
     robot_ = robot;
@@ -114,7 +114,7 @@ protected:
   PathContinuityType default_continuity_type_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
-  RobotWrapper * robot_;
+  RobotParams * robot_;
   rclcpp::Logger logger_{rclcpp::get_logger("SwathGenerator")};
 };
 
