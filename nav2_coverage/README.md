@@ -54,9 +54,6 @@ https://github.com/Fields2Cover/Fields2Cover/blob/main/include/fields2cover/util
 
 // TODO visualization (outer polygon; inner polygon; path; swath vs turn coloring)
 
-// TODO rename files, classes
-
-
 
 
 

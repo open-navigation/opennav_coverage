@@ -15,12 +15,12 @@
 #include <vector>
 #include <string>
 
-#include "nav2_coverage/path_mode.hpp"
+#include "nav2_coverage/path_generator.hpp"
 
 namespace nav2_coverage
 {
 
-Path PathMode::generatePath(const Swaths & swaths /*, (void) request*/)
+Path PathGenerator::generatePath(const Swaths & swaths /*, (void) request*/)
 {
   PathType action_type;  // = toType(request->path_type);
   PathContinuityType action_continuity_type;  // = toType(request->path_continuity_type);
@@ -45,21 +45,21 @@ Path PathMode::generatePath(const Swaths & swaths /*, (void) request*/)
   return generator_->searchBestPath(robot_->getRobot(), swaths, *curve);
 }
 
-void PathMode::setPathMode(const std::string & new_mode)
+void PathGenerator::setPathMode(const std::string & new_mode)
 {
   std::string mode = new_mode;
   default_type_ = toType(mode);
   default_curve_ = createCurve(default_type_, default_continuity_type_);
 }
 
-void PathMode::setPathContinuityMode(const std::string & new_mode)
+void PathGenerator::setPathContinuityMode(const std::string & new_mode)
 {
   std::string mode = new_mode;
   default_continuity_type_ = toContinuityType(mode);
   default_curve_ = createCurve(default_type_, default_continuity_type_);
 }
 
-TurningBasePtr PathMode::createCurve(const PathType & type, const PathContinuityType & c_type)
+TurningBasePtr PathGenerator::createCurve(const PathType & type, const PathContinuityType & c_type)
 {
   switch (type) {
     case PathType::DUBIN:
@@ -84,7 +84,7 @@ TurningBasePtr PathMode::createCurve(const PathType & type, const PathContinuity
   }
 }
 
-std::string PathMode::toString(const PathType & type, const PathContinuityType & c_type)
+std::string PathGenerator::toString(const PathType & type, const PathContinuityType & c_type)
 {
   std::string str;
   switch (type) {
@@ -117,7 +117,7 @@ std::string PathMode::toString(const PathType & type, const PathContinuityType &
   return str;
 }
 
-PathType PathMode::toType(std::string & str)
+PathType PathGenerator::toType(std::string & str)
 {
   toUpper(str);
   if (str == "REEDS_SHEPP") {
@@ -129,7 +129,7 @@ PathType PathMode::toType(std::string & str)
   }
 }
 
-PathContinuityType PathMode::toContinuityType(std::string & str)
+PathContinuityType PathGenerator::toContinuityType(std::string & str)
 {
   toUpper(str);
   if (str == "CONTINUOUS") {

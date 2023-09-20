@@ -32,7 +32,7 @@ namespace nav2_coverage
 /**
  * @class Headland mode and state
  */
-class HeadlandMode
+class HeadlandGenerator
 {
 public:
   /**
@@ -40,7 +40,7 @@ public:
    * @param node A node to get the Headland type from
    */
   template<typename NodeT>
-  explicit HeadlandMode(const NodeT & node)
+  explicit HeadlandGenerator(const NodeT & node)
   {
     logger_ = node->get_logger();
 

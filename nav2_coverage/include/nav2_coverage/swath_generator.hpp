@@ -34,7 +34,7 @@ namespace nav2_coverage
 /**
  * @class Swath mode and state
  */
-class SwathMode
+class SwathGenerator
 {
 public:
   /**
@@ -42,7 +42,7 @@ public:
    * @param node A node to get the swath type from
    */
   template<typename NodeT>
-  explicit SwathMode(const NodeT & node, RobotMode * robot)
+  explicit SwathGenerator(const NodeT & node, RobotWrapper * robot)
   {
     logger_ = node->get_logger();
     robot_ = robot;
@@ -124,7 +124,7 @@ protected:
   double default_swath_angle_;
   bool default_allow_overlap_;
   std::unique_ptr<f2c::sg::BruteForce> generator_;
-  RobotMode * robot_;
+  RobotWrapper * robot_;
   rclcpp::Logger logger_{rclcpp::get_logger("SwathGenerator")};
 };
 

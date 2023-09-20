@@ -34,7 +34,7 @@ namespace nav2_coverage
 /**
  * @class Path mode and state
  */
-class PathMode
+class PathGenerator
 {
 public:
   /**
@@ -42,7 +42,7 @@ public:
    * @param node A node to get the swath type from
    */
   template<typename NodeT>
-  explicit PathMode(const NodeT & node, RobotMode * robot)
+  explicit PathGenerator(const NodeT & node, RobotWrapper * robot)
   {
     logger_ = node->get_logger();
     robot_ = robot;
@@ -114,7 +114,7 @@ protected:
   PathContinuityType default_continuity_type_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
-  RobotMode * robot_;
+  RobotWrapper * robot_;
   rclcpp::Logger logger_{rclcpp::get_logger("SwathGenerator")};
 };
 

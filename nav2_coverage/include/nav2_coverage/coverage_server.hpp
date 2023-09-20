@@ -20,10 +20,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
-#include "nav2_coverage/headland_mode.hpp"
-#include "nav2_coverage/swath_mode.hpp"
-#include "nav2_coverage/route_mode.hpp"
-#include "nav2_coverage/path_mode.hpp"
+#include "nav2_coverage/headland_generator.hpp"
+#include "nav2_coverage/swath_generator.hpp"
+#include "nav2_coverage/route_generator.hpp"
+#include "nav2_coverage/path_generator.hpp"
 
 namespace nav2_coverage
 {
@@ -95,11 +95,11 @@ protected:
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
   std::mutex dynamic_params_lock_;
 
-  std::unique_ptr<RobotMode> robot_;
-  std::unique_ptr<HeadlandMode> headland_gen_;
-  std::unique_ptr<SwathMode> swath_gen_;
-  std::unique_ptr<RouteMode> route_gen_;
-  std::unique_ptr<PathMode> path_gen_;
+  std::unique_ptr<RobotWrapper> robot_;
+  std::unique_ptr<HeadlandGenerator> headland_gen_;
+  std::unique_ptr<SwathGenerator> swath_gen_;
+  std::unique_ptr<RouteGenerator> route_gen_;
+  std::unique_ptr<PathGenerator> path_gen_;
 };
 
 }  // namespace nav2_coverage

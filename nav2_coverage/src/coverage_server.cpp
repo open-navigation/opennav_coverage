@@ -33,11 +33,11 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   RCLCPP_INFO(get_logger(), "Configuring %s", get_name());
   auto node = shared_from_this();
 
-  robot_ = std::make_unique<RobotMode>(node);
-  headland_gen_ = std::make_unique<HeadlandMode>(node);
-  swath_gen_ = std::make_unique<SwathMode>(node, robot_.get());
-  route_gen_ = std::make_unique<RouteMode>(node);
-  path_gen_ = std::make_unique<PathMode>(node, robot_.get());
+  robot_ = std::make_unique<RobotWrapper>(node);
+  headland_gen_ = std::make_unique<HeadlandGenerator>(node);
+  swath_gen_ = std::make_unique<SwathGenerator>(node, robot_.get());
+  route_gen_ = std::make_unique<RouteGenerator>(node);
+  path_gen_ = std::make_unique<PathGenerator>(node, robot_.get());
   return nav2_util::CallbackReturn::SUCCESS;
 }
 

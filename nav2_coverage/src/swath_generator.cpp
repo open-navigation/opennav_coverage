@@ -15,12 +15,12 @@
 #include <vector>
 #include <string>
 
-#include "nav2_coverage/swath_mode.hpp"
+#include "nav2_coverage/swath_generator.hpp"
 
 namespace nav2_coverage
 {
 
-Swaths SwathMode::generateSwaths(const Field & field /*, request*/)
+Swaths SwathGenerator::generateSwaths(const Field & field /*, request*/)
 {
   SwathType action_type;  // = toType(request->swath_type)
   SwathAngleType action_angle_type;  // = toAngleType(request->swath_angle_type)
@@ -55,20 +55,20 @@ Swaths SwathMode::generateSwaths(const Field & field /*, request*/)
   }
 }
 
-void SwathMode::setSwathMode(const std::string & new_mode)
+void SwathGenerator::setSwathMode(const std::string & new_mode)
 {
   std::string mode = new_mode;
   default_type_ = toType(mode);
   default_objective_ = createObjective(default_type_);
 }
 
-void SwathMode::setSwathAngleMode(const std::string & new_mode)
+void SwathGenerator::setSwathAngleMode(const std::string & new_mode)
 {
   std::string mode = new_mode;
   default_angle_type_ = toAngleType(mode);
 }
 
-SwathObjectivePtr SwathMode::createObjective(const SwathType & type)
+SwathObjectivePtr SwathGenerator::createObjective(const SwathType & type)
 {
   switch (type) {
     case SwathType::LENGTH:
@@ -83,7 +83,7 @@ SwathObjectivePtr SwathMode::createObjective(const SwathType & type)
   }
 }
 
-std::string SwathMode::toString(const SwathType & type, const SwathAngleType & angle_type)
+std::string SwathGenerator::toString(const SwathType & type, const SwathAngleType & angle_type)
 {
   std::string str;
   switch (type) {
@@ -119,7 +119,7 @@ std::string SwathMode::toString(const SwathType & type, const SwathAngleType & a
   return str;
 }
 
-SwathType SwathMode::toType(std::string & str)
+SwathType SwathGenerator::toType(std::string & str)
 {
   toUpper(str);
   if (str == "LENGTH") {
@@ -133,7 +133,7 @@ SwathType SwathMode::toType(std::string & str)
   }
 }
 
-SwathAngleType SwathMode::toAngleType(std::string & str)
+SwathAngleType SwathGenerator::toAngleType(std::string & str)
 {
   toUpper(str);
   if (str == "SET_ANGLE") {

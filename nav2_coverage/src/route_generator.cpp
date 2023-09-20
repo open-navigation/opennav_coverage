@@ -15,12 +15,12 @@
 #include <vector>
 #include <string>
 
-#include "nav2_coverage/route_mode.hpp"
+#include "nav2_coverage/route_generator.hpp"
 
 namespace nav2_coverage
 {
 
-Swaths RouteMode::generateRoute(const Swaths & swaths /*, (void) request*/)
+Swaths RouteGenerator::generateRoute(const Swaths & swaths /*, (void) request*/)
 {
   RouteType action_type;  // = toType(request->swaths_type);
   std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> generator{nullptr};
@@ -52,14 +52,14 @@ Swaths RouteMode::generateRoute(const Swaths & swaths /*, (void) request*/)
   return generator->genSortedSwaths(swaths);
 }
 
-void RouteMode::setMode(const std::string & new_mode)
+void RouteGenerator::setMode(const std::string & new_mode)
 {
   std::string mode = new_mode;
   default_type_ = toType(mode);
   default_generator_ = createGenerator(default_type_);
 }
 
-RouteGeneratorPtr RouteMode::createGenerator(const RouteType & type)
+RouteGeneratorPtr RouteGenerator::createGenerator(const RouteType & type)
 {
   switch (type) {
     case RouteType::BOUSTROPHEDON:
@@ -76,7 +76,7 @@ RouteGeneratorPtr RouteMode::createGenerator(const RouteType & type)
   }
 }
 
-std::string RouteMode::toString(const RouteType & type)
+std::string RouteGenerator::toString(const RouteType & type)
 {
   switch (type) {
     case RouteType::BOUSTROPHEDON:
@@ -92,7 +92,7 @@ std::string RouteMode::toString(const RouteType & type)
   }
 }
 
-RouteType RouteMode::toType(std::string & str)
+RouteType RouteGenerator::toType(std::string & str)
 {
   toUpper(str);
   if (str == "BOUSTROPHEDON") {

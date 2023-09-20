@@ -15,12 +15,12 @@
 #include <vector>
 #include <string>
 
-#include "nav2_coverage/headland_mode.hpp"
+#include "nav2_coverage/headland_generator.hpp"
 
 namespace nav2_coverage
 {
 
-Field HeadlandMode::generateHeadlands(const Fields & field /*, (void) request*/)
+Field HeadlandGenerator::generateHeadlands(const Fields & field /*, (void) request*/)
 {
   HeadlandType action_type;  // = toType(request->headland_type);
   HeadlandGeneratorPtr generator{nullptr};
@@ -45,14 +45,14 @@ Field HeadlandMode::generateHeadlands(const Fields & field /*, (void) request*/)
 }
 
 
-void HeadlandMode::setMode(const std::string & new_mode)
+void HeadlandGenerator::setMode(const std::string & new_mode)
 {
   std::string mode = new_mode;
   default_type_ = toType(mode);
   default_generator_ = createGenerator(default_type_);
 }
 
-HeadlandGeneratorPtr HeadlandMode::createGenerator(const HeadlandType & type)
+HeadlandGeneratorPtr HeadlandGenerator::createGenerator(const HeadlandType & type)
 {
   switch (type) {
     case HeadlandType::CONSTANT:
@@ -63,7 +63,7 @@ HeadlandGeneratorPtr HeadlandMode::createGenerator(const HeadlandType & type)
   }
 }
 
-std::string HeadlandMode::toString(const HeadlandType & type)
+std::string HeadlandGenerator::toString(const HeadlandType & type)
 {
   switch (type) {
     case HeadlandType::CONSTANT:
@@ -73,7 +73,7 @@ std::string HeadlandMode::toString(const HeadlandType & type)
   }
 }
 
-HeadlandType HeadlandMode::toType(std::string & str)
+HeadlandType HeadlandGenerator::toType(std::string & str)
 {
   toUpper(str);
   if (str == "CONSTANT") {

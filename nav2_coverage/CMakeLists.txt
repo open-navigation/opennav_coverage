@@ -46,10 +46,10 @@ set(dependencies
 
 add_library(${library_name} SHARED
   src/coverage_server.cpp
-  src/headland_mode.cpp
-  src/swath_mode.cpp
-  src/route_mode.cpp
-  src/path_mode.cpp
+  src/headland_generator.cpp
+  src/swath_generator.cpp
+  src/route_generator.cpp
+  src/path_generator.cpp
 )
 
 ament_target_dependencies(${library_name}

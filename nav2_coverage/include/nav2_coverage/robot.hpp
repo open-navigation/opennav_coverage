@@ -32,7 +32,7 @@ namespace nav2_coverage
 /**
  * @class Robot's mode and state
  */
-class RobotMode
+class RobotWrapper
 {
 public:
   /**
@@ -40,7 +40,7 @@ public:
    * @param node A node to get the robot parameters from
    */
   template<typename NodeT>
-  explicit RobotMode(const NodeT & node)
+  explicit RobotWrapper(const NodeT & node)
   {
     nav2_util::declare_parameter_if_not_declared(
       node, "robot_width", rclcpp::ParameterValue(1.0));

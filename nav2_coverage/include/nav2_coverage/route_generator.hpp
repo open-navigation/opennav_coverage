@@ -32,7 +32,7 @@ namespace nav2_coverage
 /**
  * @class Route mode and state
  */
-class RouteMode
+class RouteGenerator
 {
 public:
   /**
@@ -40,7 +40,7 @@ public:
    * @param node A node to get the swath type from
    */
   template<typename NodeT>
-  explicit RouteMode(const NodeT & node)
+  explicit RouteGenerator(const NodeT & node)
   {
     nav2_util::declare_parameter_if_not_declared(
       node, "default_route_type", rclcpp::ParameterValue("BOUSTROPHEDON"));
