@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NAV2_COVERAGE__PATH_MODE_HPP_
-#define NAV2_COVERAGE__PATH_MODE_HPP_
+#ifndef NAV2_COVERAGE__PATH_GENERATOR_HPP_
+#define NAV2_COVERAGE__PATH_GENERATOR_HPP_
 
 #include <vector>
 #include <string>
@@ -120,4 +120,4 @@ protected:
 
 }  // namespace nav2_coverage
 
-#endif  // NAV2_COVERAGE__PATH_MODE_HPP_
+#endif  // NAV2_COVERAGE__PATH_GENERATOR_HPP_
