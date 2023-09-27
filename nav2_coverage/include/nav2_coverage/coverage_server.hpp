@@ -18,15 +18,17 @@
 #include <vector>
 #include <memory>
 
+#include "fields2cover.h" // NOLINT
+
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
 #include "nav2_util/simple_action_server.hpp"
-#include "nav2_complete_coverage_msgs/action/compute_coverage_path.hpp"
 #include "nav2_coverage/headland_generator.hpp"
 #include "nav2_coverage/swath_generator.hpp"
 #include "nav2_coverage/route_generator.hpp"
 #include "nav2_coverage/path_generator.hpp"
+#include "nav2_coverage/visualizer.hpp"
 
 namespace nav2_coverage
 {
@@ -38,7 +40,6 @@ namespace nav2_coverage
 class CoverageServer : public nav2_util::LifecycleNode
 {
 public:
-  typedef nav2_complete_coverage_msgs::action::ComputeCoveragePath ComputeCoveragePath;
   using ActionServer = nav2_util::SimpleActionServer<ComputeCoveragePath>;
 
   /**
@@ -126,6 +127,7 @@ protected:
   std::unique_ptr<SwathGenerator> swath_gen_;
   std::unique_ptr<RouteGenerator> route_gen_;
   std::unique_ptr<PathGenerator> path_gen_;
+  std::unique_ptr<Visualizer> visualizer_;
 };
 
 }  // namespace nav2_coverage

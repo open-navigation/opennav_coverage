@@ -1,2 +1,2 @@
-float32 start
-float32 end
+geometry_msgs/Point32 start
+geometry_msgs/Point32 end

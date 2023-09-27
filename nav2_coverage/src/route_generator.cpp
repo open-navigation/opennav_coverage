@@ -95,7 +95,7 @@ std::string RouteGenerator::toString(const RouteType & type)
 RouteType RouteGenerator::toType(const std::string & str)
 {
   std::string mode_str = str;
-  toUpper(mode_str);
+  util::toUpper(mode_str);
   if (mode_str == "BOUSTROPHEDON") {
     return RouteType::BOUSTROPHEDON;
   } else if (mode_str == "SNAKE") {

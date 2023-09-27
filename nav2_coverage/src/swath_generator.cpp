@@ -29,7 +29,7 @@ Swaths SwathGenerator::generateSwaths(
   float swath_angle = 0.0f;
 
   // If not set by action, use default mode
-  if (action_type != SwathType::UNKNOWN && action_angle_type != SwathAngleType::UNKNOWN) {
+  if (action_type == SwathType::UNKNOWN && action_angle_type == SwathAngleType::UNKNOWN) {
     action_type = default_type_;
     action_angle_type = default_angle_type_;
     objective = default_objective_;
@@ -104,13 +104,13 @@ std::string SwathGenerator::toString(const SwathType & type, const SwathAngleTyp
 
   switch (angle_type) {
     case SwathAngleType::SET_ANGLE:
-      str = "Set Angle";
+      str += "Set Angle";
       break;
     case SwathAngleType::BRUTE_FORCE:
-      str = "Brute Force";
+      str += "Brute Force";
       break;
     default:
-      str = "Unknown";
+      str += "Unknown";
       break;
   }
 
@@ -121,7 +121,7 @@ std::string SwathGenerator::toString(const SwathType & type, const SwathAngleTyp
 SwathType SwathGenerator::toType(const std::string & str)
 {
   std::string mode_str = str;
-  toUpper(mode_str);
+  util::toUpper(mode_str);
   if (mode_str == "LENGTH") {
     return SwathType::LENGTH;
   } else if (mode_str == "NUMBER") {
@@ -136,7 +136,7 @@ SwathType SwathGenerator::toType(const std::string & str)
 SwathAngleType SwathGenerator::toAngleType(const std::string & str)
 {
   std::string mode_str = str;
-  toUpper(mode_str);
+  util::toUpper(mode_str);
   if (mode_str == "SET_ANGLE") {
     return SwathAngleType::SET_ANGLE;
   } else if (mode_str == "BRUTE_FORCE") {

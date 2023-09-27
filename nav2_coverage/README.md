@@ -48,32 +48,16 @@ Document: F2C still has some things to add - please follow up there and ping me 
 
 
 Questions
-	- coordinate system / frame stuff. consistency, transformation, store, datem. 
-	- setting up for convertion to map coords
-  - humble defaults in messages. remove params since fully setup?
+	- setting up for convertion to map coords (convert GPS LLA to euclidean in request like WPF? Accept both.)
+  - request coords gps -> values for map to work with in  BT for rest of system?
 
-
-https://github.com/Fields2Cover/fields2cover_ros/blob/master/src/Fields2CoverVisualizerNode.cpp
-https://github.com/Fields2Cover/Fields2Cover/blob/main/include/fields2cover/utils/parser.h#L21
-
-
-
-
-
-
-
-
-
-
-
-
-
+python api for testing more easily
+test everything (setting, not setting, all the settings themselves, each optional setup, error cases, etc)
 
 ...
 
 
-# NExt steps
-  - convert GPS LLA to euclidean in request like WPF? Accept both.
+# Next steps
   - BT node for interpolating line segment. Other BT nodes or util functions?
   - method to take swath/turn and iterate to get next and identify path of which type it is
   - TODO Update https://navigation.ros.org/tutorials/docs/adding_a_nav2_task_server.html wit hcoverage 400s

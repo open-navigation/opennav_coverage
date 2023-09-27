@@ -5,10 +5,14 @@ bool generate_headland True
 bool generate_route True
 bool generate_path True
 
-# The field specification to use
+# The field specification to use.
+# If providing gml file with multiple fields, specify which with gml_field_id
+# If using polygons, bounding polygon must be first, followed by inner cutouts
 bool use_gml_file False
 string gml_field
-nav2_complete_coverage_msgs/Coordinate[] coordinates
+uint16 gml_field_id 0
+nav2_complete_coverage_msgs/Coordinates[] polygons
+string frame_id map
 
 # Modes of operation of each stage, if used
 nav2_complete_coverage_msgs/HeadlandMode headland_mode
@@ -25,6 +29,7 @@ uint16 NONE=0
 uint16 INTERNAL_F2C_ERROR=401
 uint16 INVALID_MODE_SET=402
 uint16 INVALID_REQUEST=403
+uint16 INVALID_COORDS=403
 
 nav_msgs/Path nav_path
 nav2_complete_coverage_msgs/PathComponents coverage_path

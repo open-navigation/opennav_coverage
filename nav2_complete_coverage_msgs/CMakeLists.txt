@@ -11,6 +11,7 @@ find_package(action_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Coordinate.msg"
+  "msg/Coordinates.msg"
   "msg/HeadlandMode.msg"
   "msg/SwathMode.msg"
   "msg/RouteMode.msg"

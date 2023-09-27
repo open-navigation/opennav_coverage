@@ -56,7 +56,7 @@ public:
     nav2_util::declare_parameter_if_not_declared(
       node, "default_swath_angle_type", rclcpp::ParameterValue("BRUTE_FORCE"));
     std::string angle_str = node->get_parameter("default_swath_angle_type").as_string();
-    default_angle_type_ = toAngleType(type_str);
+    default_angle_type_ = toAngleType(angle_str);
 
     nav2_util::declare_parameter_if_not_declared(
       node, "default_swath_angle", rclcpp::ParameterValue(0.0));
@@ -64,7 +64,7 @@ public:
 
     nav2_util::declare_parameter_if_not_declared(
       node, "default_allow_overlap", rclcpp::ParameterValue(false));
-    default_allow_overlap_ = node->get_parameter("default_allow_overlap").as_double();
+    default_allow_overlap_ = node->get_parameter("default_allow_overlap").as_bool();
 
     // Swath Generator BruteForce can also accept non-brute force specific
     // angle requests from SwathGeneratorBase, thus no need to change generators
@@ -73,12 +73,13 @@ public:
   }
 
   /**
-   * @brief Main method to generate swaths in field
+   * @brief Main method to generate swaths in field for cell
    * @param field Field to generate swaths from
    * @param request Action request information
    */
   Swaths generateSwaths(
     const Field & field, const nav2_complete_coverage_msgs::msg::SwathMode & settings);
+
   /**
    * @brief Sets the mode manually of the swath for dynamic parameters
    * @param mode String for mode to use

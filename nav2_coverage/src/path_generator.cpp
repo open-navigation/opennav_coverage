@@ -102,13 +102,13 @@ std::string PathGenerator::toString(const PathType & type, const PathContinuityT
 
   switch (c_type) {
     case PathContinuityType::CONTINUOUS:
-      str = "Continuous";
+      str += "Continuous";
       break;
     case PathContinuityType::DISCONTINUOUS:
-      str = "Discontinuous";
+      str += "Discontinuous";
       break;
     default:
-      str = "Unknown";
+      str += "Unknown";
       break;
   }
 
@@ -119,7 +119,7 @@ std::string PathGenerator::toString(const PathType & type, const PathContinuityT
 PathType PathGenerator::toType(const std::string & str)
 {
   std::string mode_str = str;
-  toUpper(mode_str);
+  util::toUpper(mode_str);
   if (mode_str == "REEDS_SHEPP") {
     return PathType::REEDS_SHEPP;
   } else if (mode_str == "DUBIN") {
@@ -132,7 +132,7 @@ PathType PathGenerator::toType(const std::string & str)
 PathContinuityType PathGenerator::toContinuityType(const std::string & str)
 {
   std::string mode_str = str;
-  toUpper(mode_str);
+  util::toUpper(mode_str);
   if (mode_str == "CONTINUOUS") {
     return PathContinuityType::CONTINUOUS;
   } else if (mode_str == "DISCONTINUOUS") {

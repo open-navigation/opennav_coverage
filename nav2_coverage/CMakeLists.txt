@@ -50,6 +50,7 @@ add_library(${library_name} SHARED
   src/swath_generator.cpp
   src/route_generator.cpp
   src/path_generator.cpp
+  src/visualizer.cpp
 )
 
 ament_target_dependencies(${library_name}

@@ -38,7 +38,7 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   swath_gen_ = std::make_unique<SwathGenerator>(node, robot_.get());
   route_gen_ = std::make_unique<RouteGenerator>(node);
   path_gen_ = std::make_unique<PathGenerator>(node, robot_.get());
-
+  visualizer_ = std::make_unique<Visualizer>();
 
   double action_server_result_timeout;
   nav2_util::declare_parameter_if_not_declared(
@@ -65,6 +65,7 @@ CoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
   RCLCPP_INFO(get_logger(), "Activating %s", get_name());
   auto node = shared_from_this();
   action_server_->activate();
+  visualizer_->activate(node);
 
   // Add callback for dynamic parameters
   dyn_params_handler_ = node->add_on_set_parameters_callback(
@@ -81,6 +82,7 @@ CoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Deactivating %s", get_name());
   action_server_->deactivate();
+  visualizer_->deactivate();
   dyn_params_handler_.reset();
 
   // destroy bond connection
@@ -94,6 +96,7 @@ CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Cleaning up %s", get_name());
   action_server_.reset();
+  visualizer_.reset();
   path_gen_.reset();
   route_gen_.reset();
   swath_gen_.reset();
@@ -121,6 +124,7 @@ void CoverageServer::getPreemptedGoalIfRequested(
 bool CoverageServer::validateGoal(
   typename std::shared_ptr<const typename ComputeCoveragePath::Goal> req)
 {
+  getPreemptedGoalIfRequested(req);
   if (req->generate_path && !req->generate_route) {
     return false;
   }
@@ -146,39 +150,65 @@ void CoverageServer::computeCoveragePath()
     return;
   }
 
-  getPreemptedGoalIfRequested(goal);
-
   if (!validateGoal(goal)) {
     result->error_code = ComputeCoveragePath::Result::INVALID_REQUEST;
     action_server_->terminate_current(result);
   }
 
-  Fields fields;  // TODO(SM) get from File / request field. -> convert to type
-
   try {
-    // TODO(SM) incremental visualization?
-    Field field_to_cover = fields.getGeometry(0);
-    if (goal->generate_headland) {
-      field_to_cover = headland_gen_->generateHeadlands(fields, goal->headland_mode);
+    // (0) Obtain field to use
+    Field field;
+    std::string frame_id;
+    if (goal->use_gml_file) {
+      F2CFields parse_field;
+      f2c::Parser::importGml(goal->gml_field, parse_field);
+      f2c::Transform::transform(parse_field[0], "EPSG:28992"); // TODO
+      field = parse_field[goal->gml_field_id].field.getGeometry(0);
+      frame_id = parse_field[goal->gml_field_id].coord_sys;
+
+    } else {
+      field = util::getFieldFromGoal(goal);
+      frame_id = goal->frame_id;
     }
 
-    Swaths swaths = swath_gen_->generateSwaths(field_to_cover, goal->swath_mode);
+    // (1) Optional: Remove headland from polygon field
+    Field field_no_headland = field;
+    if (goal->generate_headland) {
+      field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
+    }
 
+    // (2) Generate swaths to cover polygon field, including internal voids
+    Swaths swaths = swath_gen_->generateSwaths(field_no_headland, goal->swath_mode);
+
+    // (3) Optional: Generate an ordered route through the unordered swaths
+    std_msgs::msg::Header header;
+    header.stamp = now();
+    header.frame_id = frame_id;
     if (goal->generate_route) {
       Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
 
+      // (4) Optional: Generate connection turns between ordered swaths
       if (goal->generate_path) {
         Path path = path_gen_->generatePath(route, goal->path_mode);
+        result->coverage_path = util::toCoveragePathMsg(path, header);
+        result->nav_path = util::toNavPathMsg(path, header);
+      } else {
+        result->coverage_path = util::toCoveragePathMsg(route, true, header);
       }
+    } else {
+      result->coverage_path = util::toCoveragePathMsg(swaths, false, header);
     }
 
     auto cycle_duration = this->now() - start_time;
     result->planning_time = cycle_duration;
-    // TODO(SM) populate data: path, segments
+    visualizer_->visualize(field, field_no_headland, result, header);
     action_server_->succeeded_current(result);
   } catch (CoverageException & e) {
     RCLCPP_ERROR(get_logger(), "Invalid mode set: %s", e.what());
     result->error_code = ComputeCoveragePath::Result::INVALID_MODE_SET;
+  } catch (std::invalid_argument & e) {
+    RCLCPP_ERROR(get_logger(), "Invalid GML File or Coordinates: %s", e.what());
+    result->error_code = ComputeCoveragePath::Result::INVALID_COORDS;
   } catch (std::exception & e) {
     RCLCPP_ERROR(get_logger(), "Internal Fields2Cover error: %s", e.what());
     result->error_code = ComputeCoveragePath::Result::INTERNAL_F2C_ERROR;

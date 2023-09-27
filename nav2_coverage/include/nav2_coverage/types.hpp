@@ -19,6 +19,10 @@
 #include <string>
 #include <memory>
 
+#include "fields2cover.h" // NOLINT
+
+#include "nav2_complete_coverage_msgs/action/compute_coverage_path.hpp"
+
 namespace nav2_coverage
 {
 
@@ -27,11 +31,16 @@ typedef F2CCell Field;
 typedef F2CSwaths Swaths;
 typedef F2CPath Path;
 typedef F2CRobot Robot;
+typedef F2CLinearRing Polygon;
+typedef F2CPoint Point;
+typedef f2c::types::PathState PathState;
 
 typedef std::shared_ptr<f2c::hg::HeadlandGeneratorBase> HeadlandGeneratorPtr;
 typedef std::shared_ptr<f2c::obj::SGObjective> SwathObjectivePtr;
 typedef std::shared_ptr<f2c::pp::TurningBase> TurningBasePtr;
 typedef std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> RouteGeneratorPtr;
+
+typedef nav2_complete_coverage_msgs::action::ComputeCoveragePath ComputeCoveragePath;
 
 /**
  * @enum Headland computations types

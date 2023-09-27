@@ -62,7 +62,7 @@ public:
    * @param settings Action request information
    */
   Field generateHeadlands(
-    const Fields & field, const nav2_complete_coverage_msgs::msg::HeadlandMode & settings);
+    const Field & field, const nav2_complete_coverage_msgs::msg::HeadlandMode & settings);
 
   /**
    * @brief Sets the mode manually of the Headland for dynamic parameters

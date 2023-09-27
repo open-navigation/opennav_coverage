@@ -21,11 +21,11 @@ namespace nav2_coverage
 {
 
 Field HeadlandGenerator::generateHeadlands(
-  const Fields & field, const nav2_complete_coverage_msgs::msg::HeadlandMode & settings)
+  const Field & field, const nav2_complete_coverage_msgs::msg::HeadlandMode & settings)
 {
   HeadlandType action_type = toType(settings.mode);
   HeadlandGeneratorPtr generator{nullptr};
-  float width = 0.0f;
+  double width = 0.0;
 
   // If not set by action, use default mode
   if (action_type == HeadlandType::UNKNOWN) {
@@ -37,14 +37,14 @@ Field HeadlandGenerator::generateHeadlands(
     width = settings.width;
   }
 
+
   if (!generator) {
     throw std::runtime_error("No valid headlands mode set! Options: CONSTANT.");
   }
 
   RCLCPP_INFO(logger_, "Generating Headland with generator: %s", toString(action_type).c_str());
-  return generator->generateHeadlands(field, width).getGeometry(0);
+  return generator->generateHeadlands(Fields(field), width).getGeometry(0);
 }
-
 
 void HeadlandGenerator::setMode(const std::string & new_mode)
 {
@@ -76,7 +76,7 @@ std::string HeadlandGenerator::toString(const HeadlandType & type)
 HeadlandType HeadlandGenerator::toType(const std::string & str)
 {
   std::string mode_str = str;
-  toUpper(mode_str);
+  util::toUpper(mode_str);
   if (mode_str == "CONSTANT") {
     return HeadlandType::CONSTANT;
   } else {
