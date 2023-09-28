@@ -43,11 +43,11 @@ public:
   explicit RobotParams(const NodeT & node)
   {
     nav2_util::declare_parameter_if_not_declared(
-      node, "robot_width", rclcpp::ParameterValue(1.0));
+      node, "robot_width", rclcpp::ParameterValue(2.1));
     robot_.robot_width = node->get_parameter("robot_width").as_double();
 
     nav2_util::declare_parameter_if_not_declared(
-      node, "operation_width", rclcpp::ParameterValue(1.0));
+      node, "operation_width", rclcpp::ParameterValue(2.5));
     robot_.op_width = node->get_parameter("operation_width").as_double();
 
     nav2_util::declare_parameter_if_not_declared(

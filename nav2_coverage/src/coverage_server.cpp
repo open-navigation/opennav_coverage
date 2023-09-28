@@ -162,7 +162,7 @@ void CoverageServer::computeCoveragePath()
     if (goal->use_gml_file) {
       F2CFields parse_field;
       f2c::Parser::importGml(goal->gml_field, parse_field);
-      f2c::Transform::transform(parse_field[0], "EPSG:28992"); // TODO
+      f2c::Transform::transform(parse_field[0], "EPSG:28992");  // TODO(SM)
       field = parse_field[goal->gml_field_id].field.getGeometry(0);
       frame_id = parse_field[goal->gml_field_id].coord_sys;
 
@@ -170,6 +170,11 @@ void CoverageServer::computeCoveragePath()
       field = util::getFieldFromGoal(goal);
       frame_id = goal->frame_id;
     }
+
+    RCLCPP_INFO(
+      get_logger(),
+      "Generating coverage path in %s frame for zone with %zu outer nodes and %zu inner polygons.",
+      frame_id.c_str(), field.getGeometry(0).size(), field.size() - 1);
 
     // (1) Optional: Remove headland from polygon field
     Field field_no_headland = field;
@@ -231,6 +236,10 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         headland_gen_->setWidth(parameter.as_double());
       } else if (name == "default_swath_angle") {
         swath_gen_->setSwathAngle(parameter.as_double());
+      } else if (name == "default_step_angle") {
+        swath_gen_->setStepAngle(parameter.as_double());
+      } else if (name == "default_turn_point_distance") {
+        path_gen_->setTurnPointDistance(parameter.as_double());
       }
     } else if (type == ParameterType::PARAMETER_STRING) {
       if (name == "default_headland_type") {

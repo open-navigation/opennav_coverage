@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <memory>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_coverage/types.hpp"

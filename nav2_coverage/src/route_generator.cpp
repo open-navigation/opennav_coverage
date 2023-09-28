@@ -49,7 +49,7 @@ Swaths RouteGenerator::generateRoute(
     dynamic_cast<f2c::rp::CustomOrder *>(generator.get())->setCustomOrder(custom_order);
   }
 
-  RCLCPP_INFO(logger_, "Generating route with generator: %s", toString(action_type).c_str());
+  RCLCPP_DEBUG(logger_, "Generating route with generator: %s", toString(action_type).c_str());
   return generator->genSortedSwaths(swaths);
 }
 

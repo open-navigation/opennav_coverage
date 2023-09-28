@@ -53,6 +53,9 @@ Questions
 
 python api for testing more easily
 test everything (setting, not setting, all the settings themselves, each optional setup, error cases, etc)
+docs
+tests
+convert GPS to cartesian so can use `m` for widths and not be relative to the zone or coordinate system of use. And published out is in a reasonable plapce. Or at least the option?
 
 ...
 
@@ -61,3 +64,4 @@ test everything (setting, not setting, all the settings themselves, each optiona
   - BT node for interpolating line segment. Other BT nodes or util functions?
   - method to take swath/turn and iterate to get next and identify path of which type it is
   - TODO Update https://navigation.ros.org/tutorials/docs/adding_a_nav2_task_server.html wit hcoverage 400s
+    - shit. route planner.

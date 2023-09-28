@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <memory>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_coverage/types.hpp"
@@ -82,7 +83,7 @@ inline geometry_msgs::msg::PoseStamped toMsg(const PathState & state)
 inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   const Swaths & swaths, const bool ordered, const std_msgs::msg::Header & header)
 {
-  nav2_complete_coverage_msgs::msg::PathComponents msg; 
+  nav2_complete_coverage_msgs::msg::PathComponents msg;
   msg.contains_turns = false;
   msg.swaths_ordered = ordered;
   msg.header = header;
@@ -105,7 +106,7 @@ inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   const Path & path, const std_msgs::msg::Header & header)
 {
   using f2c::types::PathSectionType;
-  nav2_complete_coverage_msgs::msg::PathComponents msg; 
+  nav2_complete_coverage_msgs::msg::PathComponents msg;
   msg.contains_turns = true;
   msg.swaths_ordered = true;
   msg.header = header;
@@ -152,7 +153,7 @@ inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       curr_swath_start = path.states[i].point;
     }
 
-    if (path.states[i].type != PathSectionType::SWATH ||
+    if (path.states[i].type != PathSectionType::SWATH &&
       path.states[i].type != PathSectionType::TURN)
     {
       throw std::runtime_error("Unknown type of path state detected, cannot obtain path!");
@@ -193,7 +194,8 @@ inline nav_msgs::msg::Path toNavPathMsg(
  * @param goal Goal to pase
  * @return Field field of goal polygons
  */
-inline Field getFieldFromGoal(typename std::shared_ptr<const typename ComputeCoveragePath::Goal> goal)
+inline Field getFieldFromGoal(
+  typename std::shared_ptr<const typename ComputeCoveragePath::Goal> goal)
 {
   auto polygons = goal->polygons;
   if (polygons.size() == 0) {
@@ -205,7 +207,8 @@ inline Field getFieldFromGoal(typename std::shared_ptr<const typename ComputeCov
   // Get the outer most polygon (usually the only one if no voids)
   Polygon outer_polygon;
   for (unsigned int i = 0; i != polygons[0].coordinates.size(); i++) {
-    outer_polygon.addPoint(Point(polygons[0].coordinates[i].axis1, polygons[0].coordinates[i].axis2));
+    outer_polygon.addPoint(
+      Point(polygons[0].coordinates[i].axis1, polygons[0].coordinates[i].axis2));
   }
   Field field(outer_polygon);
 

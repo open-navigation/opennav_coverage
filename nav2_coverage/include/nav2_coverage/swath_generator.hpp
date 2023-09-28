@@ -63,6 +63,10 @@ public:
     default_swath_angle_ = node->get_parameter("default_swath_angle").as_double();
 
     nav2_util::declare_parameter_if_not_declared(
+      node, "default_step_angle", rclcpp::ParameterValue(1.7453e-2));
+    default_step_angle_ = node->get_parameter("default_step_angle").as_double();
+
+    nav2_util::declare_parameter_if_not_declared(
       node, "default_allow_overlap", rclcpp::ParameterValue(false));
     default_allow_overlap_ = node->get_parameter("default_allow_overlap").as_bool();
 
@@ -99,10 +103,16 @@ public:
   void setSwathAngle(const double & best_angle) {default_swath_angle_ = best_angle;}
 
   /**
-   * @brief Sets whether overlap is ok manually for dynamic parameters
+   * @brief Sets default overlap allowed for dynamic parameters
    * @param mode String for mode to use
    */
   void setOVerlap(const bool & setting) {default_allow_overlap_ = setting;}
+
+  /**
+   * @brief Sets default search step for brute force for dynamic parameters
+   * @param mode String for mode to use
+   */
+  void setStepAngle(const bool & setting) {default_step_angle_ = setting;}
 
 protected:
   /**
@@ -138,6 +148,7 @@ protected:
   SwathAngleType default_angle_type_;
   SwathObjectivePtr default_objective_;
   double default_swath_angle_;
+  double default_step_angle_;
   bool default_allow_overlap_;
   std::unique_ptr<f2c::sg::BruteForce> generator_;
   RobotParams * robot_;

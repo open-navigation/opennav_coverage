@@ -27,6 +27,7 @@ Swaths SwathGenerator::generateSwaths(
   SwathAngleType action_angle_type = toAngleType(settings.mode);
   SwathObjectivePtr objective{nullptr};
   float swath_angle = 0.0f;
+  float step_angle = 0.0f;
 
   // If not set by action, use default mode
   if (action_type == SwathType::UNKNOWN && action_angle_type == SwathAngleType::UNKNOWN) {
@@ -34,12 +35,14 @@ Swaths SwathGenerator::generateSwaths(
     action_angle_type = default_angle_type_;
     objective = default_objective_;
     swath_angle = default_swath_angle_;
+    step_angle = default_step_angle_;
   } else {
     objective = createObjective(action_type);
     swath_angle = settings.best_angle;
+    step_angle = settings.step_angle;
   }
 
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     logger_, "Generating Swaths with: %s", toString(action_type, action_angle_type).c_str());
 
   generator_->setAllowOverlap(default_allow_overlap_);
@@ -48,6 +51,7 @@ Swaths SwathGenerator::generateSwaths(
       if (!objective) {
         throw std::runtime_error("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
       }
+      generator_->step_angle = step_angle;
       return generator_->generateBestSwaths(*objective, robot_->getWidth(), field);
     case SwathAngleType::SET_ANGLE:
       return generator_->generateSwaths(swath_angle, robot_->getWidth(), field);

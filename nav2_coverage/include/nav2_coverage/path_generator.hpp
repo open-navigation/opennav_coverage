@@ -58,6 +58,10 @@ public:
     std::string type_cont_str = node->get_parameter("default_path_continuity_type").as_string();
     default_continuity_type_ = toContinuityType(type_cont_str);
 
+    nav2_util::declare_parameter_if_not_declared(
+      node, "default_turn_point_distance", rclcpp::ParameterValue(0.1));
+    default_turn_point_distance_ = node->get_parameter("default_turn_point_distance").as_double();
+
     // Path Generator requires no changes at runtime
     generator_ = std::make_unique<f2c::pp::PathPlanning>();
     default_curve_ = createCurve(default_type_, default_continuity_type_);
@@ -83,6 +87,12 @@ public:
    * @param mode String for mode to use
    */
   void setPathContinuityMode(const std::string & new_mode);
+
+  /**
+   * @brief Sets the mode manually of the density of path points in turns
+   * @param mode double for mode to use
+   */
+  void setTurnPointDistance(const double & setting) {default_turn_point_distance_ = setting;}
 
 protected:
   /**
@@ -114,6 +124,7 @@ protected:
 
   PathType default_type_;
   PathContinuityType default_continuity_type_;
+  float default_turn_point_distance_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
   RobotParams * robot_;
