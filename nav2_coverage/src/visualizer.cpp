@@ -34,6 +34,10 @@ void Visualizer::visualize(
   const std::shared_ptr<ComputeCoveragePath::Result> & result,
   const std_msgs::msg::Header & header)
 {
+  if (!visualize_) {
+    return;
+  }
+
   // Visualize coverage path
   nav_plan_pub_->publish(std::move(std::make_unique<nav_msgs::msg::Path>(result->nav_path)));
 
@@ -61,9 +65,9 @@ void Visualizer::visualize(
   output_swaths->action = visualization_msgs::msg::Marker::ADD;
   output_swaths->type = visualization_msgs::msg::Marker::LINE_LIST;
   output_swaths->pose.orientation.w = 1.0;
-  output_swaths->scale.x = 0.5;
-  output_swaths->scale.y = 0.5;
-  output_swaths->scale.z = 0.5;
+  output_swaths->scale.x = 0.3;
+  output_swaths->scale.y = 0.3;
+  output_swaths->scale.z = 0.3;
   output_swaths->color.b = 1.0;
   output_swaths->color.a = 1.0;
 

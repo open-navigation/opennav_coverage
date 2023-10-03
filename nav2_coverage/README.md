@@ -2,12 +2,15 @@
 
 This package contains the Complete Coverage Task server utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find 
 
-TODO bonsai, more details on library
+TODO bonsai logo, big ack, etc. more details on library
 
 ## Interfaces
 
 
 ## Configuration
+
+Document: if using non-default params, must fully specify in action message. Uses all or none.
+Document: F2C still has some things to add - please follow up there and ping me if implemented to add here.
 
 ## Citation
 
@@ -43,25 +46,36 @@ If you use this work, please make sure to cite both Nav2 and Fields2Cover:
 
 ## Notes of Wisdom
 
-Document: if using non-default params, must fully specify in action message. Uses all or none.
-Document: F2C still has some things to add - please follow up there and ping me if implemented to add here. Want to hire us to do it?
+TODO visualize dynamic param
 
+Walk through
+  - Lifecycle-Component-Action Task Server like you expect in Nav2
+  - Fully parameterized with dynamic parameters to easily test / tune
+  - Expose all relevent options in the Action for per-request modifications from param defaults
+  - Visualize major stages for debugging
+  - Modular stages retained; optional to which you'd like when
+  - Each stage has factories and enums for options; can be expanded past F2C as well
+  - Use GPS, Cartesian; files or direct coordinates
+  - Error codes for contextual failures to know when failures what to do about it
+  - Return: PathComponents, NavPath, error code, compute time for metrics
 
-Questions
-	- setting up for convertion to map coords (convert GPS LLA to euclidean in request like WPF? Accept both.)
-  - request coords gps -> values for map to work with in  BT for rest of system?
+  - Tester to demo
+    - Basic call
+    - Adjust to cartesian
+    - Different options
+    - RQT
 
-python api for testing more easily
-test everything (setting, not setting, all the settings themselves, each optional setup, error cases, etc)
-docs
-tests
-convert GPS to cartesian so can use `m` for widths and not be relative to the zone or coordinate system of use. And published out is in a reasonable plapce. Or at least the option?
+Future
+  - Unit testing to make sure my visual inspection is correct
+  - Transform GPS to UTM zone properly + back to GPS on return
 
-...
+  - BT nodes to interact with in in the Nav2 autonomy framework
+  - A couple of utilities for the BT nodes to iterate through the swath-turn combos
+  - Turn tester into Python API for it
+  - A Navigator API plugin for coverage specific tasks
+  - A BT XML to pair with the navigator + BT nodes to initial system demos
 
+Q
+  - Demo just have it follow the nav path on a coverage pattern, or something else more complex (or leave to you to determine?)
+  - Other F2C add on features you care about? --> designed to expand or contribute back to F2C
 
-# Next steps
-  - BT node for interpolating line segment. Other BT nodes or util functions?
-  - method to take swath/turn and iterate to get next and identify path of which type it is
-  - TODO Update https://navigation.ros.org/tutorials/docs/adding_a_nav2_task_server.html wit hcoverage 400s
-    - shit. route planner.

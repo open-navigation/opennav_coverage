@@ -44,6 +44,10 @@ public:
   template<typename NodeT>
   void activate(NodeT node)
   {
+    nav2_util::declare_parameter_if_not_declared(
+      node, "visualize", rclcpp::ParameterValue(true));
+    visualize_ = node->get_parameter("visualize").as_bool();
+
     nav_plan_pub_ = rclcpp::create_publisher<nav_msgs::msg::Path>(
       node->get_node_topics_interface(),
       "coverage_server/coverage_plan", rclcpp::QoS(1));
@@ -65,6 +69,7 @@ public:
     const std::shared_ptr<ComputeCoveragePath::Result> & result,
     const std_msgs::msg::Header & header);
 
+  bool visualize_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr nav_plan_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr headlands_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr planning_field_pub_;

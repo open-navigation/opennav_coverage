@@ -26,10 +26,10 @@ nav2_complete_coverage_msgs/PathMode path_mode
 # Error codes
 # Note: The expected priority order of the errors should match the message order
 uint16 NONE=0
-uint16 INTERNAL_F2C_ERROR=401
-uint16 INVALID_MODE_SET=402
-uint16 INVALID_REQUEST=403
-uint16 INVALID_COORDS=403
+uint16 INTERNAL_F2C_ERROR=801
+uint16 INVALID_MODE_SET=802
+uint16 INVALID_REQUEST=803
+uint16 INVALID_COORDS=803
 
 nav_msgs/Path nav_path
 nav2_complete_coverage_msgs/PathComponents coverage_path

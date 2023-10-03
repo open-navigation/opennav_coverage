@@ -52,9 +52,9 @@ Swaths SwathGenerator::generateSwaths(
         throw std::runtime_error("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
       }
       generator_->step_angle = step_angle;
-      return generator_->generateBestSwaths(*objective, robot_->getWidth(), field);
+      return generator_->generateBestSwaths(*objective, robot_->getOperationWidth(), field);
     case SwathAngleType::SET_ANGLE:
-      return generator_->generateSwaths(swath_angle, robot_->getWidth(), field);
+      return generator_->generateSwaths(swath_angle, robot_->getOperationWidth(), field);
     default:
       throw std::runtime_error("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
   }

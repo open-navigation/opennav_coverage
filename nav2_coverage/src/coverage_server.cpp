@@ -151,6 +151,7 @@ void CoverageServer::computeCoveragePath()
   }
 
   if (!validateGoal(goal)) {
+    RCLCPP_WARN(get_logger(), "Goal contained invalid configurations!");
     result->error_code = ComputeCoveragePath::Result::INVALID_REQUEST;
     action_server_->terminate_current(result);
   }
@@ -162,10 +163,11 @@ void CoverageServer::computeCoveragePath()
     if (goal->use_gml_file) {
       F2CFields parse_field;
       f2c::Parser::importGml(goal->gml_field, parse_field);
-      f2c::Transform::transform(parse_field[0], "EPSG:28992");  // TODO(SM)
+      // TODO(SM): replace w/ UTM conversion (and back?) transformSwaths, transformPath
+      // Path rtn_path = f2c::Transform::transformPath(path, field, "EPSG:4258");
+      f2c::Transform::transform(parse_field[0], "EPSG:28992");
       field = parse_field[goal->gml_field_id].field.getGeometry(0);
       frame_id = parse_field[goal->gml_field_id].coord_sys;
-
     } else {
       field = util::getFieldFromGoal(goal);
       frame_id = goal->frame_id;
@@ -240,6 +242,12 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         swath_gen_->setStepAngle(parameter.as_double());
       } else if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
+      } else if (name == "robot_width") {
+        auto & robot = robot_->getRobot();
+        robot.robot_width = parameter.as_double();
+      } else if (name == "operation_width") {
+        auto & robot = robot_->getRobot();
+        robot.op_width = parameter.as_double();
       }
     } else if (type == ParameterType::PARAMETER_STRING) {
       if (name == "default_headland_type") {

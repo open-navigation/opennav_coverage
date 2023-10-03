@@ -153,11 +153,20 @@ inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       curr_swath_start = path.states[i].point;
     }
 
+    curr_state = path.states[i].type;
+
     if (path.states[i].type != PathSectionType::SWATH &&
       path.states[i].type != PathSectionType::TURN)
     {
       throw std::runtime_error("Unknown type of path state detected, cannot obtain path!");
     }
+  }
+
+  if (curr_state == PathSectionType::SWATH) {
+    nav2_complete_coverage_msgs::msg::Swath swath;
+    swath.start = toMsg(curr_swath_start);
+    swath.end = toMsg(path.states.back().point);
+    msg.swaths.push_back(swath);
   }
 
   return msg;
