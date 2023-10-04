@@ -34,50 +34,54 @@ void Visualizer::visualize(
   const std::shared_ptr<ComputeCoveragePath::Result> & result,
   const std_msgs::msg::Header & header)
 {
-  if (!visualize_) {
-    return;
-  }
-
   // Visualize coverage path
-  nav_plan_pub_->publish(std::move(std::make_unique<nav_msgs::msg::Path>(result->nav_path)));
+  if (nav_plan_pub_->get_subscription_count() > 0) {
+    nav_plan_pub_->publish(std::move(std::make_unique<nav_msgs::msg::Path>(result->nav_path)));
+  }
 
   // Visualize field boundary
-  auto field_polygon = std::make_unique<geometry_msgs::msg::PolygonStamped>();
-  field_polygon->header = header;
-  Polygon boundary = total_field.getGeometry(0);  // Only outer-most polygon boundary
-  for (unsigned int i = 0; i != boundary.size(); i++) {
-    field_polygon->polygon.points.push_back(util::toMsg(boundary.getGeometry(i)));
+  if (headlands_pub_->get_subscription_count() > 0) {
+    auto field_polygon = std::make_unique<geometry_msgs::msg::PolygonStamped>();
+    field_polygon->header = header;
+    Polygon boundary = total_field.getGeometry(0);  // Only outer-most polygon boundary
+    for (unsigned int i = 0; i != boundary.size(); i++) {
+      field_polygon->polygon.points.push_back(util::toMsg(boundary.getGeometry(i)));
+    }
+    headlands_pub_->publish(std::move(field_polygon));    
   }
-  headlands_pub_->publish(std::move(field_polygon));
 
   // Visualize field for planning (after headland removed)
-  auto headlandless_polygon = std::make_unique<geometry_msgs::msg::PolygonStamped>();
-  headlandless_polygon->header = header;
-  Polygon planning_field = no_headland_field.getGeometry(0);  // Only outer-most polygon boundary
-  for (unsigned int i = 0; i != planning_field.size(); i++) {
-    headlandless_polygon->polygon.points.push_back(util::toMsg(planning_field.getGeometry(i)));
+  if (planning_field_pub_->get_subscription_count() > 0) {
+    auto headlandless_polygon = std::make_unique<geometry_msgs::msg::PolygonStamped>();
+    headlandless_polygon->header = header;
+    Polygon planning_field = no_headland_field.getGeometry(0);  // Only outer-most polygon boundary
+    for (unsigned int i = 0; i != planning_field.size(); i++) {
+      headlandless_polygon->polygon.points.push_back(util::toMsg(planning_field.getGeometry(i)));
+    }
+    planning_field_pub_->publish(std::move(headlandless_polygon));
   }
-  planning_field_pub_->publish(std::move(headlandless_polygon));
 
   // Visualize swaths alone
-  auto output_swaths = std::make_unique<visualization_msgs::msg::Marker>();
-  output_swaths->header = header;
-  output_swaths->action = visualization_msgs::msg::Marker::ADD;
-  output_swaths->type = visualization_msgs::msg::Marker::LINE_LIST;
-  output_swaths->pose.orientation.w = 1.0;
-  output_swaths->scale.x = 0.3;
-  output_swaths->scale.y = 0.3;
-  output_swaths->scale.z = 0.3;
-  output_swaths->color.b = 1.0;
-  output_swaths->color.a = 1.0;
+  if (swaths_pub_->get_subscription_count() > 0) {
+    auto output_swaths = std::make_unique<visualization_msgs::msg::Marker>();
+    output_swaths->header = header;
+    output_swaths->action = visualization_msgs::msg::Marker::ADD;
+    output_swaths->type = visualization_msgs::msg::Marker::LINE_LIST;
+    output_swaths->pose.orientation.w = 1.0;
+    output_swaths->scale.x = 0.3;
+    output_swaths->scale.y = 0.3;
+    output_swaths->scale.z = 0.3;
+    output_swaths->color.b = 1.0;
+    output_swaths->color.a = 1.0;
 
-  for (unsigned int i = 0; i != result->coverage_path.swaths.size(); i++) {
-    auto & swath = result->coverage_path.swaths[i];
-    output_swaths->points.push_back(util::pointToPoint32(swath.start));
-    output_swaths->points.push_back(util::pointToPoint32(swath.end));
+    for (unsigned int i = 0; i != result->coverage_path.swaths.size(); i++) {
+      auto & swath = result->coverage_path.swaths[i];
+      output_swaths->points.push_back(util::pointToPoint32(swath.start));
+      output_swaths->points.push_back(util::pointToPoint32(swath.end));
+    }
+
+    swaths_pub_->publish(std::move(output_swaths));
   }
-
-  swaths_pub_->publish(std::move(output_swaths));
 }
 
 }  // namespace nav2_coverage

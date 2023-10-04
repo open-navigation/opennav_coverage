@@ -139,18 +139,18 @@ def main():
     # goal.headland_mode.mode = "CONSTANT"
     # goal.headland_mode.width = 5.0
 
-    # goal.swath_mode.objective = "LENGTH" # LENGTH, NUMBER, or COVERAGE
+    # goal.swath_mode.objective = "NUMBER" # LENGTH, NUMBER, or COVERAGE
     # goal.swath_mode.mode = "BRUTE_FORCE" # BRUTE_FORCE, SET_ANGLE
     # goal.swath_mode.best_angle = 1.57
     # goal.swath_mode.step_angle = 1.72e-2
 
     # goal.route_mode.mode = "SPIRAL" # BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM
-    # goal.route_mode.spiral_n = 8
-    # goal.route_mode.custom_order = 
+    # goal.route_mode.spiral_n = 3
+    # # goal.route_mode.custom_order = 
 
     # goal.path_mode.mode = "DUBIN" # DUBIN, REEDS_SHEPP
     # goal.path_mode.continuity_mode = "CONTINUOUS" # CONTINUOUS, DISCONTINUOUS
-    # goal.path_mode.turn_point_distance = 0.3
+    # goal.path_mode.turn_point_distance = 0.1
 
     coverage_info = tester.getCoveragePath(goal)
     result = tester.getResult()

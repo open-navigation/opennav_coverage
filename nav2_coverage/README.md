@@ -46,8 +46,6 @@ If you use this work, please make sure to cite both Nav2 and Fields2Cover:
 
 ## Notes of Wisdom
 
-TODO visualize dynamic param
-
 Walk through
   - Lifecycle-Component-Action Task Server like you expect in Nav2
   - Fully parameterized with dynamic parameters to easily test / tune
@@ -77,5 +75,12 @@ Future
 
 Q
   - Demo just have it follow the nav path on a coverage pattern, or something else more complex (or leave to you to determine?)
+    --> just normal path it up
   - Other F2C add on features you care about? --> designed to expand or contribute back to F2C
+    - headland pass! 
+    - inner boundary not to go through (...) can wait, firefly might do.
+
+
+Leader follower 2-3 months out to kick off 
+a bunch of other stuff --> projects interest me. open nav hire to fill!
 
