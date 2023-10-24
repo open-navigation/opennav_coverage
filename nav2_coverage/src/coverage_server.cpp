@@ -33,11 +33,11 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   RCLCPP_INFO(get_logger(), "Configuring %s", get_name());
   auto node = shared_from_this();
 
-  robot_ = std::make_unique<RobotParams>(node);
+  robot_params_ = std::make_unique<RobotParams>(node);
   headland_gen_ = std::make_unique<HeadlandGenerator>(node);
-  swath_gen_ = std::make_unique<SwathGenerator>(node, robot_.get());
+  swath_gen_ = std::make_unique<SwathGenerator>(node, robot_params_.get());
   route_gen_ = std::make_unique<RouteGenerator>(node);
-  path_gen_ = std::make_unique<PathGenerator>(node, robot_.get());
+  path_gen_ = std::make_unique<PathGenerator>(node, robot_params_.get());
   visualizer_ = std::make_unique<Visualizer>();
 
   double action_server_result_timeout;
@@ -101,7 +101,7 @@ CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   route_gen_.reset();
   swath_gen_.reset();
   headland_gen_.reset();
-  robot_.reset();
+  robot_params_.reset();
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
@@ -243,10 +243,10 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
       } else if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "robot_width") {
-        auto & robot = robot_->getRobot();
+        auto & robot = robot_params_->getRobot();
         robot.robot_width = parameter.as_double();
       } else if (name == "operation_width") {
-        auto & robot = robot_->getRobot();
+        auto & robot = robot_params_->getRobot();
         robot.op_width = parameter.as_double();
       }
     } else if (type == ParameterType::PARAMETER_STRING) {

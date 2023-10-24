@@ -14,10 +14,11 @@
 # limitations under the License.
 
 from enum import Enum
+
 from action_msgs.msg import GoalStatus
-from nav2_complete_coverage_msgs.action import ComputeCoveragePath
-from nav2_complete_coverage_msgs.msg import Coordinates, Coordinate
 from lifecycle_msgs.srv import ChangeState, GetState
+from nav2_complete_coverage_msgs.action import ComputeCoveragePath
+from nav2_complete_coverage_msgs.msg import Coordinate  # Coordinates
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
@@ -84,7 +85,7 @@ class CoverageTester(Node):
     def startup(self):
         """Activate coverage server."""
         change_state_client = self.create_client(
-               GetState, "coverage_server/get_state")
+               GetState, 'coverage_server/get_state')
         req = GetState.Request()
         fut = change_state_client.call_async(req)
         rclpy.spin_until_future_complete(self, fut)
@@ -92,7 +93,7 @@ class CoverageTester(Node):
             return
 
         change_state_client = self.create_client(
-               ChangeState, "coverage_server/change_state")
+               ChangeState, 'coverage_server/change_state')
         req = ChangeState.Request()
         req.transition.id = 1
         fut = change_state_client.call_async(req)
@@ -108,9 +109,10 @@ def toMsg(val):
     coord.axis2 = val[1]
     return coord
 
+
 def main():
     rclpy.init()
-    
+
     tester = CoverageTester()
     tester.startup()
 
@@ -121,7 +123,7 @@ def main():
     goal.generate_route = True
     goal.generate_path = True
 
-    goal.use_gml_file = True 
+    goal.use_gml_file = True
     goal.gml_field = '/home/steve/Documents/bonsai_ws/src/Fields2Cover/data/example1.xml'
     goal.gml_field_id = 0
 
@@ -146,7 +148,7 @@ def main():
 
     # goal.route_mode.mode = "SPIRAL" # BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM
     # goal.route_mode.spiral_n = 3
-    # # goal.route_mode.custom_order = 
+    # goal.route_mode.custom_order
 
     # goal.path_mode.mode = "DUBIN" # DUBIN, REEDS_SHEPP
     # goal.path_mode.continuity_mode = "CONTINUOUS" # CONTINUOUS, DISCONTINUOUS
@@ -170,6 +172,7 @@ def main():
 
     print('exiting')
     exit(0)
+
 
 if __name__ == '__main__':
     main()

@@ -47,7 +47,7 @@ Path PathGenerator::generatePath(
     logger_,
     "Generating path with curve: %s", toString(action_type, action_continuity_type).c_str());
   generator_->turn_point_dist = turn_point_distance;
-  return generator_->searchBestPath(robot_->getRobot(), swaths, *curve);
+  return generator_->searchBestPath(robot_params_->getRobot(), swaths, *curve);
 }
 
 void PathGenerator::setPathMode(const std::string & new_mode)

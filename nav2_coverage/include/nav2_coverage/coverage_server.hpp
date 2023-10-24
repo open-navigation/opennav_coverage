@@ -122,7 +122,7 @@ protected:
 
   std::unique_ptr<ActionServer> action_server_;
 
-  std::unique_ptr<RobotParams> robot_;
+  std::unique_ptr<RobotParams> robot_params_;
   std::unique_ptr<HeadlandGenerator> headland_gen_;
   std::unique_ptr<SwathGenerator> swath_gen_;
   std::unique_ptr<RouteGenerator> route_gen_;

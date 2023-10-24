@@ -29,6 +29,7 @@ namespace nav2_coverage
 typedef F2CCells Fields;
 typedef F2CCell Field;
 typedef F2CSwaths Swaths;
+typedef F2CSwath Swath;
 typedef F2CPath Path;
 typedef F2CRobot Robot;
 typedef F2CLinearRing Polygon;

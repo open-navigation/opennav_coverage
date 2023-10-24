@@ -47,7 +47,7 @@ void Visualizer::visualize(
     for (unsigned int i = 0; i != boundary.size(); i++) {
       field_polygon->polygon.points.push_back(util::toMsg(boundary.getGeometry(i)));
     }
-    headlands_pub_->publish(std::move(field_polygon));    
+    headlands_pub_->publish(std::move(field_polygon));
   }
 
   // Visualize field for planning (after headland removed)

@@ -27,7 +27,7 @@
 #include "nav2_complete_coverage_msgs/msg/swath_mode.hpp"
 #include "nav2_coverage/utils.hpp"
 #include "nav2_coverage/types.hpp"
-#include "nav2_coverage/robot.hpp"
+#include "nav2_coverage/robot_params.hpp"
 
 namespace nav2_coverage
 {
@@ -43,10 +43,10 @@ public:
    * @param node A node to get the swath type from
    */
   template<typename NodeT>
-  explicit SwathGenerator(const NodeT & node, RobotParams * robot)
+  explicit SwathGenerator(const NodeT & node, RobotParams * robot_params)
   {
     logger_ = node->get_logger();
-    robot_ = robot;
+    robot_params_ = robot_params;
 
     nav2_util::declare_parameter_if_not_declared(
       node, "default_swath_type", rclcpp::ParameterValue("LENGTH"));
@@ -151,7 +151,7 @@ protected:
   double default_step_angle_;
   bool default_allow_overlap_;
   std::unique_ptr<f2c::sg::BruteForce> generator_;
-  RobotParams * robot_;
+  RobotParams * robot_params_;
   rclcpp::Logger logger_{rclcpp::get_logger("SwathGenerator")};
 };
 

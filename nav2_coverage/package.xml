@@ -4,7 +4,6 @@
   <name>nav2_coverage</name>
   <version>0.0.1</version>
   <description>A Task Server for complete coverage planning</description>
-  <author email="steve@opennav.org">Steve Macenski</author>
   <maintainer email="steve@opennav.org">Steve Macenski</maintainer>
   <license>Apache-2.0</license>
 

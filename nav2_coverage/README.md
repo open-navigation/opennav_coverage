@@ -84,3 +84,7 @@ Q
 Leader follower 2-3 months out to kick off 
 a bunch of other stuff --> projects interest me. open nav hire to fill!
 
+
+
+TODO
+  - Use coverage exception

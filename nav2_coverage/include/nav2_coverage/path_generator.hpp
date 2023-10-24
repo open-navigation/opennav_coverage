@@ -27,7 +27,7 @@
 #include "nav2_complete_coverage_msgs/msg/path_mode.hpp"
 #include "nav2_coverage/utils.hpp"
 #include "nav2_coverage/types.hpp"
-#include "nav2_coverage/robot.hpp"
+#include "nav2_coverage/robot_params.hpp"
 
 namespace nav2_coverage
 {
@@ -43,10 +43,10 @@ public:
    * @param node A node to get the swath type from
    */
   template<typename NodeT>
-  explicit PathGenerator(const NodeT & node, RobotParams * robot)
+  explicit PathGenerator(const NodeT & node, RobotParams * robot_params)
   {
     logger_ = node->get_logger();
-    robot_ = robot;
+    robot_params_ = robot_params;
 
     nav2_util::declare_parameter_if_not_declared(
       node, "default_path_type", rclcpp::ParameterValue("DUBIN"));
@@ -127,7 +127,7 @@ protected:
   float default_turn_point_distance_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
-  RobotParams * robot_;
+  RobotParams * robot_params_;
   rclcpp::Logger logger_{rclcpp::get_logger("SwathGenerator")};
 };
 
