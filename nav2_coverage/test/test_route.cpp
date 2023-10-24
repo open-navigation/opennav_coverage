@@ -86,16 +86,16 @@ TEST(RouteTests, TestrouteUtils)
 
   generator.setMode("a mode");
   generator.setSpiralN(10);
-  generator.setCustomOrder(std::vector<long int>{});
+  generator.setCustomOrder(std::vector<long int>{});  // NOLINT
 }
 
 TEST(RouteTests, TestrouteGeneration)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");
   RobotParams robot_params(node);
-  auto swath_gen = SwathGenerator(node, &robot_params);
+  SwathGenerator swath_gen(node, &robot_params);
   nav2_complete_coverage_msgs::msg::SwathMode sw_settings;
-  auto generator = RouteShim(node);
+  RouteShim generator(node);
 
   // Generate some toy field
   f2c::Random rand;
@@ -109,8 +109,10 @@ TEST(RouteTests, TestrouteGeneration)
   auto route2 = generator.generateRoute(swaths, settings);
   settings.mode = "SPIRAL";
   auto route3 = generator.generateRoute(swaths, settings);
+
+  // Throws since custom order is set to emptry set
   settings.mode = "CUSTOM";
-  auto route4 = generator.generateRoute(swaths, settings);
+  EXPECT_THROW(generator.generateRoute(swaths, settings), std::length_error);
 }
 
 }  // namespace nav2_coverage

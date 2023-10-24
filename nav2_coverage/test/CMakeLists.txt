@@ -63,3 +63,25 @@ ament_target_dependencies(test_route
 target_link_libraries(test_route
   ${library_name}
 )
+
+# Test path
+ament_add_gtest(test_path
+  test_path.cpp
+)
+ament_target_dependencies(test_path
+  ${dependencies}
+)
+target_link_libraries(test_path
+  ${library_name}
+)
+
+# Test server
+ament_add_gtest(test_server
+  test_server.cpp
+)
+ament_target_dependencies(test_server
+  ${dependencies}
+)
+target_link_libraries(test_server
+  ${library_name}
+)
