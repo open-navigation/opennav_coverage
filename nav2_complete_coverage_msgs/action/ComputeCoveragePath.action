@@ -8,6 +8,8 @@ bool generate_path True
 # The field specification to use.
 # If providing gml file with multiple fields, specify which with gml_field_id
 # If using polygons, bounding polygon must be first, followed by inner cutouts
+# Both must specify if the data is cartesian or GPS coordinates
+bool frame_cartesian True
 bool use_gml_file False
 string gml_field
 uint16 gml_field_id 0

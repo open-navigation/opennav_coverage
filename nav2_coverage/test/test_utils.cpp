@@ -77,12 +77,13 @@ TEST(UtilsTests, TesttoCoveragePathMsg1)
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Swaths swaths_in;
+  F2CField field;
 
   swaths_in.push_back(Swath());
   swaths_in.push_back(Swath());
   swaths_in.push_back(Swath());
 
-  auto msg = util::toCoveragePathMsg(swaths_in, ordered, header_in);
+  auto msg = util::toCoveragePathMsg(swaths_in, field, ordered, header_in, true);
   EXPECT_EQ(msg.header.frame_id, "test");
   EXPECT_EQ(msg.swaths_ordered, false);
   EXPECT_EQ(msg.swaths.size(), 3u);
@@ -90,7 +91,7 @@ TEST(UtilsTests, TesttoCoveragePathMsg1)
 
   ordered = true;
   swaths_in = Swaths();
-  msg = util::toCoveragePathMsg(swaths_in, ordered, header_in);
+  msg = util::toCoveragePathMsg(swaths_in, field, ordered, header_in, true);
   EXPECT_EQ(msg.swaths_ordered, true);
   EXPECT_EQ(msg.swaths.size(), 0u);
   EXPECT_EQ(msg.contains_turns, false);
@@ -102,8 +103,9 @@ TEST(UtilsTests, TesttoNavPathMsg)
   header_in.frame_id = "test";
   Path path_in;
   path_in.states.resize(10);
+  F2CField field;
 
-  auto msg = util::toNavPathMsg(path_in, header_in);
+  auto msg = util::toNavPathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.header.frame_id, "test");
   EXPECT_EQ(msg.poses.size(), 10u);
 }
@@ -113,7 +115,9 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
-  auto msg = util::toCoveragePathMsg(path_in, header_in);
+  F2CField field;
+
+  auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.swaths.size(), 0u);
   EXPECT_EQ(msg.turns.size(), 0u);
   EXPECT_EQ(msg.contains_turns, true);
@@ -121,7 +125,7 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
 
   // states are not valid (e.g. non-marked as turn or swath)
   path_in.states.resize(10);
-  EXPECT_THROW(util::toCoveragePathMsg(path_in, header_in), std::runtime_error);
+  EXPECT_THROW(util::toCoveragePathMsg(path_in, field, header_in, true), std::runtime_error);
 
   // Now lets make it valid
   using f2c::types::PathSectionType;
@@ -136,7 +140,7 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   path_in.states[8].type = PathSectionType::SWATH;
   path_in.states[9].type = PathSectionType::SWATH;
 
-  msg = util::toCoveragePathMsg(path_in, header_in);
+  msg = util::toCoveragePathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.swaths.size(), 3u);
   EXPECT_EQ(msg.turns.size(), 2u);
   EXPECT_EQ(msg.turns[0].poses.size(), 2u);
@@ -152,7 +156,7 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   path_in.states[8].type = PathSectionType::TURN;
   path_in.states[9].type = PathSectionType::TURN;
 
-  msg = util::toCoveragePathMsg(path_in, header_in);
+  msg = util::toCoveragePathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.swaths.size(), 2u);
   EXPECT_EQ(msg.turns.size(), 3u);
   EXPECT_EQ(msg.turns[0].poses.size(), 2u);
@@ -174,7 +178,7 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   // Should work now, with a trivial polygon of 3 nodes of (0, 0)
   goal->polygons[0].coordinates[2].axis1 = 0.0;
   auto field = util::getFieldFromGoal(goal);
-  EXPECT_EQ(field.getGeometry(0).size(), 3u);
+  EXPECT_EQ(field.field.getGeometry(0).getGeometry(0).size(), 3u);
 
   // Test with inner polygons, first invalid
   goal->polygons.resize(2);
@@ -185,8 +189,8 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   // Now valid
   goal->polygons[0].coordinates[0].axis1 = 0.0;
   goal->polygons[1].coordinates[0].axis1 = 1.0;
-  field = util::getFieldFromGoal(goal);
-  EXPECT_EQ(field.getGeometry(1).size(), 3u);
+  auto field2 = util::getFieldFromGoal(goal);
+  EXPECT_EQ(field2.field.getGeometry(0).getGeometry(1).size(), 3u);
 }
 
 }  // namespace nav2_coverage

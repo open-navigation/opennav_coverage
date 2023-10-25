@@ -91,7 +91,8 @@ TEST(ServerTest, testServerTransactions)
     client_node, "compute_coverage_path");
 
   auto goal_msg = nav2_complete_coverage_msgs::action::ComputeCoveragePath::Goal();
-  goal_msg.use_gml_file = true;
+  goal_msg.use_gml_file = true;  // Use file
+  goal_msg.frame_cartesian = false;  // Using GPS coordinates
   goal_msg.gml_field =
     ament_index_cpp::get_package_share_directory("nav2_coverage") + "/test_field.xml";
 

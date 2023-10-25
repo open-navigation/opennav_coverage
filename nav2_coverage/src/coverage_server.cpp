@@ -158,20 +158,25 @@ void CoverageServer::computeCoveragePath()
 
   try {
     // (0) Obtain field to use
+    bool cartesian_frame = goal->frame_cartesian;
     Field field;
+    F2CField master_field;
     std::string frame_id;
     if (goal->use_gml_file) {
       F2CFields parse_field;
       f2c::Parser::importGml(goal->gml_field, parse_field);
-      // TODO(SM): replace w/ UTM conversion (and back?) transformSwaths, transformPath
-      // Path rtn_path = f2c::Transform::transformPath(path, field, "EPSG:4258");
-      f2c::Transform::transform(parse_field[0], "EPSG:28992");
-      field = parse_field[goal->gml_field_id].field.getGeometry(0);
-      frame_id = parse_field[goal->gml_field_id].coord_sys;
+      master_field = parse_field[goal->gml_field_id];
+      frame_id = master_field.coord_sys;
     } else {
-      field = util::getFieldFromGoal(goal);
+      master_field = util::getFieldFromGoal(goal);
+      master_field.setCRS(goal->frame_id);
       frame_id = goal->frame_id;
     }
+
+    if (!cartesian_frame) {
+      f2c::Transform::transformToUTM(master_field);
+    }
+    field = master_field.field.getGeometry(0);
 
     RCLCPP_INFO(
       get_logger(),
@@ -195,19 +200,25 @@ void CoverageServer::computeCoveragePath()
       Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
 
       // (4) Optional: Generate connection turns between ordered swaths
+      // Converts UTM back to GPS, if necessary, for action returns
       if (goal->generate_path) {
         Path path = path_gen_->generatePath(route, goal->path_mode);
-        result->coverage_path = util::toCoveragePathMsg(path, header);
-        result->nav_path = util::toNavPathMsg(path, header);
+        result->coverage_path =
+          util::toCoveragePathMsg(path, master_field, header, cartesian_frame);
+        result->nav_path = util::toNavPathMsg(path, master_field, header, cartesian_frame);
       } else {
-        result->coverage_path = util::toCoveragePathMsg(route, true, header);
+        result->coverage_path =
+          util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame);
       }
     } else {
-      result->coverage_path = util::toCoveragePathMsg(swaths, false, header);
+      result->coverage_path =
+        util::toCoveragePathMsg(swaths, master_field, false, header, cartesian_frame);
     }
 
     auto cycle_duration = this->now() - start_time;
     result->planning_time = cycle_duration;
+
+    // Visualization always uses cartesian coordinates for convenience
     visualizer_->visualize(field, field_no_headland, result, header);
     action_server_->succeeded_current(result);
   } catch (CoverageException & e) {

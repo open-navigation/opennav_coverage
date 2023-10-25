@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <memory>
 
+#include "fields2cover.h" // NOLINT
 #include "rclcpp/rclcpp.hpp"
 #include "nav2_coverage/types.hpp"
 #include "nav2_util/node_utils.hpp"
@@ -78,16 +79,25 @@ inline geometry_msgs::msg::PoseStamped toMsg(const PathState & state)
 /**
  * @brief Converts swaths to coverage path message for action client
  * @param swaths Swaths to convert. May be ordered or unordered.
+ * @param Field Field to use for conversion from UTM if necessary
+ * @param header header
+ * @param bool if the origional CRS is cartesian or not requiring conversion
  * @return PathComponents Info for action server to utilize
  */
 inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
-  const Swaths & swaths, const bool ordered, const std_msgs::msg::Header & header)
+  const Swaths & raw_swaths, const F2CField & field,
+  const bool ordered, const std_msgs::msg::Header & header, const bool is_cartesian)
 {
   nav2_complete_coverage_msgs::msg::PathComponents msg;
   msg.contains_turns = false;
   msg.swaths_ordered = ordered;
   msg.header = header;
-  msg.swaths.resize(swaths.size());
+  msg.swaths.resize(raw_swaths.size());
+
+  Swaths swaths = raw_swaths;
+  if (!is_cartesian) {
+    swaths = f2c::Transform::transformToPrevCRS(raw_swaths, field);
+  }
 
   for (unsigned int i = 0; i != swaths.size(); i++) {
     msg.swaths[i].start = toMsg(swaths[i].startPoint());
@@ -100,10 +110,14 @@ inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
 /**
  * @brief Converts full path to coverage path message for action client
  * @param path Full path to convert
+ * @param Field Field to use for conversion from UTM if necessary
+ * @param header header
+ * @param bool if the origional CRS is cartesian or not requiring conversion
  * @return PathComponents Info for action server to utilize
  */
 inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
-  const Path & path, const std_msgs::msg::Header & header)
+  const Path & raw_path, const F2CField & field,
+  const std_msgs::msg::Header & header, const bool is_cartesian)
 {
   using f2c::types::PathSectionType;
   nav2_complete_coverage_msgs::msg::PathComponents msg;
@@ -111,12 +125,17 @@ inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   msg.swaths_ordered = true;
   msg.header = header;
 
-  if (path.states.size() == 0) {
+  if (raw_path.states.size() == 0) {
     return msg;
   }
 
   Point curr_swath_start(0.0, 0.0);
   nav_msgs::msg::Path * curr_turn = nullptr;
+
+  Path path = raw_path;
+  if (!is_cartesian) {
+    path = f2c::Transform::transformToPrevCRS(raw_path, field);
+  }
 
   PathSectionType curr_state = path.states[0].type;
   if (curr_state == PathSectionType::SWATH) {
@@ -176,17 +195,26 @@ inline nav2_complete_coverage_msgs::msg::PathComponents toCoveragePathMsg(
  * @brief Converts full path to nav_msgs/path message for action client, visualization
  * and use in direct-sending to a controller to replace the planner server
  * @param path Full path to convert
+ * @param Field Field to use for conversion from UTM if necessary
+ * @param header header
+ * @param bool if the origional CRS is cartesian or not requiring conversion
  * @return nav_msgs/Path Path
  */
 inline nav_msgs::msg::Path toNavPathMsg(
-  const Path & path, const std_msgs::msg::Header & header)
+  const Path & raw_path, const F2CField & field,
+  const std_msgs::msg::Header & header, const bool is_cartesian)
 {
   using f2c::types::PathSectionType;
   nav_msgs::msg::Path msg;
   msg.header = header;
 
-  if (path.states.size() == 0) {
+  if (raw_path.states.size() == 0) {
     return msg;
+  }
+
+  Path path = raw_path;
+  if (!is_cartesian) {
+    path = f2c::Transform::transformToPrevCRS(raw_path, field);
   }
 
   msg.poses.resize(path.states.size());
@@ -203,7 +231,7 @@ inline nav_msgs::msg::Path toNavPathMsg(
  * @param goal Goal to pase
  * @return Field field of goal polygons
  */
-inline Field getFieldFromGoal(
+inline F2CField getFieldFromGoal(
   typename std::shared_ptr<const typename ComputeCoveragePath::Goal> goal)
 {
   auto polygons = goal->polygons;
@@ -236,7 +264,7 @@ inline Field getFieldFromGoal(
     field.addRing(inner_polygon);
   }
 
-  return field;
+  return F2CField(Fields(field));
 }
 
 /**

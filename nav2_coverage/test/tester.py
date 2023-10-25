@@ -16,6 +16,7 @@
 from enum import Enum
 
 from action_msgs.msg import GoalStatus
+from ament_index_python.packages import get_package_share_directory
 from lifecycle_msgs.srv import ChangeState, GetState
 from nav2_complete_coverage_msgs.action import ComputeCoveragePath
 from nav2_complete_coverage_msgs.msg import Coordinate  # Coordinates
@@ -124,19 +125,29 @@ def main():
     goal.generate_path = True
 
     goal.use_gml_file = True
-    goal.gml_field = '/home/steve/Documents/bonsai_ws/src/Fields2Cover/data/example1.xml'
+    goal.frame_cartesian = True
+    goal.gml_field = get_package_share_directory('nav2_coverage') + '/test_field.xml'
     goal.gml_field_id = 0
 
-    # Cartesian coordinates corresponding to a similar XML as example1.xml
+    # Cartesian coordinates corresponding to a similar XML as test_field.xml
     # test_coords = [[0.0, 0.0], [2.78733, 7.60181], [25.3394, 88.3711],
     #                [60.5611, 211.52], [88.6878, 311.358], [105.814, 374.206],
     #                [-404.753, 525.721], [-403.403, 519.014], [-365.901, 341.765],
     #                [-320.543, 125.493], [-309.789, 75.0412], [-3.61568, -15.8186], [0.0, 0.0]]
+
+    # Same, in "EPSG:4258" frame
+    # test_coords = [[4.26199990317851,51.7859704975047], [4.26203858931428,51.7860392024232],
+    #                [4.26234728296244,51.7867682098064], [4.26283009086539,51.7878798462305],
+    #                [4.26321532471923,51.7887809885397], [4.26344944239078,51.7893481817958],
+    #                [4.25601634525234,51.7906387243889], [4.25603742148301,51.7905786368844],
+    #                [4.25662083047068,51.7889909449083], [4.25732681137421,51.7870536505356],
+    #                [4.25749399420598,51.7866017400346], [4.26195105582634,51.7858278333044],
+    #                [4.26199990317851,51.7859704975047]]
     # coords = Coordinates()
     # for x in test_coords:
     #     coords.coordinates.append(toMsg(x))
     # goal.polygons.append(coords)
-    # goal.frame_id = "map"
+    # goal.frame_id = "map"  # "EPSG:4258"
 
     # goal.headland_mode.mode = "CONSTANT"
     # goal.headland_mode.width = 5.0

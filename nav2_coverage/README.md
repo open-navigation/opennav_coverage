@@ -64,19 +64,10 @@ Walk through
     - RQT
 
 Future
-  - Transform GPS to UTM zone properly + back to GPS on return (https://github.com/Fields2Cover/Fields2Cover/pull/95/files)
   - Use coverage exceptions
-  - transform back into proper frame
 
   - BT nodes to interact with in in the Nav2 autonomy framework
   - A couple of utilities for the BT nodes to iterate through the swath-turn combos
   - Turn tester into Python API for it
   - A Navigator API plugin for coverage specific tasks
   - A BT XML to pair with the navigator + BT nodes to initial system demos
-
-Q
-  - Demo just have it follow the nav path on a coverage pattern, or something else more complex (or leave to you to determine?)
-    --> just normal path it up
-  - Other F2C add on features you care about? --> designed to expand or contribute back to F2C
-    - headland pass! 
-    - inner boundary not to go through (...) can wait, firefly might do.
