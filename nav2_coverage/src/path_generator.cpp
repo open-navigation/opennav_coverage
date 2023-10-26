@@ -40,7 +40,7 @@ Path PathGenerator::generatePath(
   }
 
   if (!curve) {
-    throw std::runtime_error("No valid path mode set!");
+    throw CoverageException("No valid path mode set!");
   }
 
   RCLCPP_DEBUG(

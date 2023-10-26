@@ -1,0 +1,18 @@
+<!--
+  This Behavior Tree computes a complete coverage path over a selected space, then follows it.
+  Can also take the coverage_path instead of Nav Path for segmented swaths from turns
+  for changes in operational modes (e.g. raise tool, turn off payload in turns not in field).
+
+  Field filepath is set by the Navigator plugin in the action request, but also may be hardcoded
+  or set using the polygons input port instead for dynamically computed values instead of from file
+-->
+
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <PipelineSequence name="NavigateWithoutReplanning">
+      <!-- May also use 'polygons={field_polygon} polygons_frame_id={polygon_frame_id}' if set polygon via NavigateCompleteCoverage instead of filepath -->
+      <ComputeCoveragePath nav_path="{path}" file_field="{field_filepath}" coords_cartesian="false" error_code_id="{compute_coverage_error_code}"/>
+      <FollowPath path="{path}" controller_id="FollowPath" error_code_id="{follow_path_error_code}"/>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>

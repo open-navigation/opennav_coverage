@@ -40,6 +40,12 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   path_gen_ = std::make_unique<PathGenerator>(node, robot_params_.get());
   visualizer_ = std::make_unique<Visualizer>();
 
+  // If in GPS coordinates, we must convert to a CRS to compute coverage
+  // Then, reconvert back to GPS for the user.
+  nav2_util::declare_parameter_if_not_declared(
+    node, "coordinates_in_cartesian_frame", rclcpp::ParameterValue(true));
+  get_parameter("coordinates_in_cartesian_frame", cartesian_frame_);
+
   double action_server_result_timeout;
   nav2_util::declare_parameter_if_not_declared(
     node, "action_server_result_timeout", rclcpp::ParameterValue(10.0));
@@ -158,7 +164,6 @@ void CoverageServer::computeCoveragePath()
 
   try {
     // (0) Obtain field to use
-    bool cartesian_frame = goal->frame_cartesian;
     Field field;
     F2CField master_field;
     std::string frame_id;
@@ -173,7 +178,7 @@ void CoverageServer::computeCoveragePath()
       frame_id = goal->frame_id;
     }
 
-    if (!cartesian_frame) {
+    if (!cartesian_frame_) {
       f2c::Transform::transformToUTM(master_field);
     }
     field = master_field.field.getGeometry(0);
@@ -204,15 +209,15 @@ void CoverageServer::computeCoveragePath()
       if (goal->generate_path) {
         Path path = path_gen_->generatePath(route, goal->path_mode);
         result->coverage_path =
-          util::toCoveragePathMsg(path, master_field, header, cartesian_frame);
-        result->nav_path = util::toNavPathMsg(path, master_field, header, cartesian_frame);
+          util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
+        result->nav_path = util::toNavPathMsg(path, master_field, header, cartesian_frame_);
       } else {
         result->coverage_path =
-          util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame);
+          util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);
       }
     } else {
       result->coverage_path =
-        util::toCoveragePathMsg(swaths, master_field, false, header, cartesian_frame);
+        util::toCoveragePathMsg(swaths, master_field, false, header, cartesian_frame_);
     }
 
     auto cycle_duration = this->now() - start_time;
@@ -277,6 +282,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
     } else if (type == ParameterType::PARAMETER_BOOL) {
       if (name == "default_allow_overlap") {
         swath_gen_->setOVerlap(parameter.as_bool());
+      } else if (name == "coordinates_in_cartesian_frame") {
+        cartesian_frame_ = parameter.as_bool();
       }
     } else if (type == ParameterType::PARAMETER_INTEGER) {
       if (name == "default_spiral_n") {

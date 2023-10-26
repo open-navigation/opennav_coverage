@@ -41,7 +41,7 @@ Swaths RouteGenerator::generateRoute(
   }
 
   if (!generator) {
-    throw std::runtime_error(
+    throw CoverageException(
             "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM.");
   } else if (action_type == RouteType::SPIRAL) {
     dynamic_cast<f2c::rp::SpiralOrder *>(generator.get())->setSpiralSize(spiral_n);

@@ -128,6 +128,7 @@ protected:
   std::unique_ptr<RouteGenerator> route_gen_;
   std::unique_ptr<PathGenerator> path_gen_;
   std::unique_ptr<Visualizer> visualizer_;
+  bool cartesian_frame_;
 };
 
 }  // namespace nav2_coverage

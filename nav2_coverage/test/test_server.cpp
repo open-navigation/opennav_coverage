@@ -38,7 +38,11 @@ public:
   ServerShim()
   : CoverageServer()
   {}
-  void configure(const rclcpp_lifecycle::State & state) {this->on_configure(state);}
+  void configure(const rclcpp_lifecycle::State & state)
+  {
+    this->on_configure(state);
+    cartesian_frame_ = false;  // Test files in GPS
+  }
   void activate(const rclcpp_lifecycle::State & state) {this->on_activate(state);}
   void deactivate(const rclcpp_lifecycle::State & state) {this->on_deactivate(state);}
   void cleanup(const rclcpp_lifecycle::State & state) {this->on_cleanup(state);}
@@ -92,7 +96,6 @@ TEST(ServerTest, testServerTransactions)
 
   auto goal_msg = nav2_complete_coverage_msgs::action::ComputeCoveragePath::Goal();
   goal_msg.use_gml_file = true;  // Use file
-  goal_msg.frame_cartesian = false;  // Using GPS coordinates
   goal_msg.gml_field =
     ament_index_cpp::get_package_share_directory("nav2_coverage") + "/test_field.xml";
 
@@ -142,6 +145,7 @@ TEST(ServerTest, testDynamicParams)
       rclcpp::Parameter("default_swath_angle_type", std::string("hi")),
       rclcpp::Parameter("default_allow_overlap", true),
       rclcpp::Parameter("default_spiral_n", 41),
+      rclcpp::Parameter("coordinates_in_cartesian_frame", false),
       rclcpp::Parameter("default_custom_order", std::vector<int>{1, 2, 3})});
 
   rclcpp::spin_until_future_complete(
@@ -152,6 +156,7 @@ TEST(ServerTest, testDynamicParams)
   EXPECT_EQ(node->get_parameter("default_headland_type").as_string(), std::string("hi"));
   EXPECT_EQ(node->get_parameter("default_allow_overlap").as_bool(), true);
   EXPECT_EQ(node->get_parameter("default_spiral_n").as_int(), 41);
+  EXPECT_EQ(node->get_parameter("coordinates_in_cartesian_frame").as_bool(), false);
 }
 
 }  // namespace nav2_coverage

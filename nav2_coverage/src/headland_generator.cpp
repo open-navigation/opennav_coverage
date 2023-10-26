@@ -39,7 +39,7 @@ Field HeadlandGenerator::generateHeadlands(
 
 
   if (!generator) {
-    throw std::runtime_error("No valid headlands mode set! Options: CONSTANT.");
+    throw CoverageException("No valid headlands mode set! Options: CONSTANT.");
   }
 
   RCLCPP_DEBUG(logger_, "Generating Headland with generator: %s", toString(action_type).c_str());

@@ -56,6 +56,7 @@ Walk through
   - Use GPS, Cartesian; files or direct coordinates
   - Error codes for contextual failures to know when failures what to do about it
   - Return: PathComponents, NavPath, error code, compute time for metrics
+  - BT nodes + XML using the nav path from coverage + Navigator type for semantic information of request + demo sim use
 
   - Tester to demo
     - Basic call
@@ -64,10 +65,13 @@ Walk through
     - RQT
 
 Future
-  - Use coverage exceptions
+  - Test BT nodes / XML / Navigator // unit tests
+  - Create simulation to testing / demo
 
-  - BT nodes to interact with in in the Nav2 autonomy framework
-  - A couple of utilities for the BT nodes to iterate through the swath-turn combos
-  - Turn tester into Python API for it
-  - A Navigator API plugin for coverage specific tasks
-  - A BT XML to pair with the navigator + BT nodes to initial system demos
+  - A couple of utilities for the BT nodes to iterate through the swath-turn combos (optional)
+
+
+
+Navigators require Iron+
+Options: (A) upgrade, (B) use Navigate To Pose and hardcode the field file path and ignore the pose action request, (C) call the server manually from your application
+

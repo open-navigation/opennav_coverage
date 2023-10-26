@@ -49,14 +49,14 @@ Swaths SwathGenerator::generateSwaths(
   switch (action_angle_type) {
     case SwathAngleType::BRUTE_FORCE:
       if (!objective) {
-        throw std::runtime_error("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
+        throw CoverageException("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
       }
       generator_->step_angle = step_angle;
       return generator_->generateBestSwaths(*objective, robot_params_->getOperationWidth(), field);
     case SwathAngleType::SET_ANGLE:
       return generator_->generateSwaths(swath_angle, robot_params_->getOperationWidth(), field);
     default:
-      throw std::runtime_error("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
+      throw CoverageException("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
   }
 }
 
