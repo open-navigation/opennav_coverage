@@ -65,9 +65,12 @@ Walk through
     - RQT
 
 Future
-  - Test BT nodes / XML / Navigator // unit tests
-  - Create simulation to testing / demo
+  - Use setup with BT nodes / XML / Navigator. Simulator demo altogether. Demo video.
+  - README
 
+
+  - Python3 API from tester.py
+  - Rename packages / repo?
   - A couple of utilities for the BT nodes to iterate through the swath-turn combos (optional)
 
 

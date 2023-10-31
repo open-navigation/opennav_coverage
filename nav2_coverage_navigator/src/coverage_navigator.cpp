@@ -65,12 +65,12 @@ CoverageNavigator::getDefaultBTFilepath(
     std::string pkg_share_dir =
       ament_index_cpp::get_package_share_directory("nav2_coverage_bt");
     node->declare_parameter<std::string>(
-      "default_nav_to_pose_bt_xml",
+      "default_coverage_bt_xml",
       pkg_share_dir +
       "/behavior_trees/navigate_w_basic_complete_coverage.xml");
   }
 
-  node->get_parameter("default_nav_to_pose_bt_xml", default_bt_xml_filename);
+  node->get_parameter("default_coverage_bt_xml", default_bt_xml_filename);
 
   return default_bt_xml_filename;
 }
