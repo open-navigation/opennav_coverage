@@ -1,6 +1,6 @@
 # Nav2 Complete Coverage
 
-This package contains the Complete Coverage Task server utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find more information about Fields2Cover (F2C) in its [ReadTheDocs Documentation](https://fields2cover.github.io/index.html).
+This package contains the Complete Coverage Task server utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find more information about Fields2Cover (F2C) in its [ReadTheDocs Documentation](https://fields2cover.github.io/index.html). It can accept both GPS and Cartesian coordinates.
 
 This capability was created by [Open Navigation LLC](https://www.opennav.org/) in partnership with [Bonsai Robotics](https://www.bonsairobotics.ai/). Bonsai Robotics funded the development of this work for their own product and has graciously allowed Open Navigation to open-source it for the community to leverage in their own systems. Please thank Bonsai Robotics for their commendable donation to the ROS community!
 
@@ -34,7 +34,7 @@ Finally, it contains the polygon information. This can be represented either as 
 
 When setting the polygon (`goal.polygons`), this is a vector of polygons. If only considering a bounding field, only populate the first field shape. If there are internal voids, use subsequent polygons to indicate them. The coordinate type has `axis1` and `axis2` instead of X and Y as the server can process both GPS and cartesian coordinates. If specifying the polygon outside of GML files, you must specify the frame of reference of the polygon using the `goal.frame_id` field. This is not used for GML files as those should contain the frame within it.
 
-The result returns a `result.nav_path` -- which is a `nav_msgs/Path` containing the coverage path requested **only if** all `generate_` fields are `true`. This can be followed by a local trajectory planner or controller directly. This is what is used in the `nav2_coverage_bt` examples for basic coverage navigation. It also returns `result.coverage_path` which contains an ordered set of swaths and paths to connect them (if applicable settings enabled) which can be used for more task-specific navigation. For example, navigating with a tool down or enabled on swaths and raised in turns to connect to other swaths. 
+The result returns a `result.nav_path` -- which is a `nav_msgs/Path` containing the coverage path requested **only if** all `generate_` fields are `true`. This can be followed by a local trajectory planner or controller directly. This is what is used in the `nav2_coverage_bt` examples for basic coverage navigation. It also returns `result.coverage_path` which contains an ordered set of swaths and paths to connect them (if applicable settings enabled) which can be used for more task-specific navigation. For example, navigating with a tool down or enabled on swaths and raised in turns to connect to other swaths. A utility is provided in `nav2_coverage/utils.hpp` for iterating through this custom `coverage_path` for convenience.
 
 It also returns an error code, if any error occurred and the total planning time for metrics analysis.
 
@@ -43,6 +43,8 @@ It also returns an error code, if any error occurred and the total planning time
 The Coverage Navigator calls the `ComputeCoveragePath` action within its BT XML. This navigator plugin exists to expose to the application layer the fields required to do Coverage-type navigation tasks rather than go-to-pose type tasks. Thus, this Action does not contain a "goal" or "start" pose, but the field filepath or polygon of interest for coverage navigation. See the section above for discussion on those types. It also contains a `goal.behavior_tree` field to specify which behavior tree to navigate using -- if not the default.
 
 It returns the error code from the BT's error code IDs if any error occurs. Otherwise, it returns live regular feedback on the robot's current position, navigation time elapsed, number of recoveries enacted, distance remaining in the path (if `nav_path` valid), and a rough ETA.
+
+Note that Navigator Plugins require **ROS 2 Iron or newer**. Otherwise, you may still use the Coverage Server in **Foxy or newer**, just don't compile the `nav2_coverage_navigator` package.
 
 ## Configuration
 
@@ -84,36 +86,20 @@ If you use this work, please make sure to cite both Nav2 and Fields2Cover:
 
 ## Notes of Wisdom
 
-Walk through
-  - Lifecycle-Component-Action Task Server like you expect in Nav2
-  - Fully parameterized with dynamic parameters to easily test / tune
-  - Expose all relevent options in the Action for per-request modifications from param defaults
+TODO
   - Visualize major stages for debugging
   - Modular stages retained; optional to which you'd like when
   - Each stage has factories and enums for options; can be expanded past F2C as well
-  - Use GPS, Cartesian; files or direct coordinates
-  - Error codes for contextual failures to know when failures what to do about it
-  - Return: PathComponents, NavPath, error code, compute time for metrics
-  - BT nodes + XML using the nav path from coverage + Navigator type for semantic information of request + demo sim use
 
-  - Tester to demo
-    - Basic call
-    - Adjust to cartesian
-    - Different options
-    - RQT
 
 Future
-  - Use setup with BT nodes / XML / Navigator. Simulator demo altogether. Demo video (in readme).
   - README
-
-
-  - Python3 API from tester.py
-  - Nav2 docs to include / config guide. BT ports. Groot index
   - Rename packages / repo?
   - A couple of utilities for the BT nodes to iterate through the swath-turn combos (optional)
 
 
 
-Navigators require Iron+
-Options: (A) upgrade, (B) use Navigate To Pose and hardcode the field file path and ignore the pose action request, (C) call the server manually from your application
+  - Use setup with BT nodes / XML / Navigator. Simulator demo altogether. Demo video (in readme).
 
+  - Python3 API from tester.py
+  - Nav2 docs to include / config guide. BT ports. Groot index
