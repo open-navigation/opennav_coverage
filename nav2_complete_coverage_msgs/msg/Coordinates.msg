@@ -1,1 +1,0 @@
-nav2_complete_coverage_msgs/Coordinate[] coordinates

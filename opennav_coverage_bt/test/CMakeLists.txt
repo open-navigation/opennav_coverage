@@ -1,0 +1,9 @@
+# Cancel test
+ament_add_gtest(test_cancel_complete_coverage test_cancel_complete_coverage.cpp)
+target_link_libraries(test_cancel_complete_coverage opennav_cancel_complete_coverage_action_bt_node)
+ament_target_dependencies(test_cancel_complete_coverage ${dependencies})
+
+# Make command test
+ament_add_gtest(test_compute_coverage_path test_compute_coverage_path.cpp)
+target_link_libraries(test_compute_coverage_path opennav_compute_complete_coverage_action_bt_node)
+ament_target_dependencies(test_compute_coverage_path ${dependencies})

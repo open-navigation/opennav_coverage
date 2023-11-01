@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>opennav_coverage_navigator</name>
+  <version>0.0.1</version>
+  <description>A navigator plugin for BT Navigator for coverage planning</description>
+  <maintainer email="steve@opennav.org">Steve Macenski</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>nav2_behavior_tree</depend>
+  <depend>nav2_util</depend>
+  <depend>nav2_core</depend>
+  <depend>nav2_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>opennav_coverage_msgs</depend>
+  <depend>opennav_coverage_bt</depend>
+  <depend>opennav_coverage</depend>
+
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>opennav_coverage_bt</test_depend>
+  <test_depend>opennav_coverage</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <nav2_core prefix="$(prefix)/navigator_plugins.xml"/> 
+  </export>
+</package>

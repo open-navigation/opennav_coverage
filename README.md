@@ -1,4 +1,4 @@
-# Nav2 Complete Coverage
+# Open Navigation's Nav2 Complete Coverage
 
 This package contains the Complete Coverage Task Server & auxiliary tools utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find more information about Fields2Cover (F2C) in its [ReadTheDocs Documentation](https://fields2cover.github.io/index.html). It can accept both GPS and Cartesian coordinates and publishes the field, headland, swaths, and route as separate topics in cartesian coordinates for debugging and visualization.
 
@@ -8,19 +8,19 @@ This capability was created by [Open Navigation LLC](https://www.opennav.org/) i
 
 This server exposes all of the features of Fields2Cover as a Lifecycle-Component Nav2 Task Server like all others within the Nav2 Framework, so it should feel very familiar to those using Nav2 already. The server is split into modular stages with factories and enum types for all known options which can be easily expanded up over time scalably. It even could be expanded to include custom coverage capabilities separate of F2C if desired. This capability is split into 4 packages:
 
-- `nav2_coverage`: Contains the main Nav2 Task Server.
+- `opennav_coverage`: Contains the main Nav2 Task Server.
 
-- `nav2_coverage_msgs`: Contains the action definition for the Coverage Navigator, Coverage Planner. Also contains several useful message types for F2C.
+- `opennav_coverage_msgs`: Contains the action definition for the Coverage Navigator, Coverage Planner. Also contains several useful message types for F2C.
 
-- `nav2_coverage_bt`: Contains the Behavior Tree Nodes and an example XML file using the Task Server to complete a simple coverage navigation task.
+- `opennav_coverage_bt`: Contains the Behavior Tree Nodes and an example XML file using the Task Server to complete a simple coverage navigation task.
 
-- `nav2_coverage_navigator`: Contains the BT Navigator plugin exposing `NavigateCompleteCoverage` action server analog to `NavigateToPose` and `NavigateThroughPoses`.
+- `opennav_coverage_navigator`: Contains the BT Navigator plugin exposing `NavigateCompleteCoverage` action server analog to `NavigateToPose` and `NavigateThroughPoses`.
 
 Fields2Cover is a living library with new features planned to be added (for example those discussed in a [Nav2 integration ticket](https://github.com/Fields2Cover/Fields2Cover/issues/73)). As such, as new F2C capabilities are created, they will be welcome for integration here. If you see anything missing, please let us know or submit a PR to expose it!
 
 ## Interfaces
 
-The two main interfaces are `NavigateCompleteCoverage` and `ComputeCoveragePath`. The first is the action definition to request the BT Navigator's `CoverageNavigator` plugin to navigate usign a Complete Coverage task input. The latter is an analog to the `PlannerServer`'s action definition for computing Complete Coverage paths using the `nav2_coverage` action server. See `nav2_coverage_msgs` for complete details.
+The two main interfaces are `NavigateCompleteCoverage` and `ComputeCoveragePath`. The first is the action definition to request the BT Navigator's `CoverageNavigator` plugin to navigate usign a Complete Coverage task input. The latter is an analog to the `PlannerServer`'s action definition for computing Complete Coverage paths using the `opennav_coverage` action server. See `opennav_coverage_msgs` for complete details.
 
 ### ComputeCoveragePath
 
@@ -28,11 +28,11 @@ This contains `generate_headland`, `generate_route`, and `generate_path` about w
 
 Each of the stages (including `generate_swaths`, which is always on) has its own `_mode` message in the action containing its potential parameters to specify a mode. If not modified, it uses the parameters set in the server at launch time or after dynamic reconfiguration. See the parameter information below or the message files for complete details.
 
-Finally, it contains the polygon information. This can be represented either as GML files, with [an example in `nav2_coverage/test`](./nav2_coverage/test/test_field.xml), or as a polygon in the message itself. If using GML files, set `goal.use_gml_file = true`. If your GML file contains multiple fields, set the ID of which to use with `goal.gml_field_id = id`, whereas the number is its ordered position in the file.
+Finally, it contains the polygon information. This can be represented either as GML files, with [an example in `opennav_coverage/test`](./opennav_coverage/test/test_field.xml), or as a polygon in the message itself. If using GML files, set `goal.use_gml_file = true`. If your GML file contains multiple fields, set the ID of which to use with `goal.gml_field_id = id`, whereas the number is its ordered position in the file.
 
 When setting the polygon (`goal.polygons`), this is a vector of polygons. If only considering a bounding field, only populate the first field shape. If there are internal voids, use subsequent polygons to indicate them. The coordinate type has `axis1` and `axis2` instead of X and Y as the server can process both GPS and cartesian coordinates. If specifying the polygon outside of GML files, you must specify the frame of reference of the polygon using the `goal.frame_id` field. This is not used for GML files as those should contain the frame within it.
 
-The result returns a `result.nav_path` -- which is a `nav_msgs/Path` containing the coverage path requested **only if** all `generate_path` is `true`. This can be followed by a local trajectory planner or controller directly. This is what is used in the `nav2_coverage_bt` examples for basic coverage navigation. It also returns `result.coverage_path` which contains an ordered set of swaths and paths to connect them (if applicable settings enabled) which can be used for more task-specific navigation. For example, navigating with a tool down or enabled on swaths and raised in turns to connect to other swaths. A utility is provided in `nav2_coverage/utils.hpp` for iterating through this custom `coverage_path` for convenience.
+The result returns a `result.nav_path` -- which is a `nav_msgs/Path` containing the coverage path requested **only if** all `generate_path` is `true`. This can be followed by a local trajectory planner or controller directly. This is what is used in the `opennav_coverage_bt` examples for basic coverage navigation. It also returns `result.coverage_path` which contains an ordered set of swaths and paths to connect them (if applicable settings enabled) which can be used for more task-specific navigation. For example, navigating with a tool down or enabled on swaths and raised in turns to connect to other swaths. A utility is provided in `opennav_coverage/utils.hpp` for iterating through this custom `coverage_path` for convenience.
 
 It also returns an error code, if any error occurred and the total planning time for metrics analysis.
 
@@ -42,7 +42,7 @@ The Coverage Navigator calls the `ComputeCoveragePath` action within its BT XML.
 
 It returns the error code from the BT's error code IDs if any error occurs. Otherwise, it returns live regular feedback on the robot's current position, navigation time elapsed, number of recoveries enacted, distance remaining in the path (if `nav_path` valid), and a rough ETA.
 
-Navigator Plugins require **ROS 2 Iron or newer**. Otherwise, you may still use the Coverage Server in **Foxy or newer**, just don't compile the `nav2_coverage_navigator` package.
+Navigator Plugins require **ROS 2 Iron or newer**. Otherwise, you may still use the Coverage Server in **Foxy or newer**, just don't compile the `opennav_coverage_navigator` package.
 
 Note: `NavigateCompleteCoverage` action message and `CoverageNavigator` are subject to API changes to continue to be most useful to users! The current API is relatively basic and will be adapted as more users adopt its use and need additional fields exposed to the application layer. If you need any adjustments, feel free to ask!
 
@@ -108,7 +108,7 @@ All type string.
 | error_code_id | The complete coverage error code"     | uint |
 | planning_time | The time to compute coverage plan     | double |
 | nav_path      | The coverage plan as a nav_msgs/Path to track directly     | `nav_msgs/Path` |
-| coverage_path | The coverage plan as an ordered set of swaths and route connections     | `nav2_coverage_msgs/PathComponents` |
+| coverage_path | The coverage plan as an ordered set of swaths and route connections     | `opennav_coverage_msgs/PathComponents` |
 
 
 #### CoverageCancel Ports
@@ -148,10 +148,5 @@ If you use this work, please make sure to cite both Nav2 and Fields2Cover:
 ```
 
 ## Current Work
-
-  - Rename packages / repo? opennav_nav2? nav2_coverage_msgs? opennav_ prefix?
-  - A couple of utilities for the BT nodes to iterate through the swath-turn combos (optional)
-
-
 
   - Use setup with BT nodes / XML / Navigator. Simulator demo altogether. Demo video (in readme).

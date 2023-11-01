@@ -1,0 +1,10 @@
+<class_libraries>
+	<library path="opennav_coverage_navigator">
+	  <class
+	  	name="opennav_coverage_navigator/CoverageNavigator"
+	  	type="opennav_coverage_navigator::CoverageNavigator"
+	  	base_class_type="nav2_core::NavigatorBase">
+	    <description>Coverage Navigator</description>
+	  </class>
+	</library>
+</class_libraries>
