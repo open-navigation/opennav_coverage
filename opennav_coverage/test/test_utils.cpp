@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <utility>
+
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage/utils.hpp"
@@ -191,6 +193,45 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   goal->polygons[1].coordinates[0].axis1 = 1.0;
   auto field2 = util::getFieldFromGoal(goal);
   EXPECT_EQ(field2.field.getGeometry(0).getGeometry(1).size(), 3u);
+}
+
+TEST(UtilsTests, TestPathComponentsIterator)
+{
+  opennav_coverage_msgs::msg::PathComponents msg;
+
+  // Sizes don't match
+  msg.swaths.resize(4);
+  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg), std::runtime_error);
+
+  // Isn't properly filled in to contain turns
+  msg.turns.resize(4);
+  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg), std::runtime_error);
+
+  // Isn't properly filled in to be ordered
+  msg.contains_turns = true;
+  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg), std::runtime_error);
+
+  // Now should work
+  msg.swaths_ordered = true;
+  EXPECT_NO_THROW(opennav_coverage::util::PathComponentsIterator it(msg));
+
+  unsigned int i = 0;
+  opennav_coverage::util::PathComponentsIterator it(msg);
+  for (; it.isValid(); it.advance()) {
+    auto curr_row_info = it.getNext();
+
+    // Always should be valid
+    (void)std::get<0>(curr_row_info)->start;
+
+    if (i < 3) {
+      // Always should be before last
+      (void)std::get<1>(curr_row_info)->poses;
+    }
+    i++;
+  }
+
+  auto last_row_info = it.getNext();
+  EXPECT_EQ(std::get<1>(last_row_info), nullptr);
 }
 
 }  // namespace opennav_coverage

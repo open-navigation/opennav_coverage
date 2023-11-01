@@ -19,6 +19,7 @@
 #include <string>
 #include <algorithm>
 #include <memory>
+#include <utility>
 
 #include "fields2cover.h" // NOLINT
 #include "rclcpp/rclcpp.hpp"
@@ -275,6 +276,82 @@ inline void toUpper(std::string & string)
 {
   std::transform(string.begin(), string.end(), string.begin(), ::toupper);
 }
+
+/**
+ * @brief A Path Components iterator object to get next turn/swath from action return
+ *
+ * Example Use:
+    for (opennav_coverage::util::PathComponentsIterator it(msg); it.isValid(); it.advance()) {
+      auto curr_row_info = it.getNext();
+
+      // Always should be valid
+      (void)std::get<0>(curr_row_info)->start;
+
+      if (std::get<1>(curr_row_info)) {
+        // Always should be before last
+        (void)std::get<1>(curr_row_info)->poses;
+      }
+    }
+
+    auto last_row_info = it.getNext();
+    ASSERT(std::get<1>(last_row_info) == nullptr);
+ */
+class PathComponentsIterator
+{
+public:
+  /**
+   * @brief A Path Components iterator constructor
+   * @param PathComponents object to iterate over
+   */
+  explicit PathComponentsIterator(opennav_coverage_msgs::msg::PathComponents & msg)
+  : path_components_(msg), idx_(0)
+  {
+    if (fabs(path_components_.swaths.size() - path_components_.turns.size()) > 1) {
+      throw std::runtime_error("PathComponents size not valid for iteration!");
+    } else if (!path_components_.contains_turns) {
+      throw std::runtime_error("PathComponents cannot be iterated over without turns!");
+    } else if (!path_components_.swaths_ordered) {
+      throw std::runtime_error("PathComponents cannot be iterated over without ordered swaths!");
+    }
+
+    max_idx_ = path_components_.swaths.size();
+  }
+
+  /**
+   * @brief For condition if still valid to continue iterating
+   */
+  bool isValid()
+  {
+    return idx_ <= max_idx_;
+  }
+
+  /**
+   * @brief For loop marching
+   */
+  void advance()
+  {
+    idx_++;
+  }
+
+  /**
+   * @brief Get the data of the current iteration
+   * @return returns a pair of pointers to the current swath and its next turn
+   * If at the end, the turn is nullptr, so be sure to check it!
+   */
+  std::pair<opennav_coverage_msgs::msg::Swath *, nav_msgs::msg::Path *>
+  getNext()
+  {
+    if (idx_ < max_idx_ - 1) {
+      return std::make_pair(&path_components_.swaths[idx_], &path_components_.turns[idx_]);
+    } else {
+      return std::make_pair(&path_components_.swaths[idx_], nullptr);
+    }
+  }
+
+  opennav_coverage_msgs::msg::PathComponents & path_components_;
+  unsigned int idx_;
+  unsigned int max_idx_;
+};
 
 }  // namespace util
 
