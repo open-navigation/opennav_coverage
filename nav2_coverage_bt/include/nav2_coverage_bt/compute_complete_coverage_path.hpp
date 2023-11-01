@@ -97,7 +97,7 @@ public:
           "planning_time", "The time to compute coverage plan"),
         BT::OutputPort<nav_msgs::msg::Path>(
           "nav_path", "The coverage plan as a nav_msgs/Path to track directly"),
-        BT::OutputPort<nav_msgs::msg::Path>(
+        BT::OutputPort<ActionResult::_coverage_path_type>(
           "coverage_path", "The coverage plan as an ordered set of swaths and route connections"),
       });
   }

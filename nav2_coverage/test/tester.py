@@ -125,7 +125,6 @@ def main():
     goal.generate_path = True
 
     goal.use_gml_file = True
-    goal.frame_cartesian = True
     goal.gml_field = get_package_share_directory('nav2_coverage') + '/test_field.xml'
     goal.gml_field_id = 0
 
