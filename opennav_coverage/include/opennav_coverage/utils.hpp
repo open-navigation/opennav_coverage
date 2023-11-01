@@ -284,11 +284,11 @@ inline void toUpper(std::string & string)
     for (opennav_coverage::util::PathComponentsIterator it(msg); it.isValid(); it.advance()) {
       auto curr_row_info = it.getNext();
 
-      // Always should be valid
+      // Always should be valid -- Swath
       (void)std::get<0>(curr_row_info)->start;
 
       if (std::get<1>(curr_row_info)) {
-        // Always should be before last
+        // Always should be before last -- Turn
         (void)std::get<1>(curr_row_info)->poses;
       }
     }
