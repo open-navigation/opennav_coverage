@@ -6,7 +6,7 @@ This capability was created by [Open Navigation LLC](https://www.opennav.org/) i
 
 ![BonsaixOpenNavigation](https://github.com/ros-planning/navigation2/assets/14944147/b5c23851-0694-4b87-b5ab-fb7c957413f4)
 
-This server exposes all of the features of Fields2Cover as a Lifecycle-Component Nav2 Task Server like all others within the Nav2 Framework, so it should feel very familiar to those using Nav2 already. The server is split into modular stages with factories and enum types for all known options which can be easily expanded up over time scalably. It even could be expanded to include custom coverage capabilities separate of F2C if desired. This capability is split into 4 packages:
+This server exposes all of the features of Fields2Cover as a Lifecycle-Component Nav2 Task Server like all others within the Nav2 Framework, so it should feel very familiar to those using Nav2 already. The server is split into modular stages with factories and enum types for all known options which can be easily expanded up over time scalably. It even could be expanded to include custom coverage capabilities separate of F2C if desired. This capability is split into 5 packages:
 
 - `opennav_coverage`: Contains the main Nav2 Task Server.
 
@@ -16,7 +16,14 @@ This server exposes all of the features of Fields2Cover as a Lifecycle-Component
 
 - `opennav_coverage_navigator`: Contains the BT Navigator plugin exposing `NavigateCompleteCoverage` action server analog to `NavigateToPose` and `NavigateThroughPoses`.
 
+- `opennav_coverage_demo`: Contains an example launch and python node to trigger the coverage planner for a demonstration of the Navigator Plugin, Server, BT nodes, XML, and such. 
+
 Fields2Cover is a living library with new features planned to be added (for example those discussed in a [Nav2 integration ticket](https://github.com/Fields2Cover/Fields2Cover/issues/73)). As such, as new F2C capabilities are created, they will be welcome for integration here. If you see anything missing, please let us know or submit a PR to expose it!
+
+[![IMAGE ALT TEXT](./opennav_coverage_demo/test/demo.png)](https://www.youtube.com/watch?v=XC_qf5AyNpU)
+
+(PS: Click on image to see the video!)
+
 
 ## Interfaces
 
