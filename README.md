@@ -153,3 +153,21 @@ If you use this work, please make sure to cite both Nav2 and Fields2Cover:
   doi={10.1109/LRA.2023.3248439}
 }
 ```
+
+## To fully integrate into Nav2
+
+Within Fields2Cover [outlined here](https://github.com/Fields2Cover/Fields2Cover/issues/73):
+- [ ] Optional starting / goal point on the field
+- [ ] Voids in field
+- [ ] Non-convex shaped fields
+- [ ] Option to have turns be promised to be within polygon for confined spaces
+- [ ] Overlapping operational segments when overlapping is desirable
+- [ ] Around-border option
+
+Within Nav2 and this work:
+
+- [ ] Migrate the tester.py and demo's python scripts into the simple navigator's capabilities
+- [ ] Add Nav2 System Test running the server
+- [ ] Add a tutorial about using the coverage server / navigator
+- [ ] Add server to Nav2 docs: configuration guide, migration guide, BT ports, groot index
+
