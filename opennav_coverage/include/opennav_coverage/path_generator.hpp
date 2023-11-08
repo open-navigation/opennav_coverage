@@ -94,6 +94,8 @@ public:
    */
   void setTurnPointDistance(const double & setting) {default_turn_point_distance_ = setting;}
 
+  float getTurnPointDistance() {return default_turn_point_distance_;}
+
 protected:
   /**
    * @brief Creates generator pointer of a requested type

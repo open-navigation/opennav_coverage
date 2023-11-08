@@ -210,7 +210,8 @@ void CoverageServer::computeCoveragePath()
         Path path = path_gen_->generatePath(route, goal->path_mode);
         result->coverage_path =
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
-        result->nav_path = util::toNavPathMsg(path, master_field, header, cartesian_frame_);
+        result->nav_path = util::toNavPathMsg(
+          path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance());
       } else {
         result->coverage_path =
           util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);
@@ -223,7 +224,7 @@ void CoverageServer::computeCoveragePath()
     auto cycle_duration = this->now() - start_time;
     result->planning_time = cycle_duration;
 
-    // Visualization always uses cartesian coordinates for convenience
+    // Visualize in native coordinates
     visualizer_->visualize(field, field_no_headland, result, header);
     action_server_->succeeded_current(result);
   } catch (CoverageException & e) {

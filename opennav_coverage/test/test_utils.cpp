@@ -107,7 +107,7 @@ TEST(UtilsTests, TesttoNavPathMsg)
   path_in.states.resize(10);
   F2CField field;
 
-  auto msg = util::toNavPathMsg(path_in, field, header_in, true);
+  auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1);
   EXPECT_EQ(msg.header.frame_id, "test");
   EXPECT_EQ(msg.poses.size(), 10u);
 }

@@ -49,7 +49,7 @@ void ComputeCoveragePathAction::on_tick()
     getInput("polygons", polys);
     goal_.polygons.resize(polys.size());
     for (unsigned int i = 0; i != polys.size(); i++) {
-      for (unsigned int j; j != polys[i].points.size(); j++) {
+      for (unsigned int j = 0; j != polys[i].points.size(); j++) {
         opennav_coverage_msgs::msg::Coordinate coord;
         coord.axis1 = polys[i].points[j].x;
         coord.axis2 = polys[i].points[j].y;

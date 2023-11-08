@@ -4,15 +4,21 @@
   for changes in operational modes (e.g. raise tool, turn off payload in turns not in field).
 
   Field filepath is set by the Navigator plugin in the action request, but also may be hardcoded
-  or set using the polygons input port instead for dynamically computed values instead of from file
+  or set using the polygons input port instead for dynamically computed values instead of from file.
+
+  It might be wise to still have the planner server on hand to connect to the coverage path in realistic uses.
 -->
 
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <PipelineSequence name="NavigateWithoutReplanning">
-      <!-- May also use 'polygons={field_polygon} polygons_frame_id={polygon_frame_id}' if set polygon via NavigateCompleteCoverage instead of filepath -->
-      <ComputeCoveragePath nav_path="{path}" file_field="{field_filepath}" coords_cartesian="false" error_code_id="{compute_coverage_error_code}"/>
-      <FollowPath path="{path}" controller_id="FollowPath" error_code_id="{follow_path_error_code}"/>
-    </PipelineSequence>
+    <RateController hz="0.0000001"> <!-- once, for demo -->
+      <Sequence name="NavigateWithoutReplanning">
+        <!-- May use:
+         'polygons="{field_polygon}" polygons_frame_id="{polygon_frame_id}"' if set polygon via NavigateCompleteCoverage
+         or file_field="{field_filepath}" if setting polygon file via NavigateCompleteCoverage -->
+        <ComputeCoveragePath nav_path="{path}" polygons="{field_polygon}" polygons_frame_id="{polygon_frame_id}" error_code_id="{compute_coverage_error_code}"/>
+        <FollowPath path="{path}" controller_id="FollowPath" error_code_id="{follow_path_error_code}"/>
+      </Sequence>
+    </RateController>
   </BehaviorTree>
 </root>

@@ -207,9 +207,15 @@ CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
     feedback_utils_.global_frame, feedback_utils_.robot_frame,
     feedback_utils_.transform_tolerance);
 
-  RCLCPP_INFO(
-    logger_, "Begin coverage navigating with field %s!",
-    goal->field_filepath.c_str());
+  if (goal->field_filepath.size() == 0) {
+    RCLCPP_INFO(
+      logger_, "Begin coverage navigating with outer field of size: %lu!",
+      goal->polygons[0].points.size());
+  } else {
+    RCLCPP_INFO(
+      logger_, "Begin coverage navigating with field %s!",
+      goal->field_filepath.c_str());
+  }
 
   // Reset state for new action feedback
   start_time_ = clock_->now();
