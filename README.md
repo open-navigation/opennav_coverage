@@ -169,5 +169,4 @@ Within Nav2 and this work:
 - [ ] Migrate the tester.py and demo's python scripts into the simple navigator's capabilities
 - [ ] Add Nav2 System Test running the server
 - [ ] Add a tutorial about using the coverage server / navigator
-- [ ] Add server to Nav2 docs: configuration guide, migration guide, BT ports, groot index
 
