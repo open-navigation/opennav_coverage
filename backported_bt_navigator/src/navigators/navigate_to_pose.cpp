@@ -16,73 +16,74 @@
 #include <string>
 #include <memory>
 #include <limits>
-#include "opennav_coverage_navigator/coverage_navigator.hpp"
+#include "backported_bt_navigator/navigators/navigate_to_pose.hpp"
 
-namespace opennav_coverage_navigator
+namespace backported_bt_navigator
 {
 
 bool
-CoverageNavigator::configure(
+NavigateToPoseNavigator::configure(
   rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node,
   std::shared_ptr<nav2_util::OdomSmoother> odom_smoother)
 {
   start_time_ = rclcpp::Time(0);
   auto node = parent_node.lock();
 
+  if (!node->has_parameter("goal_blackboard_id")) {
+    node->declare_parameter("goal_blackboard_id", std::string("goal"));
+  }
+
+  goal_blackboard_id_ = node->get_parameter("goal_blackboard_id").as_string();
+
   if (!node->has_parameter("path_blackboard_id")) {
     node->declare_parameter("path_blackboard_id", std::string("path"));
   }
+
   path_blackboard_id_ = node->get_parameter("path_blackboard_id").as_string();
-
-  if (!node->has_parameter("field_file_blackboard_id")) {
-    node->declare_parameter("field_file_blackboard_id", std::string("field_filepath"));
-  }
-  field_blackboard_id_ = node->get_parameter("field_file_blackboard_id").as_string();
-
-  if (!node->has_parameter("field_polygon_blackboard_id")) {
-    node->declare_parameter("field_polygon_blackboard_id", std::string("field_polygon"));
-  }
-  polygon_blackboard_id_ = node->get_parameter("field_polygon_blackboard_id").as_string();
-
-  if (!node->has_parameter("polygon_frame_blackboard_id")) {
-    node->declare_parameter("polygon_frame_blackboard_id", std::string("polygon_frame_id"));
-  }
-  polygon_frame_blackboard_id_ = node->get_parameter("polygon_frame_blackboard_id").as_string();
 
   // Odometry smoother object for getting current speed
   odom_smoother_ = odom_smoother;
+
+  self_client_ = rclcpp_action::create_client<ActionT>(node, getName());
+
+  goal_sub_ = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+    "goal_pose",
+    rclcpp::SystemDefaultsQoS(),
+    std::bind(&NavigateToPoseNavigator::onGoalPoseReceived, this, std::placeholders::_1));
   return true;
 }
 
 std::string
-CoverageNavigator::getDefaultBTFilepath(
+NavigateToPoseNavigator::getDefaultBTFilepath(
   rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node)
 {
   std::string default_bt_xml_filename;
   auto node = parent_node.lock();
 
-  if (!node->has_parameter("default_coverage_bt_xml")) {
+  if (!node->has_parameter("default_nav_to_pose_bt_xml")) {
     std::string pkg_share_dir =
-      ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
+      ament_index_cpp::get_package_share_directory("nav2_bt_navigator");
     node->declare_parameter<std::string>(
-      "default_coverage_bt_xml",
+      "default_nav_to_pose_bt_xml",
       pkg_share_dir +
-      "/behavior_trees/navigate_w_basic_complete_coverage.xml");
+      "/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml");
   }
 
-  node->get_parameter("default_coverage_bt_xml", default_bt_xml_filename);
+  node->get_parameter("default_nav_to_pose_bt_xml", default_bt_xml_filename);
 
   return default_bt_xml_filename;
 }
 
 bool
-CoverageNavigator::cleanup()
+NavigateToPoseNavigator::cleanup()
 {
+  goal_sub_.reset();
+  self_client_.reset();
   return true;
 }
 
 bool
-CoverageNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
+NavigateToPoseNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
 {
   auto bt_xml_filename = goal->behavior_tree;
 
@@ -94,18 +95,19 @@ CoverageNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
   }
 
   initializeGoalPose(goal);
+
   return true;
 }
 
 void
-CoverageNavigator::goalCompleted(
+NavigateToPoseNavigator::goalCompleted(
   typename ActionT::Result::SharedPtr /*result*/,
   const nav2_behavior_tree::BtStatus /*final_bt_status*/)
 {
 }
 
 void
-CoverageNavigator::onLoop()
+NavigateToPoseNavigator::onLoop()
 {
   // action server feedback (pose, duration of task,
   // number of recoveries, and distance remaining to goal)
@@ -174,7 +176,7 @@ CoverageNavigator::onLoop()
 }
 
 void
-CoverageNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
+NavigateToPoseNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
 {
   RCLCPP_INFO(logger_, "Received goal preemption request");
 
@@ -199,7 +201,7 @@ CoverageNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
 }
 
 void
-CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
+NavigateToPoseNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
 {
   geometry_msgs::msg::PoseStamped current_pose;
   nav2_util::getCurrentPose(
@@ -207,31 +209,31 @@ CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
     feedback_utils_.global_frame, feedback_utils_.robot_frame,
     feedback_utils_.transform_tolerance);
 
-  if (goal->field_filepath.size() == 0) {
-    RCLCPP_INFO(
-      logger_, "Begin coverage navigating with outer field of size: %lu!",
-      goal->polygons[0].points.size());
-  } else {
-    RCLCPP_INFO(
-      logger_, "Begin coverage navigating with field %s!",
-      goal->field_filepath.c_str());
-  }
+  RCLCPP_INFO(
+    logger_, "Begin navigating from current location (%.2f, %.2f) to (%.2f, %.2f)",
+    current_pose.pose.position.x, current_pose.pose.position.y,
+    goal->pose.pose.position.x, goal->pose.pose.position.y);
 
   // Reset state for new action feedback
   start_time_ = clock_->now();
   auto blackboard = bt_action_server_->getBlackboard();
   blackboard->set<int>("number_recoveries", 0);  // NOLINT
 
-  // Update the field to cover on the blackboard
-  blackboard->set<std::string>(field_blackboard_id_, goal->field_filepath);
-  blackboard->set<std::vector<geometry_msgs::msg::Polygon>>(
-    polygon_blackboard_id_, goal->polygons);
-  blackboard->set<std::string>(polygon_frame_blackboard_id_, goal->frame_id);
+  // Update the goal pose on the blackboard
+  blackboard->set<geometry_msgs::msg::PoseStamped>(goal_blackboard_id_, goal->pose);
 }
 
-}  // namespace opennav_coverage_navigator
+void
+NavigateToPoseNavigator::onGoalPoseReceived(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
+{
+  ActionT::Goal goal;
+  goal.pose = *pose;
+  self_client_->async_send_goal(goal);
+}
+
+}  // namespace backported_bt_navigator
 
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(
-  opennav_coverage_navigator::CoverageNavigator,
+  backported_bt_navigator::NavigateToPoseNavigator,
   backported_bt_navigator::NavigatorBase)

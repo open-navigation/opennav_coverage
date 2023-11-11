@@ -16,8 +16,8 @@
         <!-- May use:
          'polygons="{field_polygon}" polygons_frame_id="{polygon_frame_id}"' if set polygon via NavigateCompleteCoverage
          or file_field="{field_filepath}" if setting polygon file via NavigateCompleteCoverage -->
-        <ComputeCoveragePath nav_path="{path}" polygons="{field_polygon}" polygons_frame_id="{polygon_frame_id}" error_code_id="{compute_coverage_error_code}"/>
-        <FollowPath path="{path}" controller_id="FollowPath" error_code_id="{follow_path_error_code}"/>
+        <ComputeCoveragePath nav_path="{path}" polygons="{field_polygon}" polygons_frame_id="{polygon_frame_id}"/>
+        <FollowPath path="{path}" controller_id="FollowPath"/>
       </Sequence>
     </RateController>
   </BehaviorTree>

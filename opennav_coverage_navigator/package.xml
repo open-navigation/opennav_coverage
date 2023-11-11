@@ -20,6 +20,7 @@
   <depend>opennav_coverage_msgs</depend>
   <depend>opennav_coverage_bt</depend>
   <depend>opennav_coverage</depend>
+  <depend>backported_bt_navigator</depend>
 
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_lint_auto</test_depend>
@@ -28,6 +29,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
-    <nav2_core prefix="$(prefix)/navigator_plugins.xml"/> 
+    <backported_bt_navigator prefix="$(prefix)/navigator_plugins.xml"/> 
   </export>
 </package>

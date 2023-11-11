@@ -12,6 +12,7 @@ find_package(nav2_behavior_tree REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(opennav_coverage_msgs REQUIRED)
+find_package(backported_bt_navigator REQUIRED)
 
 # potentially replace with nav2_common, nav2_package()
 set(CMAKE_CXX_STANDARD 17)
@@ -32,6 +33,7 @@ set(dependencies
   nav_msgs
   geometry_msgs
   opennav_coverage_msgs
+  backported_bt_navigator
 )
 
 include_directories(
@@ -41,7 +43,7 @@ include_directories(
 add_library(opennav_coverage_navigator SHARED src/coverage_navigator.cpp)
 ament_target_dependencies(opennav_coverage_navigator ${dependencies})
 
-pluginlib_export_plugin_description_file(nav2_core navigator_plugins.xml)
+pluginlib_export_plugin_description_file(backported_bt_navigator navigator_plugins.xml)
 
 install(TARGETS opennav_coverage_navigator
   ARCHIVE DESTINATION lib

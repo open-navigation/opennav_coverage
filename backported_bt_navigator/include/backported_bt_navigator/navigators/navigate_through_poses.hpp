@@ -12,41 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENNAV_COVERAGE_NAVIGATOR__COVERAGE_NAVIGATOR_HPP_
-#define OPENNAV_COVERAGE_NAVIGATOR__COVERAGE_NAVIGATOR_HPP_
+#ifndef backported_bt_navigator__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
+#define backported_bt_navigator__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
 
 #include <string>
 #include <vector>
 #include <memory>
-
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "backported_bt_navigator/behavior_tree_navigator.hpp"
-#include "opennav_coverage_msgs/action/navigate_complete_coverage.hpp"
-#include "nav2_util/geometry_utils.hpp"
-#include "nav2_util/robot_utils.hpp"
+#include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "nav2_util/robot_utils.hpp"
+#include "nav2_util/geometry_utils.hpp"
 #include "nav2_util/odometry_utils.hpp"
 
-namespace opennav_coverage_navigator
+namespace backported_bt_navigator
 {
 
 /**
- * @class CoverageNavigator
- * @brief A navigator for navigating to complete a coverage pattern
+ * @class NavigateThroughPosesNavigator
+ * @brief A navigator for navigating to a a bunch of intermediary poses
  */
-class CoverageNavigator
-  : public backported_bt_navigator::BehaviorTreeNavigator<
-    opennav_coverage_msgs::action::NavigateCompleteCoverage>
+class NavigateThroughPosesNavigator
+  : public backported_bt_navigator::BehaviorTreeNavigator<nav2_msgs::action::NavigateThroughPoses>
 {
 public:
-  using ActionT = opennav_coverage_msgs::action::NavigateCompleteCoverage;
+  using ActionT = nav2_msgs::action::NavigateThroughPoses;
+  typedef std::vector<geometry_msgs::msg::PoseStamped> Goals;
 
   /**
-   * @brief A constructor for CoverageNavigator
+   * @brief A constructor for NavigateThroughPosesNavigator
    */
-  CoverageNavigator()
+  NavigateThroughPosesNavigator()
   : BehaviorTreeNavigator() {}
 
   /**
@@ -59,15 +58,10 @@ public:
     std::shared_ptr<nav2_util::OdomSmoother> odom_smoother) override;
 
   /**
-   * @brief A cleanup state transition to remove memory allocated
-   */
-  bool cleanup() override;
-
-  /**
    * @brief Get action name for this navigator
    * @return string Name of action server
    */
-  std::string getName() override {return std::string("navigate_complete_coverage");}
+  std::string getName() override {return std::string("navigate_through_poses");}
 
   /**
    * @brief Get navigator's default BT
@@ -110,18 +104,17 @@ protected:
 
   /**
    * @brief Goal pose initialization on the blackboard
-   * @param goal Action template's goal message to process
    */
-  void initializeGoalPose(ActionT::Goal::ConstSharedPtr goal);
+  void initializeGoalPoses(ActionT::Goal::ConstSharedPtr goal);
 
   rclcpp::Time start_time_;
-  std::string path_blackboard_id_, field_blackboard_id_, polygon_blackboard_id_;
-  std::string polygon_frame_blackboard_id_;
+  std::string goals_blackboard_id_;
+  std::string path_blackboard_id_;
 
   // Odometry smoother object
   std::shared_ptr<nav2_util::OdomSmoother> odom_smoother_;
 };
 
-}  // namespace opennav_coverage_navigator
+}  // namespace backported_bt_navigator
 
-#endif  // OPENNAV_COVERAGE_NAVIGATOR__COVERAGE_NAVIGATOR_HPP_
+#endif  // backported_bt_navigator__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
