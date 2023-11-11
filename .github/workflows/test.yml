@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     container:
       image: rostooling/setup-ros-docker:ubuntu-jammy-latest
     strategy:
