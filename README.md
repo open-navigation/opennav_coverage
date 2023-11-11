@@ -22,7 +22,7 @@ Fields2Cover is a living library with new features planned to be added (for exam
 
 [![IMAGE ALT TEXT](./opennav_coverage_demo/test/demo.png)](https://www.youtube.com/watch?v=XC_qf5AyNpU)
 
-(PS: Click on image to see the video!)
+PS: Click on image to see the video! :-)
 
 
 ## Interfaces
