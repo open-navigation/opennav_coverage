@@ -21,7 +21,6 @@ jobs:
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
       with:
-        import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
     - uses: actions/upload-artifact@v1
       with:
