@@ -87,11 +87,11 @@ public:
 
   static void TearDownTestCase()
   {
+    factory_.reset();
+    action_server_.reset();
     delete config_;
     config_ = nullptr;
     node_.reset();
-    action_server_.reset();
-    factory_.reset();
   }
 
   void TearDown() override
@@ -166,6 +166,7 @@ int main(int argc, char ** argv)
   int all_successful = RUN_ALL_TESTS();
 
   // shutdown ROS
+  ComputeCoveragePathActionTestFixture::action_server_.reset();
   rclcpp::shutdown();
   server_thread.join();
 
