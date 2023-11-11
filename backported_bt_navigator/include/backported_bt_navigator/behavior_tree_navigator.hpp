@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef backported_bt_navigator__BEHAVIOR_TREE_NAVIGATOR_HPP_
-#define backported_bt_navigator__BEHAVIOR_TREE_NAVIGATOR_HPP_
+#ifndef BACKPORTED_BT_NAVIGATOR__BEHAVIOR_TREE_NAVIGATOR_HPP_
+#define BACKPORTED_BT_NAVIGATOR__BEHAVIOR_TREE_NAVIGATOR_HPP_
 
 #include <memory>
 #include <string>
@@ -375,4 +375,4 @@ protected:
 
 }  // namespace backported_bt_navigator
 
-#endif  // backported_bt_navigator__BEHAVIOR_TREE_NAVIGATOR_HPP_
+#endif  // BACKPORTED_BT_NAVIGATOR__BEHAVIOR_TREE_NAVIGATOR_HPP_

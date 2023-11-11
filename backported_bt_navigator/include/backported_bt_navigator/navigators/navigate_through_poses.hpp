@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef backported_bt_navigator__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
-#define backported_bt_navigator__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
+#ifndef BACKPORTED_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
+#define BACKPORTED_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
 
 #include <string>
 #include <vector>
@@ -117,4 +117,4 @@ protected:
 
 }  // namespace backported_bt_navigator
 
-#endif  // backported_bt_navigator__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
+#endif  // BACKPORTED_BT_NAVIGATOR__NAVIGATORS__NAVIGATE_THROUGH_POSES_HPP_
