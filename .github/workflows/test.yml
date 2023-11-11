@@ -23,7 +23,7 @@ jobs:
       with:
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
-        vcs-repo-file-url: ${{ github.workspace }}/.github/deps.repos 
+        vcs-repo-file-url: ./.github/deps.repos 
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
