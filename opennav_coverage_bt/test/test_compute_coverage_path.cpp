@@ -169,7 +169,8 @@ int main(int argc, char ** argv)
   try {
     rclcpp::shutdown();
     server_thread.join();
-  } catch (...) {}
+  } catch (...) {
+  }
 
   return all_successful;
 }
