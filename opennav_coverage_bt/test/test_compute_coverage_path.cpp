@@ -166,11 +166,8 @@ int main(int argc, char ** argv)
   int all_successful = RUN_ALL_TESTS();
 
   // shutdown ROS
-  try {
-    rclcpp::shutdown();
-    server_thread.join();
-  } catch (...) {
-  }
+  // rclcpp::shutdown();
+  server_thread.join();
 
   return all_successful;
 }
