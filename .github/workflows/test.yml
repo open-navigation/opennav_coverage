@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     container:
       image: rostooling/setup-ros-docker:ubuntu-jammy-latest
     strategy:
@@ -17,6 +18,8 @@ jobs:
       matrix:
           ros_distro: [iron]
     steps:
+    - name: Install Cyclone DDS
+      run: sudo apt install ros-iron-rmw-cyclonedds-cpp
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
