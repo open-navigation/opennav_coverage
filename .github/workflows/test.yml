@@ -18,6 +18,7 @@ jobs:
       matrix:
           ros_distro: [iron]
     steps:
+    - uses: actions/checkout@v2
     - name: Install Cyclone DDS
       run: sudo apt install ros-iron-rmw-cyclonedds-cpp -y
     - name: Build and run tests
@@ -26,7 +27,7 @@ jobs:
       with:
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
-        vcs-repo-file-url: https://raw.githubusercontent.com/open-navigation/navigation2/coverage_ci/deps.repos
+        vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
