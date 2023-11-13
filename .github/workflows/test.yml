@@ -1,0 +1,34 @@
+name: Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    env:
+      ROS_DISTRO: ${{ matrix.ros_distro }}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+    strategy:
+      fail-fast: false
+      matrix:
+          ros_distro: [humble]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Cyclone DDS
+      run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
+    - name: Build and run tests
+      id: action-ros-ci
+      uses: ros-tooling/action-ros-ci@v0.3
+      with:
+        import-token: ${{ secrets.GITHUB_TOKEN }}
+        target-ros2-distro: ${{ matrix.ros_distro }}
+        vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: colcon-logs
+        path: ros_ws/log
