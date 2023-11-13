@@ -93,6 +93,7 @@ TEST(ServerTest, testServerTransactions)
   auto action_client =
     rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
     client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
 
   auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
   goal_msg.use_gml_file = true;  // Use file
