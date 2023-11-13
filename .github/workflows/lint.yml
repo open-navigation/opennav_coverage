@@ -1,0 +1,26 @@
+name: Lint
+on:
+  pull_request:
+
+jobs:
+  ament_lint_general:
+    name: ament_${{ matrix.linter }}
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
+    strategy:
+      fail-fast: false
+      matrix:
+          linter: [copyright, xmllint, cpplint, uncrustify, pep257, flake8]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@v0.1
+      with:
+        linter: ${{ matrix.linter }}
+        distribution: humble
+        package-name: |
+            opennav_coverage
+            opennav_coverage_bt
+            opennav_coverage_demo
+            opennav_coverage_msgs
+            opennav_coverage_navigator
