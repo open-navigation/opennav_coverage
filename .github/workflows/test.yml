@@ -12,8 +12,8 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     runs_on: ubuntu-22.04
-    # container:
-    #   image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+    container:
+      image: ubuntu:jammy
     strategy:
       fail-fast: false
       matrix:
