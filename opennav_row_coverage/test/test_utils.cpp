@@ -37,7 +37,7 @@ TEST(UtilsTests, TestRowParserSimple)
     ament_index_cpp::get_package_share_directory("opennav_coverage") +
     "/cartesian_test_field.xml";
   auto rows = opennav_row_coverage::util::parseRows(file_path);
-  ASSERT_EQ(rows.size(), 7);
+  ASSERT_EQ(rows.size(), 7u);
 }
 
 TEST(UtilsTests, TestRowParserComplex)
@@ -47,7 +47,7 @@ TEST(UtilsTests, TestRowParserComplex)
     "/irregular_test_field.xml";
   auto rows = opennav_row_coverage::util::parseRows(file_path);
 
-  ASSERT_EQ(rows.size(), 10);
+  ASSERT_EQ(rows.size(), 10u);
 
   EXPECT_EQ(rows[2].first.getX(0), 4.26122335903712);
   EXPECT_EQ(rows[2].first.getY(0), 51.7859542010475);

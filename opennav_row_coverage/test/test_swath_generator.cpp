@@ -58,7 +58,7 @@ TEST_F(SwathTestFixture, TestCenter)
 
   auto swaths = generator_->generateSwaths(rows_, settings);
 
-  ASSERT_EQ(swaths.size(), 6);
+  ASSERT_EQ(swaths.size(), 6u);
   EXPECT_EQ(swaths[0].getId(), 1);
   EXPECT_EQ(swaths[0].getPath().getX(0), 6.475);
   EXPECT_EQ(swaths[0].getPath().getY(0), 5.0);
@@ -73,7 +73,7 @@ TEST_F(SwathTestFixture, TestCenterWithSkipping)
   settings.skip_ids = {1, 10};
 
   auto swaths = generator_->generateSwaths(rows_, settings);
-  ASSERT_EQ(swaths.size(), 5);
+  ASSERT_EQ(swaths.size(), 5u);
   EXPECT_EQ(swaths[0].getId(), 2);
   EXPECT_NEAR(swaths[0].getPath().getX(0), 8.04, 1e-3);
   EXPECT_EQ(swaths[0].getPath().getY(0), 5.0);
@@ -90,7 +90,7 @@ TEST_F(SwathTestFixture, TestOffset)
 
   auto swaths = generator_->generateSwaths(rows_, settings);
 
-  ASSERT_EQ(swaths.size(), 5);
+  ASSERT_EQ(swaths.size(), 5u);
   EXPECT_EQ(swaths[0].getId(), 2);
   EXPECT_NEAR(swaths[0].getPath().getX(0), 13.699, 1e-3);
   EXPECT_EQ(swaths[0].getPath().getY(0), 5.0);
@@ -106,7 +106,7 @@ TEST_F(SwathTestFixture, TestRowsAreSwaths)
 
   auto swaths = generator_->generateSwaths(rows_, settings);
 
-  EXPECT_EQ(swaths.size(), 5);
+  EXPECT_EQ(swaths.size(), 5u);
 
   EXPECT_NEAR(swaths[0].getPath().getX(0), rows_[2].first.getX(0), 1e-3);
   EXPECT_NEAR(swaths[0].getPath().getY(0), rows_[2].first.getY(0), 1e-3);
