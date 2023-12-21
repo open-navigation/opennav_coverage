@@ -40,7 +40,6 @@ void ComputeCoveragePathAction::on_tick()
   if (getInput("file_field", gml_filename)) {
     goal_.gml_field = gml_filename;
     goal_.use_gml_file = true;
-    getInput("file_field_id", goal_.gml_field_id);
   } else {
     getInput("polygons_frame_id", goal_.frame_id);
 

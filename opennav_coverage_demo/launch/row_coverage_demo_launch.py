@@ -59,8 +59,8 @@ def generate_launch_description():
         arguments=[
             '-entity', 'tb3',
             '-file', sdf,
-            '-x', '5.0', '-y', '5.0', '-z', '0.10',
-            '-R', '0.0', '-P', '0.0', '-Y', '0.0'])
+            '-x', '6.23', '-y', '15.0', '-z', '0.10',
+            '-R', '0.0', '-P', '0.0', '-Y', '-1.5708'])
 
     # start the visualization
     rviz_cmd = IncludeLaunchDescription(
@@ -71,20 +71,25 @@ def generate_launch_description():
     # start navigation
     bringup_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(coverage_demo_dir, 'bringup_launch.py')),
+            os.path.join(coverage_demo_dir, 'row_bringup_launch.py')),
         launch_arguments={'params_file': param_file_path}.items())
 
-    # world->odom transform, no localization. For visualization & controller transform
+    # Demo GPS->map->odom transform, no localization. For visualization & controller transform
     fake_localization_cmd = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             output='screen',
             arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'])
+    fake_gps_cmd = Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            output='screen',
+            arguments=['0', '0', '0', '0', '0', '0', 'EPSG:4258', 'map'])
 
     # start the demo task
     demo_cmd = Node(
         package='opennav_coverage_demo',
-        executable='demo_coverage',
+        executable='demo_row_coverage',
         emulate_tty=True,
         output='screen')
 
@@ -96,5 +101,6 @@ def generate_launch_description():
     ld.add_action(rviz_cmd)
     ld.add_action(bringup_cmd)
     ld.add_action(fake_localization_cmd)
+    ld.add_action(fake_gps_cmd)
     ld.add_action(demo_cmd)
     return ld

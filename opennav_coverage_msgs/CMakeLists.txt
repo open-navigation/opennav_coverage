@@ -14,6 +14,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Coordinates.msg"
   "msg/HeadlandMode.msg"
   "msg/SwathMode.msg"
+  "msg/RowSwathMode.msg"
   "msg/RouteMode.msg"
   "msg/PathMode.msg"
   "msg/Swath.msg"
