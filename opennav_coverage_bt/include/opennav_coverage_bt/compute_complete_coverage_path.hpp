@@ -22,6 +22,7 @@
 #include "opennav_coverage_msgs/action/compute_coverage_path.hpp"
 #include "nav2_behavior_tree/bt_action_node.hpp"
 #include "geometry_msgs/msg/polygon.hpp"
+#include "opennav_coverage_bt/utils.hpp"
 
 namespace opennav_coverage_bt
 {

@@ -12,39 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "opennav_coverage/coverage_server.hpp"
+#include "opennav_row_coverage/row_coverage_server.hpp"
 
 using namespace std::chrono_literals;
 using rcl_interfaces::msg::ParameterType;
 using std::placeholders::_1;
 
-namespace opennav_coverage
+namespace opennav_row_coverage
 {
 
-CoverageServer::CoverageServer(const rclcpp::NodeOptions & options)
-: nav2_util::LifecycleNode("coverage_server", "", options)
+RowCoverageServer::RowCoverageServer(const rclcpp::NodeOptions & options)
+: nav2_util::LifecycleNode("row_coverage_server", "", options)
 {
   RCLCPP_INFO(get_logger(), "Creating %s", get_name());
 }
 
 nav2_util::CallbackReturn
-CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
+RowCoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Configuring %s", get_name());
   auto node = shared_from_this();
 
   robot_params_ = std::make_unique<RobotParams>(node);
-  headland_gen_ = std::make_unique<HeadlandGenerator>(node);
-  swath_gen_ = std::make_unique<SwathGenerator>(node, robot_params_.get());
-  route_gen_ = std::make_unique<RouteGenerator>(node);
-  path_gen_ = std::make_unique<PathGenerator>(node, robot_params_.get());
-  visualizer_ = std::make_unique<Visualizer>();
+  swath_gen_ = std::make_unique<RowSwathGenerator>(node);
+  route_gen_ = std::make_unique<opennav_coverage::RouteGenerator>(node);
+  path_gen_ = std::make_unique<opennav_coverage::PathGenerator>(node, robot_params_.get());
+  visualizer_ = std::make_unique<opennav_coverage::Visualizer>();
 
   // If in GPS coordinates, we must convert to a CRS to compute coverage
   // Then, reconvert back to GPS for the user.
   nav2_util::declare_parameter_if_not_declared(
     node, "coordinates_in_cartesian_frame", rclcpp::ParameterValue(true));
   get_parameter("coordinates_in_cartesian_frame", cartesian_frame_);
+
+  // Whether to reorder IDs in file by value instead of file ordering
+  nav2_util::declare_parameter_if_not_declared(
+    node, "order_ids", rclcpp::ParameterValue(true));
+  get_parameter("order_ids", order_ids_);
 
   double action_server_result_timeout;
   nav2_util::declare_parameter_if_not_declared(
@@ -57,7 +61,7 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   action_server_ = std::make_unique<ActionServer>(
     shared_from_this(),
     "compute_coverage_path",
-    std::bind(&CoverageServer::computeCoveragePath, this),
+    std::bind(&RowCoverageServer::computeCoveragePath, this),
     nullptr,
     std::chrono::milliseconds(500),
     true, server_options);
@@ -66,7 +70,7 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
 }
 
 nav2_util::CallbackReturn
-CoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
+RowCoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Activating %s", get_name());
   auto node = shared_from_this();
@@ -75,7 +79,7 @@ CoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
 
   // Add callback for dynamic parameters
   dyn_params_handler_ = node->add_on_set_parameters_callback(
-    std::bind(&CoverageServer::dynamicParametersCallback, this, _1));
+    std::bind(&RowCoverageServer::dynamicParametersCallback, this, _1));
 
   // create bond connection
   createBond();
@@ -84,7 +88,7 @@ CoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
 }
 
 nav2_util::CallbackReturn
-CoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
+RowCoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Deactivating %s", get_name());
   action_server_->deactivate();
@@ -98,7 +102,7 @@ CoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 }
 
 nav2_util::CallbackReturn
-CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
+RowCoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Cleaning up %s", get_name());
   action_server_.reset();
@@ -106,20 +110,19 @@ CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   path_gen_.reset();
   route_gen_.reset();
   swath_gen_.reset();
-  headland_gen_.reset();
   robot_params_.reset();
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
 nav2_util::CallbackReturn
-CoverageServer::on_shutdown(const rclcpp_lifecycle::State &)
+RowCoverageServer::on_shutdown(const rclcpp_lifecycle::State &)
 {
   RCLCPP_INFO(get_logger(), "Shutting down %s", get_name());
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
 
-void CoverageServer::getPreemptedGoalIfRequested(
+void RowCoverageServer::getPreemptedGoalIfRequested(
   typename std::shared_ptr<const typename ComputeCoveragePath::Goal> goal)
 {
   if (action_server_->is_preempt_requested()) {
@@ -127,7 +130,7 @@ void CoverageServer::getPreemptedGoalIfRequested(
   }
 }
 
-bool CoverageServer::validateGoal(
+bool RowCoverageServer::validateGoal(
   typename std::shared_ptr<const typename ComputeCoveragePath::Goal> req)
 {
   getPreemptedGoalIfRequested(req);
@@ -135,15 +138,20 @@ bool CoverageServer::validateGoal(
     return false;
   }
 
-  // Swath Mode needs to be considered, not Row Swath Mode
-  if (req->row_swath_mode.mode != "UNKNOWN") {
+  // Requires GML file rows, for now
+  if (!req->use_gml_file) {
+    return false;
+  }
+
+  // Row Swath Mode needs to be considered, not Swath Mode
+  if (req->swath_mode.objective != "UNKNOWN" || req->swath_mode.mode != "UNKNOWN") {
     return false;
   }
 
   return true;
 }
 
-void CoverageServer::computeCoveragePath()
+void RowCoverageServer::computeCoveragePath()
 {
   std::lock_guard<std::mutex> lock(dynamic_params_lock_);
   auto start_time = this->now();
@@ -169,39 +177,28 @@ void CoverageServer::computeCoveragePath()
   }
 
   try {
-    // (0) Obtain field to use
-    Field field;
-    F2CField master_field;
-    std::string frame_id;
-    if (goal->use_gml_file) {
-      master_field = f2c::Parser::importFieldGml(goal->gml_field, true);
-      frame_id = master_field.coord_sys;
-    } else {
-      master_field = util::getFieldFromGoal(goal);
-      master_field.setCRS(goal->frame_id);
-      frame_id = goal->frame_id;
-    }
+    // (0) Obtain field and rows to use
+    F2CField master_field = f2c::Parser::importFieldGml(goal->gml_field, true);
+    Rows rows = util::parseRows(goal->gml_field, order_ids_);
+    std::string frame_id = master_field.coord_sys;
 
     if (!cartesian_frame_) {
       f2c::Transform::transformToUTM(master_field);
+      rows = util::transformRowsWithRef(rows, master_field);
+    } else {
+      rows = util::removeRowsRefPoint(rows, master_field);
     }
-    field = master_field.field.getGeometry(0);
+    Field field = master_field.field.getGeometry(0);
 
     RCLCPP_INFO(
       get_logger(),
-      "Generating coverage path in %s frame for zone with %zu outer nodes and %zu inner polygons.",
-      frame_id.c_str(), field.getGeometry(0).size(), field.size() - 1);
+      "Generating coverage path in %s frame for field of %li rows (%li swaths).",
+      frame_id.c_str(), rows.size(), rows.size() - 1);
 
-    // (1) Optional: Remove headland from polygon field
-    Field field_no_headland = field;
-    if (goal->generate_headland) {
-      field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
-    }
+    // (1) Generate swaths from rows based on policy
+    Swaths swaths = swath_gen_->generateSwaths(rows, goal->row_swath_mode);
 
-    // (2) Generate swaths to cover polygon field, including internal voids
-    Swaths swaths = swath_gen_->generateSwaths(field_no_headland, goal->swath_mode);
-
-    // (3) Optional: Generate an ordered route through the unordered swaths
+    // (2) Optional: Generate an ordered route through the unordered swaths
     std_msgs::msg::Header header;
     header.stamp = now();
     header.frame_id = frame_id;
@@ -209,21 +206,24 @@ void CoverageServer::computeCoveragePath()
     if (goal->generate_route) {
       Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
 
-      // (4) Optional: Generate connection turns between ordered swaths
+      // (3) Optional: Generate connection turns between ordered swaths
       // Converts UTM back to GPS, if necessary, for action returns
       if (goal->generate_path) {
         path = path_gen_->generatePath(route, goal->path_mode);
+
         result->coverage_path =
-          util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
-        result->nav_path = util::toNavPathMsg(
+          opennav_coverage::util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
+        result->nav_path = opennav_coverage::util::toNavPathMsg(
           path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance());
       } else {
         result->coverage_path =
-          util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);
+          opennav_coverage::util::toCoveragePathMsg(
+          route, master_field, true, header, cartesian_frame_);
       }
     } else {
       result->coverage_path =
-        util::toCoveragePathMsg(swaths, master_field, false, header, cartesian_frame_);
+        opennav_coverage::util::toCoveragePathMsg(
+        swaths, master_field, false, header, cartesian_frame_);
     }
 
     auto cycle_duration = this->now() - start_time;
@@ -231,9 +231,9 @@ void CoverageServer::computeCoveragePath()
 
     // Visualize in Cartesian coordinates for debugging
     visualizer_->visualize(
-      field, field_no_headland, master_field.getRefPoint(),
-      util::toCartesianNavPathMsg(path, header, path_gen_->getTurnPointDistance()),
-      swaths, header);
+      field, Field() /*No headland field for row coverage*/, master_field.getRefPoint(),
+      opennav_coverage::util::toCartesianNavPathMsg(
+        path, header, path_gen_->getTurnPointDistance()), swaths, header);
     action_server_->succeeded_current(result);
   } catch (CoverageException & e) {
     RCLCPP_ERROR(get_logger(), "Invalid mode set: %s", e.what());
@@ -250,7 +250,7 @@ void CoverageServer::computeCoveragePath()
 }
 
 rcl_interfaces::msg::SetParametersResult
-CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
+RowCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
 {
   std::lock_guard<std::mutex> lock(dynamic_params_lock_);
   rcl_interfaces::msg::SetParametersResult result;
@@ -259,13 +259,7 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
     const auto & name = parameter.get_name();
 
     if (type == ParameterType::PARAMETER_DOUBLE) {
-      if (name == "default_headland_width") {
-        headland_gen_->setWidth(parameter.as_double());
-      } else if (name == "default_swath_angle") {
-        swath_gen_->setSwathAngle(parameter.as_double());
-      } else if (name == "default_step_angle") {
-        swath_gen_->setStepAngle(parameter.as_double());
-      } else if (name == "default_turn_point_distance") {
+      if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
@@ -273,25 +267,21 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
       } else if (name == "operation_width") {
         auto & robot = robot_params_->getRobot();
         robot.op_width = parameter.as_double();
+      } else if (name == "default_offset") {
+        swath_gen_->setOffset(parameter.as_double());
       }
     } else if (type == ParameterType::PARAMETER_STRING) {
-      if (name == "default_headland_type") {
-        headland_gen_->setMode(parameter.as_string());
-      } else if (name == "default_path_type") {
+      if (name == "default_path_type") {
         path_gen_->setPathMode(parameter.as_string());
       } else if (name == "default_path_continuity_type") {
         path_gen_->setPathContinuityMode(parameter.as_string());
       } else if (name == "default_route_type") {
         route_gen_->setMode(parameter.as_string());
       } else if (name == "default_swath_type") {
-        swath_gen_->setSwathMode(parameter.as_string());
-      } else if (name == "default_swath_angle_type") {
-        swath_gen_->setSwathAngleMode(parameter.as_string());
+        swath_gen_->setMode(parameter.as_string());
       }
     } else if (type == ParameterType::PARAMETER_BOOL) {
-      if (name == "default_allow_overlap") {
-        swath_gen_->setOVerlap(parameter.as_bool());
-      } else if (name == "coordinates_in_cartesian_frame") {
+      if (name == "coordinates_in_cartesian_frame") {
         cartesian_frame_ = parameter.as_bool();
       }
     } else if (type == ParameterType::PARAMETER_INTEGER) {
@@ -309,11 +299,11 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
   return result;
 }
 
-}  // namespace opennav_coverage
+}  // namespace opennav_row_coverage
 
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader.
 // This acts as a sort of entry point, allowing the component to be discoverable when its library
 // is being loaded into a running process.
-RCLCPP_COMPONENTS_REGISTER_NODE(opennav_coverage::CoverageServer)
+RCLCPP_COMPONENTS_REGISTER_NODE(opennav_row_coverage::RowCoverageServer)

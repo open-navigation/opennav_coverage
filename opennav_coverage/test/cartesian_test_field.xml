@@ -1,0 +1,64 @@
+<GAOS_parcel xmlns:gml="http://www.opengis.net/gml" id="14d36f66-eac9-4e2b-b835-f6bddd925ae2">
+    <Field area="17.2581" best_angle="2.85311132324" cost_if_no_crop="0.23" date="2018-06-05"
+        greening_subsidy="0.1667" id="boundary" increment="0.05" lineage="Unknown"
+        penalty_additnl_swath="7.285" sprayer_width="39" swath_width="3">
+        <geometry>
+            <gml:Polygon srsName="map">
+                <gml:outerBoundaryIs>
+                    <gml:LinearRing>
+                        <gml:coordinates>5.0,5.0 5.0,15.0 15.0,15.0 10.0,5.0 5.0,5.0</gml:coordinates>
+                    </gml:LinearRing>
+                </gml:outerBoundaryIs>
+            </gml:Polygon>
+        </geometry>
+    </Field>
+    <Row id="1">
+        <geometry>
+            <gml:LineString srsName="map">
+                <gml:coordinates>5.25,5.0 5.5,15.0</gml:coordinates>
+            </gml:LineString>
+        </geometry>
+    </Row>
+    <Row id="2">
+        <geometry>
+            <gml:LineString srsName="map">
+                <gml:coordinates>7.7,5.0 6.76,15.0</gml:coordinates>
+            </gml:LineString>
+        </geometry>
+    </Row>
+    <Row id="3">
+        <geometry>
+            <gml:LineString srsName="map">
+                <gml:coordinates>8.38,5.0 9.3,15.0</gml:coordinates>
+            </gml:LineString>
+        </geometry>
+    </Row>
+    <Row id="4">
+        <geometry>
+            <gml:LineString srsName="map">
+                <gml:coordinates>11.26,7.53 10.37,15.0</gml:coordinates>
+            </gml:LineString>
+        </geometry>
+    </Row>
+    <Row id="5">
+        <geometry>
+            <gml:LineString srsName="map">
+                <gml:coordinates>11.84,8.7 11.5,15.0</gml:coordinates>
+            </gml:LineString>
+        </geometry>
+    </Row>
+    <Row id="6">
+        <geometry>
+            <gml:LineString srsName="map">
+                <gml:coordinates>13.23,11.47 13.16,15.0</gml:coordinates>
+            </gml:LineString>
+        </geometry>
+    </Row>
+    <Row id="7">
+        <geometry>
+            <gml:LineString srsName="map">
+                <gml:coordinates>13.71,12.43 14.15,15.0</gml:coordinates>
+            </gml:LineString>
+        </geometry>
+    </Row>
+</GAOS_parcel>

@@ -6,18 +6,18 @@ bool generate_route True
 bool generate_path True
 
 # The field specification to use.
-# If providing gml file with multiple fields, specify which with gml_field_id
 # If using polygons, bounding polygon must be first, followed by inner cutouts
 # Both must specify if the data is cartesian or GPS coordinates
+# If using Row Coverage Server, must use gml field.
 bool use_gml_file False
 string gml_field
-uint16 gml_field_id 0
 opennav_coverage_msgs/Coordinates[] polygons
 string frame_id map
 
 # Modes of operation of each stage, if used
 opennav_coverage_msgs/HeadlandMode headland_mode
 opennav_coverage_msgs/SwathMode swath_mode
+opennav_coverage_msgs/RowSwathMode row_swath_mode
 opennav_coverage_msgs/RouteMode route_mode
 opennav_coverage_msgs/PathMode path_mode
 
