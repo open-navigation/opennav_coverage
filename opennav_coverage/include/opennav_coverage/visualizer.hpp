@@ -62,8 +62,8 @@ public:
 
   void visualize(
     const Field & total_field, const Field & no_headland_field,
-    const std::shared_ptr<ComputeCoveragePath::Result> & result,
-    const std_msgs::msg::Header & header);
+    const Point & ref_pt, const nav_msgs::msg::Path & path,
+    const Swaths swaths, const std_msgs::msg::Header & header);
 
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr nav_plan_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr headlands_pub_;

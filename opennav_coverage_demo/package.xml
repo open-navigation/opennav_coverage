@@ -14,6 +14,7 @@
   <depend>opennav_coverage_msgs</depend>
   <depend>opennav_coverage_bt</depend>
   <depend>opennav_coverage</depend>
+  <depend>opennav_row_coverage</depend>
   <depend>opennav_coverage_navigator</depend>
   <depend>backported_bt_navigator</depend>
 

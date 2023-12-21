@@ -20,6 +20,7 @@
 
 #include "opennav_coverage_msgs/action/compute_coverage_path.hpp"
 #include "nav2_behavior_tree/bt_cancel_action_node.hpp"
+#include "opennav_coverage_bt/utils.hpp"
 
 namespace opennav_coverage_bt
 {

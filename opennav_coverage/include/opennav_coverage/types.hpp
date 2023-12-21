@@ -35,6 +35,8 @@ typedef F2CRobot Robot;
 typedef F2CLinearRing Polygon;
 typedef F2CPoint Point;
 typedef f2c::types::PathState PathState;
+typedef f2c::types::LineString LineString;
+typedef F2CLineString LineString;
 
 typedef std::shared_ptr<f2c::hg::HeadlandGeneratorBase> HeadlandGeneratorPtr;
 typedef std::shared_ptr<f2c::obj::SGObjective> SwathObjectivePtr;

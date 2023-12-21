@@ -1,6 +1,6 @@
 # Open Navigation's Nav2 Complete Coverage
 
-This package contains the Complete Coverage Task Server & auxiliary tools utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find more information about Fields2Cover (F2C) in its [ReadTheDocs Documentation](https://fields2cover.github.io/index.html). It can accept both GPS and Cartesian coordinates and publishes the field, headland, swaths, and route as separate topics in cartesian coordinates for debugging and visualization.
+This package contains the Complete Coverage Task Server & auxiliary tools utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find more information about Fields2Cover (F2C) in its [ReadTheDocs Documentation](https://fields2cover.github.io/index.html). It can accept both GPS and Cartesian coordinates and publishes the field, headland, swaths, and route as separate topics in cartesian coordinates for debugging and visualization. It can also compute coverage paths based on open-field polygons **or** based on annotated rows as might exist in a tree farm or other applications with both irregular and regular pre-established rows.
 
 This capability was created by [Open Navigation LLC](https://www.opennav.org/) in partnership with [Bonsai Robotics](https://www.bonsairobotics.ai/). Bonsai Robotics builds autonomous software for machines in adverse and GPS degraded conditions utilizing vision. Bonsai Robotics funded the development of this work for their own product and has graciously allowed Open Navigation to open-source it for the community to leverage in their own systems. Please thank Bonsai Robotics for their commendable donation to the ROS community! Bonsai is hiring [here](https://www.bonsairobotics.ai/jobs).
 
@@ -8,11 +8,13 @@ This capability was created by [Open Navigation LLC](https://www.opennav.org/) i
 
 This server exposes all of the features of Fields2Cover as a Lifecycle-Component Nav2 Task Server like all others within the Nav2 Framework, so it should feel very familiar to those using Nav2 already. The server is split into modular stages with factories and enum types for all known options which can be easily expanded up over time scalably. It even could be expanded to include custom coverage capabilities separate of F2C if desired. This capability is split into 5 packages:
 
-- `opennav_coverage`: Contains the main Nav2 Task Server.
+- `opennav_coverage`: Contains the main Nav2 Task Server. Given a **field polygon**, computes swaths, routes, and paths. Best of 'open field' applications with regular rows desired.
+
+- `opennav_row_coverage`: Contains another main Nav2 Task Server. Given a set of **precomputed** or **annotated** rows, computes swaths, routes, and paths. Best for applications with pre-established or irregular rows.
 
 - `opennav_coverage_msgs`: Contains the action definition for the Coverage Navigator, Coverage Planner. Also contains several useful message types for F2C.
 
-- `opennav_coverage_bt`: Contains the Behavior Tree Nodes and an example XML file using the Task Server to complete a simple coverage navigation task.
+- `opennav_coverage_bt`: Contains the Behavior Tree Nodes and an example XMLs file using the Task Server to complete a simple coverage and row coverage navigation tasks.
 
 - `opennav_coverage_navigator`: Contains the BT Navigator plugin exposing `NavigateCompleteCoverage` action server analog to `NavigateToPose` and `NavigateThroughPoses`.
 
@@ -22,8 +24,11 @@ Fields2Cover is a living library with new features planned to be added (for exam
 
 [![IMAGE ALT TEXT](./opennav_coverage_demo/test/demo.png)](https://www.youtube.com/watch?v=XC_qf5AyNpU)
 
-(PS: Click on image to see the video!)
+Have pre-annotated rows due to physical constraints and want to still compute the patterned route & feasible paths between them? Extra wacky to show that they don't need to be parallel nor regularly spaced!
 
+[![IMAGE ALT TEXT](./opennav_coverage_demo/test/demo_rows.png)](https://www.youtube.com/watch?v=NMznTft56jE)
+
+PS: Click on either image to see the demo videos! :-)
 
 ## Interfaces
 
@@ -35,13 +40,15 @@ This contains `generate_headland`, `generate_route`, and `generate_path` about w
 
 Each of the stages (including `generate_swaths`, which is always on) has its own `_mode` message in the action containing its potential parameters to specify a mode. If not modified, it uses the parameters set in the server at launch time or after dynamic reconfiguration. See the parameter information below or the message files for complete details.
 
-Finally, it contains the polygon information. This can be represented either as GML files, with [an example in `opennav_coverage/test`](./opennav_coverage/test/test_field.xml), or as a polygon in the message itself. If using GML files, set `goal.use_gml_file = true`. If your GML file contains multiple fields, set the ID of which to use with `goal.gml_field_id = id`, whereas the number is its ordered position in the file.
+Finally, it contains the polygon information. This can be represented either as GML files, with [an example in `opennav_coverage/test`](./opennav_coverage/test/test_field.xml), or as a polygon in the message itself. If using GML files, set `goal.use_gml_file = true`.
 
 When setting the polygon (`goal.polygons`), this is a vector of polygons. If only considering a bounding field, only populate the first field shape. If there are internal voids, use subsequent polygons to indicate them. The coordinate type has `axis1` and `axis2` instead of X and Y as the server can process both GPS and cartesian coordinates. If specifying the polygon outside of GML files, you must specify the frame of reference of the polygon using the `goal.frame_id` field. This is not used for GML files as those should contain the frame within it.
 
 The result returns a `result.nav_path` -- which is a `nav_msgs/Path` containing the coverage path requested **only if** all `generate_path` is `true`. This can be followed by a local trajectory planner or controller directly. This is what is used in the `opennav_coverage_bt` examples for basic coverage navigation. It also returns `result.coverage_path` which contains an ordered set of swaths and paths to connect them (if applicable settings enabled) which can be used for more task-specific navigation. For example, navigating with a tool down or enabled on swaths and raised in turns to connect to other swaths. A utility is provided in `opennav_coverage/utils.hpp` for iterating through this custom `coverage_path` for convenience, `PathComponentsIterator`.
 
 It also returns an error code, if any error occurred and the total planning time for metrics analysis.
+
+Note that `SwathMode` settings are to be paired with the `opennav_coverage` server with polygons, while the `RowSwathMode` settings are to be paired with the `opennav_row_coverage` server based on annotated rows. 
 
 ### NavigateCompleteCoverage
 
@@ -68,20 +75,21 @@ The complete set of options are exposed as both dynamic parameters and through t
 | operation_width  | Width of implement or task for coverage  | double |
 | min_turning_radius  | Minimum turning radius for path planning  | double |
 | linear_curv_change  | Max linear curvature change | double |
-| default_allow_overlap  | Whether to allow some coverage overlap in final pass to fill space by default  | bool |
+| default_allow_overlap  | Whether to allow some coverage overlap in final pass to fill space by default. Only for `opennav_coverage`  | bool |
 | default_custom_order  | Default custom order of swaths -> route in CUSTOM mode | `vector<int>` |
-| default_headland_type  | Default headland mode. Option: CONSTANT  | String |
-| default_headland_width  | Default headland width to remove from field | double |
+| default_headland_type  | Default headland mode. Option: CONSTANT. Only for `opennav_coverage`  | String |
+| default_headland_width  | Default headland width to remove from field. Only for `opennav_coverage` | double |
 | default_path_continuity_type  | Default path continuity mode. Option: DISCONTINUOUS, CONTINUOUS | String |
 | default_path_type  | Default path mode. Option: DUBIN, REEDS_SHEPP | String |
 | default_route_type  | Default route mode. Option: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM  | String |
 | default_spiral_n  | Default number for spiraling, when set as default | int |
-| default_step_angle  | Default angular step to attempt swath generating in BRUTE_FORCE mode | double |
-| default_swath_angle  | Default swath angle to use when known for swathc generation in SET_ANGLE mode | double |
-| default_swath_angle_type  | Default swath angle computation type. Options: BRUTE_FORCE,SET_ANGLE  | String |
-| default_swath_type  | Default swath computation objective. Option: LENGTH, COVERAGE, NUMBER | String |
+| default_step_angle  | Default angular step to attempt swath generating in BRUTE_FORCE mode. Only for `opennav_coverage` | double |
+| default_swath_angle  | Default swath angle to use when known for swathc generation in SET_ANGLE mode. Only for `opennav_coverage` | double |
+| default_swath_angle_type  | Default swath angle computation type. Options: BRUTE_FORCE,SET_ANGLE. Only for `opennav_coverage`  | String |
+| default_swath_type  | Default swath computation objective. Option: LENGTH, COVERAGE, NUMBER for `opennav_coverage`; Option: OFFSET, CENTER, ROWSARESWATHS for `opennav_row_coverage` | String |
 | default_turn_point_distance  | Distance between points in path turns between swaths  | double |
-
+| default_offset  | Offset to use for computing swaths from annotated rows. Only for `opennav_row_coverage` | double |
+| order_ids  | For `opennav_row_coverage`, whether to reorder the parsed rows in the order of their `id`s | bool |
 
 ### CoverageNavigator
 
@@ -121,6 +129,24 @@ All type string.
 #### CoverageCancel Ports
 
 N/A
+
+
+#### A Quick Note On Skipping
+
+Rows(r) and swaths(s) are numbered as such. r1, s1, r2, s2, .... rN-1, sN-1, rN. 
+In order to skip particular rows the 'opennav_coverage_msgs/RowSwathMode' provides 'skip_ids'
+to be populated. For example, if the skip ids were set to {1, 3} for five rows the output would be the following: s2, s4.
+
+### Swath Generation
+
+As noted about `opennav_row_coverage` provides three ways to compute swaths which are `CENTER`, `OFFSET` and `SWATHSAREROWS`.
+
+The `CENTER` generator iterates through each row, calculating a center between consecutive rows.
+
+The `OFFSET` generator iterates through each row, calculating a relative offset between consecutive rows. 
+
+The `SWATHSAREROWS` generator iterates through each row and uses that row as the swath.
+
 
 ## Citation
 
