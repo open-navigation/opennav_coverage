@@ -93,10 +93,10 @@ void Visualizer::visualize(
 
     for (unsigned int i = 0; i != swaths.size(); i++) {
       auto & swath = swaths[i];
-      output_swaths->points.push_back(util::pointToPoint32(
-        util::toMsg(swath.startPoint() + ref_pt)));
-      output_swaths->points.push_back(util::pointToPoint32(
-        util::toMsg(swath.endPoint() + ref_pt)));
+      output_swaths->points.push_back(
+        util::pointToPoint32(util::toMsg(swath.startPoint() + ref_pt)));
+      output_swaths->points.push_back(
+        util::pointToPoint32(util::toMsg(swath.endPoint() + ref_pt)));
     }
 
     swaths_pub_->publish(std::move(output_swaths));
