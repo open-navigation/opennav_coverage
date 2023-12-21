@@ -98,6 +98,8 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   Swaths swaths = raw_swaths;
   if (!is_cartesian) {
     swaths = f2c::Transform::transformToPrevCRS(raw_swaths, field);
+  } else {
+    swaths.moveTo(field.getRefPoint());
   }
 
   for (unsigned int i = 0; i != swaths.size(); i++) {
@@ -136,6 +138,8 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   Path path = raw_path;
   if (!is_cartesian) {
     path = f2c::Transform::transformToPrevCRS(raw_path, field);
+  } else {
+    path.moveTo(field.getRefPoint());
   }
 
   PathSectionType curr_state = path.states[0].type;
@@ -218,6 +222,8 @@ inline nav_msgs::msg::Path toNavPathMsg(
   Path path = raw_path;
   if (!is_cartesian) {
     path = f2c::Transform::transformToPrevCRS(raw_path, field);
+  } else {
+    path.moveTo(field.getRefPoint());
   }
 
   for (unsigned int i = 0; i != path.states.size(); i++) {
@@ -255,6 +261,19 @@ inline nav_msgs::msg::Path toNavPathMsg(
   }
 
   return msg;
+}
+
+/**
+ * @brief Converts full path to nav_msgs/path message in cartesian UTM frame
+ * @param path Full path to convert
+ * @param header header
+ * @return nav_msgs/Path Path
+ */
+inline nav_msgs::msg::Path toCartesianNavPathMsg(
+  const Path & raw_path,
+  const std_msgs::msg::Header & header, const float & pt_dist)
+{
+  return toNavPathMsg(raw_path, F2CField(), header, true, pt_dist);
 }
 
 /**

@@ -88,13 +88,17 @@ TEST(VizTests, TestVizPubs)
   const auto result = std::make_shared<typename ComputeCoveragePath::Result>();
   result->nav_path.poses.resize(20);
   result->coverage_path.swaths.resize(20);
-  Field no_headland_field = total_field;
-  viz.visualize(total_field, no_headland_field, result, header);
+  Field no_headland_field = total_field.clone();
+  std::vector<Swath> swaths_raw;
+  swaths_raw.resize(20);
+  Swaths swaths(swaths_raw);
+  nav_msgs::msg::Path path;
+  viz.visualize(total_field, no_headland_field, Point(), path, swaths, header);
 
   // Give a moment to process for stability, then check if received
   rclcpp::spin_some(node);
   r.sleep();
-  EXPECT_TRUE(got_path_msg);
+  EXPECT_FALSE(got_path_msg);  // Path empty, unpublished
   EXPECT_TRUE(got_headland_msg);
   EXPECT_TRUE(got_planning_field_msg);
   EXPECT_TRUE(got_swaths_msg);
