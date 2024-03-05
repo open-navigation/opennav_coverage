@@ -141,13 +141,13 @@ TEST_F(ComputeCoveragePathActionTestFixture, test_tick)
 
   // check if returned path is correct
   nav_msgs::msg::Path path;
-  config_->blackboard->get<nav_msgs::msg::Path>("path", path);
+  [[maybe_unused]] auto res = config_->blackboard->get("path", path);
   EXPECT_EQ(path.poses.size(), 2u);
   EXPECT_EQ(path.poses[0].pose.position.x, 0.0);
   EXPECT_EQ(path.poses[1].pose.position.x, 1.0);
 
   // halt node so another goal can be sent
-  tree_->rootNode()->halt();
+  tree_->rootNode()->haltNode();
   EXPECT_EQ(tree_->rootNode()->status(), BT::NodeStatus::IDLE);
 }
 
