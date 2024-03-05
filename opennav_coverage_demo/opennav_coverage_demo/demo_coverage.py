@@ -173,10 +173,11 @@ def main():
             print('Goal has an invalid return status!')
 
     except KeyboardInterrupt:
-        print("\nCtrl-C detected. Cancelling goal")
+        print('\nCtrl-C detected. Cancelling goal')
         cancel_future = navigator.goal_handle.cancel_goal_async()
         rclpy.spin_until_future_complete(navigator, cancel_future)
         print('Goal was canceled!')
+
 
 if __name__ == '__main__':
     main()
