@@ -34,7 +34,7 @@ void ComputeCoveragePathAction::on_tick()
   getInput("generate_headland", goal_.generate_headland);
   getInput("generate_route", goal_.generate_route);
   getInput("generate_path", goal_.generate_path);
-
+  std::cout << "Testing CI";
   // Get the field to get coverage for
   std::string gml_filename;
   if (getInput("file_field", gml_filename)) {
