@@ -150,26 +150,33 @@ def main():
     navigator.navigateCoverage(field)
 
     i = 0
-    while not navigator.isTaskComplete():
-        # Do something with the feedback
-        i = i + 1
-        feedback = navigator.getFeedback()
-        if feedback and i % 5 == 0:
-            print('Estimated time of arrival: ' + '{0:.0f}'.format(
-                  Duration.from_msg(feedback.estimated_time_remaining).nanoseconds / 1e9)
-                  + ' seconds.')
-        time.sleep(1)
+    try:
+        while not navigator.isTaskComplete():
+            # Do something with the feedback
+            i = i + 1
+            feedback = navigator.getFeedback()
+            if feedback and i % 5 == 0:
+                print('Estimated time of arrival: ' + '{0:.0f}'.format(
+                    Duration.from_msg(feedback.estimated_time_remaining).nanoseconds / 1e9)
+                    + ' seconds.')
+            time.sleep(1)
 
-    # Do something depending on the return code
-    result = navigator.getResult()
-    if result == TaskResult.SUCCEEDED:
-        print('Goal succeeded!')
-    elif result == TaskResult.CANCELED:
+        # Do something depending on the return code
+        result = navigator.getResult()
+        if result == TaskResult.SUCCEEDED:
+            print('Goal succeeded!')
+        elif result == TaskResult.CANCELED:
+            print('Goal was canceled!')
+        elif result == TaskResult.FAILED:
+            print('Goal failed!')
+        else:
+            print('Goal has an invalid return status!')
+
+    except KeyboardInterrupt:
+        print('\nCtrl-C detected. Cancelling goal')
+        cancel_future = navigator.goal_handle.cancel_goal_async()
+        rclpy.spin_until_future_complete(navigator, cancel_future)
         print('Goal was canceled!')
-    elif result == TaskResult.FAILED:
-        print('Goal failed!')
-    else:
-        print('Goal has an invalid return status!')
 
 
 if __name__ == '__main__':
