@@ -147,7 +147,7 @@ TEST_F(ComputeCoveragePathActionTestFixture, test_tick)
   EXPECT_EQ(path.poses[1].pose.position.x, 1.0);
 
   // halt node so another goal can be sent
-  tree_->haltTree();
+  tree_->rootNode()->haltNode();
   EXPECT_EQ(tree_->rootNode()->status(), BT::NodeStatus::IDLE);
 }
 
