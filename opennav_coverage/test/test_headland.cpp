@@ -84,9 +84,9 @@ TEST(HeadlandTests, TestheadlandGeneration)
 
   // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::HeadlandMode settings;
-  auto field_out = generator.generateHeadlands(field.field.getGeometry(0), settings);
+  auto field_out = generator.generateHeadlands(field.getField().getGeometry(0), settings);
   settings.mode = "CONSTANT";
-  auto field_out2 = generator.generateHeadlands(field.field.getGeometry(0), settings);
+  auto field_out2 = generator.generateHeadlands(field.getField().getGeometry(0), settings);
 }
 
 }  // namespace opennav_coverage

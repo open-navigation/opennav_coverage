@@ -112,13 +112,13 @@ TEST(SwathTests, TestswathGeneration)
 
   // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::SwathMode settings;
-  auto swaths1 = generator.generateSwaths(field.field.getGeometry(0), settings);
+  auto swaths1 = generator.generateSwaths(field.getField().getGeometry(0), settings);
   settings.mode = "BRUTE_FORCE";
   settings.objective = "LENGTH";
-  auto swaths2 = generator.generateSwaths(field.field.getGeometry(0), settings);
+  auto swaths2 = generator.generateSwaths(field.getField().getGeometry(0), settings);
   settings.mode = "SET_ANGLE";
   settings.objective = "NUMBER";
-  auto swaths3 = generator.generateSwaths(field.field.getGeometry(0), settings);
+  auto swaths3 = generator.generateSwaths(field.getField().getGeometry(0), settings);
 }
 
 }  // namespace opennav_coverage

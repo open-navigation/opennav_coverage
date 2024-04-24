@@ -116,7 +116,7 @@ TEST(PathTests, TestpathGeneration)
   f2c::Random rand;
   auto field = rand.generateRandField(5, 1e5);
   opennav_coverage_msgs::msg::SwathMode sw_settings;
-  auto swaths = swath_gen.generateSwaths(field.field.getGeometry(0), sw_settings);
+  auto swaths = swath_gen.generateSwaths(field.getField().getGeometry(0), sw_settings);
   opennav_coverage_msgs::msg::RouteMode rt_settings;
   auto route = route_gen.generateRoute(swaths, rt_settings);
 
