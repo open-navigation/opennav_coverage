@@ -10,6 +10,7 @@ find_package(Fields2Cover REQUIRED)
 find_package(opennav_coverage REQUIRED)
 find_package(opennav_coverage_msgs REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
+find_package(TinyXML2 REQUIRED)
 
 # potentially replace with nav2_common, nav2_package()
 set(CMAKE_CXX_STANDARD 17)
@@ -36,7 +37,6 @@ set(dependencies
   opennav_coverage
   opennav_coverage_msgs
   tinyxml2_vendor
-  #Fields2Cover not packaged with ament
 )
 
 add_library(${library_name} SHARED
@@ -48,7 +48,11 @@ ament_target_dependencies(${library_name}
   ${dependencies}
 )
 
-target_link_libraries(${library_name} Fields2Cover tinyxml2::tinyxml2)
+#Fields2Cover not packaged with ament so have to do it manually
+#and grab the vendored TINYXML2_LIBRARY too
+target_link_libraries(${library_name}
+    Fields2Cover
+    tinyxml2::tinyxml2)
 
 add_executable(${executable_name}
   src/main.cpp
