@@ -132,7 +132,7 @@ TEST(ServerTest, testDynamicParams)
     node->get_node_services_interface());
 
   auto results = rec_param->set_parameters_atomically(
-    {rclcpp::Parameter("default_turn_point_distance", 0.25),
+    {rclcpp::Parameter("default_turn_point_distance", 0.25),  // Discretization ??
       rclcpp::Parameter("robot_width", 1.0),
       rclcpp::Parameter("operation_width", 1.12),
       rclcpp::Parameter("default_path_type", std::string("hi")),

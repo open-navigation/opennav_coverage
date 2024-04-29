@@ -106,11 +106,14 @@ TEST(UtilsTests, TesttoNavPathMsg)
   header_in.frame_id = "test";
   Path path_in;
   path_in.getStates().resize(10);
+  EXPECT_EQ(path_in.size(), 10u);
   F2CField field;
 
   auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1);
   EXPECT_EQ(msg.header.frame_id, "test");
-  EXPECT_EQ(msg.poses.size(), 10u);
+
+  // Path goes nowhere so compressed into a dense path
+  EXPECT_EQ(msg.poses.size(), 1u);
 }
 
 TEST(UtilsTests, TesttoCoveragePathMsg2)
@@ -126,9 +129,10 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   EXPECT_EQ(msg.contains_turns, true);
   EXPECT_EQ(msg.swaths_ordered, true);
 
-  // states are not valid (e.g. non-marked as turn or swath)
+  // states are initalised as a valid swath
   path_in.getStates().resize(10);
-  EXPECT_THROW(util::toCoveragePathMsg(path_in, field, header_in, true), std::runtime_error);
+  msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+  util::toCoveragePathMsg(path_in, field, header_in, true);
 
   // Now lets make it valid
   using f2c::types::PathSectionType;

@@ -108,7 +108,9 @@ TEST(SwathTests, TestswathGeneration)
 
   // Generate some toy field
   f2c::Random rand;
-  auto field = rand.generateRandField(5, 1e5);
+  double area = 1e5;
+  int sides = 5;
+  auto field = rand.generateRandField(area, sides);
 
   // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::SwathMode settings;
