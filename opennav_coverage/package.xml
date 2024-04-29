@@ -19,6 +19,7 @@
   <depend>builtin_interfaces</depend>
   <depend>tf2_ros</depend>
   <depend>fields2cover</depend>
+  <depend>ortools_vendor</depend>
   <depend>opennav_coverage_msgs</depend>
 
   <test_depend>ament_lint_common</test_depend>
