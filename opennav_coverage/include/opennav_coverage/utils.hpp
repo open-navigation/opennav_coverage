@@ -152,14 +152,20 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   }
 
   for (unsigned int i = 0; i != path.size(); i++) {
-    if (curr_state == path.getState(i).type && path.getState(i).type == PathSectionType::SWATH) {
+    if (curr_state == path.getState(i).type &&
+      path.getState(i).type == PathSectionType::SWATH)
+    {
       // Continuing swath so...
       // (1) no action required.
-    } else if (curr_state == path.getState(i).type && path.getState(i).type == PathSectionType::TURN) {
+    } else if (curr_state == path.getState(i).type &&
+      path.getState(i).type == PathSectionType::TURN)
+    {
       // Continuing a turn so...
       // (1) keep populating
       curr_turn->poses.push_back(toMsg(path.getState(i)));
-    } else if (curr_state != path.getState(i).type && path.getState(i).type == PathSectionType::TURN) {
+    } else if (curr_state != path.getState(i).type &&
+      path.getState(i).type == PathSectionType::TURN)
+    {
       // Transitioning from a swath to a turn so...
       // (1) Complete the existing swath
       opennav_coverage_msgs::msg::Swath swath;
@@ -171,7 +177,9 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       msg.turns.back().header = header;
       curr_turn = &msg.turns.back();
       curr_turn->poses.push_back(toMsg(path.getState(i)));
-    } else if (curr_state != path.getState(i).type && path.getState(i).type == PathSectionType::SWATH) {
+    } else if (curr_state != path.getState(i).type &&
+      path.getState(i).type == PathSectionType::SWATH)
+    {
       // Transitioning from a turn to a swath so...
       // (1) Update new swath starting point
       curr_swath_start = path.getState(i).point;
