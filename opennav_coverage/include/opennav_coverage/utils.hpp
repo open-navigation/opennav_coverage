@@ -142,30 +142,25 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
     path.moveTo(field.getRefPoint());
   }
 
-  PathSectionType curr_state = path.getState(0).type;
-  if (curr_state == PathSectionType::SWATH) {
+  PathSectionType curr_section_type = path.getState(0).type;
+  if (curr_section_type == PathSectionType::SWATH) {
     curr_swath_start = path.getState(0).point;
-  } else if (curr_state == PathSectionType::TURN) {
+  } else if (curr_section_type == PathSectionType::TURN) {
     msg.turns.push_back(nav_msgs::msg::Path());
     msg.turns.back().header = header;
     curr_turn = &msg.turns.back();
   }
 
   for (unsigned int i = 0; i != path.size(); i++) {
-    if (curr_state == path.getState(i).type &&
-      path.getState(i).type == PathSectionType::SWATH)
-    {
+    auto idx_type = path.getState(i).type;
+    if (curr_section_type == idx_type && idx_type == PathSectionType::SWATH) {
       // Continuing swath so...
       // (1) no action required.
-    } else if (curr_state == path.getState(i).type &&
-      path.getState(i).type == PathSectionType::TURN)
-    {
+    } else if (curr_section_type == idx_type && idx_type == PathSectionType::TURN) {
       // Continuing a turn so...
       // (1) keep populating
       curr_turn->poses.push_back(toMsg(path.getState(i)));
-    } else if (curr_state != path.getState(i).type &&
-      path.getState(i).type == PathSectionType::TURN)
-    {
+    } else if (curr_section_type != idx_type && idx_type == PathSectionType::TURN) {
       // Transitioning from a swath to a turn so...
       // (1) Complete the existing swath
       opennav_coverage_msgs::msg::Swath swath;
@@ -177,24 +172,22 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       msg.turns.back().header = header;
       curr_turn = &msg.turns.back();
       curr_turn->poses.push_back(toMsg(path.getState(i)));
-    } else if (curr_state != path.getState(i).type &&
-      path.getState(i).type == PathSectionType::SWATH)
-    {
+    } else if (curr_section_type != idx_type && idx_type == PathSectionType::SWATH) {
       // Transitioning from a turn to a swath so...
       // (1) Update new swath starting point
       curr_swath_start = path.getState(i).point;
     }
 
-    curr_state = path.getState(i).type;
+    curr_section_type = idx_type;
 
-    if (path.getState(i).type != PathSectionType::SWATH &&
-      path.getState(i).type != PathSectionType::TURN)
+    if (idx_type != PathSectionType::SWATH &&
+      idx_type != PathSectionType::TURN)
     {
       throw std::runtime_error("Unknown type of path state detected, cannot obtain path!");
     }
   }
 
-  if (curr_state == PathSectionType::SWATH) {
+  if (curr_section_type == PathSectionType::SWATH) {
     opennav_coverage_msgs::msg::Swath swath;
     swath.start = toMsg(curr_swath_start);
     swath.end = toMsg(path.back().point);
