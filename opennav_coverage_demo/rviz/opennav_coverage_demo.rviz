@@ -594,7 +594,7 @@ Visualization Manager:
       Shaft Length: 0.10000000149011612
       Topic:
         Depth: 5
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
