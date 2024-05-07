@@ -25,6 +25,8 @@ jobs:
       run: sudo apt install ros-${{ matrix.ros_distro }}-geometry-msgs -y
     - name: Install nav_msgs
       run: sudo apt install ros-${{ matrix.ros_distro }}-nav-msgs -y
+    - name: Install rosidl-default-generators
+      run: sudo apt install ros-${{ matrix.ros_distro }}-rosidl-default-generators -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
