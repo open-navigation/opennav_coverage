@@ -33,13 +33,16 @@ jobs:
       run: sudo apt install ros-${{ matrix.ros_distro }}-bondcpp -y
     - name: Install angles
       run: sudo apt install ros-${{ matrix.ros_distro }}-angles -y
+    - name: Install test_msgs
+      run: sudo apt install ros-${{ matrix.ros_distro }}-test-msgs -y
     - name: Build and run tests
       id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.3
+      uses: ros-tooling/action-ros-ci@v0.3.11
       with:
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
         vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+        rosdep-check: true
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
