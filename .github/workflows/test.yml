@@ -28,7 +28,7 @@ jobs:
     - name: Install rosidl-default-generators
       run: sudo apt install ros-${{ matrix.ros_distro }}-rosidl-default-generators -y
     - name: Install geographic_msgs
-      run: sudo apt install ros-${{ matrix.ros_distro }}-geographic_msgs -y
+      run: sudo apt install ros-${{ matrix.ros_distro }}-geographic-msgs -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
