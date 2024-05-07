@@ -35,6 +35,8 @@ jobs:
       run: sudo apt install ros-${{ matrix.ros_distro }}-angles -y
     - name: Install test_msgs
       run: sudo apt install ros-${{ matrix.ros_distro }}-test-msgs -y
+    - name: Install behaviortree_cpp
+      run: sudo apt install ros-${{ matrix.ros_distro }}-behaviortree-cpp -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
