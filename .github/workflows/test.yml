@@ -37,7 +37,7 @@ jobs:
       run: sudo apt install ros-${{ matrix.ros_distro }}-test-msgs -y
     - name: Build and run tests
       id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.3.11
+      uses: ros-tooling/action-ros-ci@v0.3
       with:
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
