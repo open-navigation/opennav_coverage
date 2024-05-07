@@ -18,6 +18,10 @@ jobs:
       matrix:
           ros_distro: [rolling]
     steps:
+    - name: apt update
+      run: sudo apt update
+    - name: Install nodejs
+      run: sudo apt install nodejs -y
     - uses: actions/checkout@v2
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
@@ -39,6 +43,8 @@ jobs:
       run: sudo apt install ros-${{ matrix.ros_distro }}-behaviortree-cpp -y
     - name: Install diagnostic_updater
       run: sudo apt install ros-${{ matrix.ros_distro }}-diagnostic-updater -y
+    - name: Install rviz_common
+      run: sudo apt install ros-${{ matrix.ros_distro }}-rviz-common -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
