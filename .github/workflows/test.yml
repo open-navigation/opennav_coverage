@@ -21,6 +21,10 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
+    - name: Install geometry_msgs
+      run: sudo apt install ros-${{ matrix.ros_distro }}-geometry-msgs -y
+    - name: Install nav_msgs
+      run: sudo apt install ros-${{ matrix.ros_distro }}-nav-msgs -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
