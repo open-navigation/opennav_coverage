@@ -45,6 +45,16 @@ jobs:
       run: sudo apt install ros-${{ matrix.ros_distro }}-diagnostic-updater -y
     - name: Install rviz_common
       run: sudo apt install ros-${{ matrix.ros_distro }}-rviz-common -y
+    - name: Install rviz_default_plugins
+      run: sudo apt install ros-${{ matrix.ros_distro }}-rviz-default-plugins -y
+    - name: Install ompl
+      run: sudo apt install ros-${{ matrix.ros_distro }}-ompl -y
+    - name: Install laser_geometry
+      run: sudo apt install ros-${{ matrix.ros_distro }}-laser_geometry -y
+    - name: Install cv_bridge
+      run: sudo apt install ros-${{ matrix.ros_distro }}-cv-bridge -y
+    - name: Install gazebo_ros_pkgs
+      run: sudo apt install ros-${{ matrix.ros_distro }}-gazebo-ros-pkgs -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
