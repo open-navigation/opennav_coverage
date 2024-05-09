@@ -59,6 +59,8 @@ jobs:
       run: sudo apt install libunwind-dev -y
     - name: Install libceres-dev
       run: sudo apt install libceres-dev -y
+    - name: Install robot_localization
+      run: sudo apt install ros-${{ matrix.ros_distro }}-robot-localization -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
