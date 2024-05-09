@@ -50,7 +50,7 @@ jobs:
     - name: Install ompl
       run: sudo apt install ros-${{ matrix.ros_distro }}-ompl -y
     - name: Install laser_geometry
-      run: sudo apt install ros-${{ matrix.ros_distro }}-laser_geometry -y
+      run: sudo apt install ros-${{ matrix.ros_distro }}-laser-geometry -y
     - name: Install cv_bridge
       run: sudo apt install ros-${{ matrix.ros_distro }}-cv-bridge -y
     - name: Install gazebo_ros_pkgs
