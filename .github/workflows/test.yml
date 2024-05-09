@@ -55,6 +55,8 @@ jobs:
       run: sudo apt install ros-${{ matrix.ros_distro }}-cv-bridge -y
     - name: Install gazebo_ros_pkgs
       run: sudo apt install ros-${{ matrix.ros_distro }}-gazebo-ros-pkgs -y
+    - name: Install libceres-dev
+      run: sudo apt install libceres-dev -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
