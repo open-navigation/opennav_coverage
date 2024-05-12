@@ -69,6 +69,19 @@ jobs:
         target-ros2-distro: ${{ matrix.ros_distro }}
         vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
         rosdep-check: true
+        package-name: "opennav_coverage_demo"
+        colcon-defaults: |
+          {
+            "test": {
+              "packages-select": [
+                  "opennav_coverage",
+                  "opennav_coverage_bt",
+                  "opennav_row_coverage",
+                  "opennav_coverage_navigator",
+                  "opennav_coverage_demo"
+              ]
+            }
+          }
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
