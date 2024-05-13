@@ -6,6 +6,45 @@ on:
       - main
 
 jobs:
+  jammy_rolling:
+    runs-on: ubuntu-latest
+    env:
+      ROS_DISTRO: ${{ matrix.ros_distro }}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
+    strategy:
+      fail-fast: false
+      matrix:
+          ros_distro: [rolling]
+    steps:
+    - name: checkout source
+      uses: actions/checkout@v4
+    - name: Install Cyclone DDS
+      run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
+    - name: Build and run tests
+      id: action-ros-ci
+      uses: ros-tooling/action-ros-ci@v0.3
+      with:
+        package-name: "opennav_coverage_demo"
+        target-ros2-distro: ${{ matrix.ros_distro }}
+        vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+        colcon-defaults: |
+          {
+            "test": {
+              "packages-select": [
+                  "opennav_coverage",
+                  "opennav_coverage_bt",
+                  "opennav_row_coverage",
+                  "opennav_coverage_navigator",
+                  "opennav_coverage_demo"
+              ]
+            }
+          }
+    - uses: actions/upload-artifact@v1
+      with:
+        name: colcon-logs
+        path: ros_ws/log
   noble_rolling:
     runs-on: ubuntu-latest
     env:
