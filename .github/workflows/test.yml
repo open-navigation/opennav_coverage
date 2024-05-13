@@ -20,6 +20,12 @@ jobs:
     steps:
     - name: checkout source
       uses: actions/checkout@v4
+    - name: run apt-get update
+      run: sudo apt-get update
+    - name: run apt-get upgrade --list-upgradable
+      run: sudo apt-get update --list-upgradeable
+    - name: run apt upgrade python3-rosdep
+      run: sudo apt-get upgrade python3-rosdep -y
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
     - name: Build and run tests
@@ -59,10 +65,14 @@ jobs:
     steps:
     - name: checkout source
       uses: actions/checkout@v4
+    - name: run apt-get update
+      run: sudo apt-get update
+    - name: run apt-get upgrade --list-upgradable
+      run: sudo apt-get update --list-upgradeable
+    - name: run apt upgrade python3-rosdep
+      run: sudo apt-get upgrade python3-rosdep -y
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
-    - name: Remove python3-nose
-      run: sudo apt remove python3-nose -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
