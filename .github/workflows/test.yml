@@ -6,70 +6,29 @@ on:
       - main
 
 jobs:
-  build_and_test:
+  noble_rolling:
     runs-on: ubuntu-latest
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     container:
-      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-noble-ros-rolling-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           ros_distro: [rolling]
     steps:
-    - name: apt update
-      run: sudo apt update
-    - name: Install nodejs
-      run: sudo apt install nodejs -y
-    - uses: actions/checkout@v2
+    - name: checkout source
+      uses: actions/checkout@v4
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
-    - name: Install geometry_msgs
-      run: sudo apt install ros-${{ matrix.ros_distro }}-geometry-msgs -y
-    - name: Install nav_msgs
-      run: sudo apt install ros-${{ matrix.ros_distro }}-nav-msgs -y
-    - name: Install rosidl-default-generators
-      run: sudo apt install ros-${{ matrix.ros_distro }}-rosidl-default-generators -y
-    - name: Install geographic_msgs
-      run: sudo apt install ros-${{ matrix.ros_distro }}-geographic-msgs -y
-    - name: Install bondcpp
-      run: sudo apt install ros-${{ matrix.ros_distro }}-bondcpp -y
-    - name: Install angles
-      run: sudo apt install ros-${{ matrix.ros_distro }}-angles -y
-    - name: Install test_msgs
-      run: sudo apt install ros-${{ matrix.ros_distro }}-test-msgs -y
-    - name: Install behaviortree_cpp
-      run: sudo apt install ros-${{ matrix.ros_distro }}-behaviortree-cpp -y
-    - name: Install diagnostic_updater
-      run: sudo apt install ros-${{ matrix.ros_distro }}-diagnostic-updater -y
-    - name: Install rviz_common
-      run: sudo apt install ros-${{ matrix.ros_distro }}-rviz-common -y
-    - name: Install rviz_default_plugins
-      run: sudo apt install ros-${{ matrix.ros_distro }}-rviz-default-plugins -y
-    - name: Install ompl
-      run: sudo apt install ros-${{ matrix.ros_distro }}-ompl -y
-    - name: Install laser_geometry
-      run: sudo apt install ros-${{ matrix.ros_distro }}-laser-geometry -y
-    - name: Install cv_bridge
-      run: sudo apt install ros-${{ matrix.ros_distro }}-cv-bridge -y
-    - name: Install gazebo_ros_pkgs
-      run: sudo apt install ros-${{ matrix.ros_distro }}-gazebo-ros-pkgs -y
-    - name: Install libunwind-dev
-      run: sudo apt install libunwind-dev -y
-    - name: Install libceres-dev
-      run: sudo apt install libceres-dev -y
-    - name: Install robot_localization
-      run: sudo apt install ros-${{ matrix.ros_distro }}-robot-localization -y
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
       with:
-        import-token: ${{ secrets.GITHUB_TOKEN }}
+        package-name: "opennav_coverage_demo"
         target-ros2-distro: ${{ matrix.ros_distro }}
         vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
-        rosdep-check: true
-        package-name: "opennav_coverage_demo"
         colcon-defaults: |
           {
             "test": {
