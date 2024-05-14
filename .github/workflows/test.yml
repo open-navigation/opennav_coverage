@@ -20,10 +20,10 @@ jobs:
     steps:
     - name: checkout source
       uses: actions/checkout@v4
-    - name: run apt-get update
-      run: sudo apt-get update
-    - name: run apt-get upgrade --list-upgradable
-      run: sudo apt-get update --list-upgradeable
+    - name: run apt update
+      run: sudo apt update
+    - name: run apt --list-upgradable
+      run: sudo apt --list-upgradeable
     - name: run apt upgrade python3-rosdep
       run: sudo apt-get upgrade python3-rosdep -y
     - name: Install Cyclone DDS
@@ -98,5 +98,5 @@ jobs:
           }
     - uses: actions/upload-artifact@v1
       with:
-        name: colcon-logs
+        name: noble-colcon-logs
         path: ros_ws/log
