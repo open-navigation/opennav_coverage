@@ -21,11 +21,11 @@ jobs:
     - name: checkout source
       uses: actions/checkout@v4
     - name: run apt update
-      run: sudo apt update
-    - name: run apt --list-upgradable
-      run: sudo apt --list-upgradeable
-    - name: run apt upgrade python3-rosdep
-      run: sudo apt-get upgrade python3-rosdep -y
+      run: apt update
+    - name: run apt list --upgradable
+      run: apt list --upgradeable
+    - name: run apt upgrade python3-rosdep -y
+      run: apt upgrade python3-rosdep -y
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
     - name: Build and run tests
@@ -72,7 +72,7 @@ jobs:
     - name: run apt upgrade python3-rosdep -y
       run: apt upgrade python3-rosdep -y
     - name: Unistall python nose - uses imp not supported python3.12
-      run: pip uninstall nose
+      run: pip uninstall nose -y
       env:
         PIP_BREAK_SYSTEM_PACKAGES: 1
     - name: Install Cyclone DDS
