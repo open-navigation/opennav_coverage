@@ -71,6 +71,8 @@ jobs:
       run: sudo apt-get update --list-upgradeable
     - name: run apt upgrade python3-rosdep
       run: sudo apt-get upgrade python3-rosdep -y
+    - name: Unistall python nose - uses imp not supported python3.12
+      run: sudo pip uninstall nose
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
     - name: Build and run tests
