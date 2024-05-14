@@ -1,3 +1,4 @@
+---
 name: Test
 on:
   pull_request:
@@ -16,45 +17,46 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [rolling]
+        ros_distro: [rolling]
     steps:
-    - name: checkout source
-      uses: actions/checkout@v4
-    - name: run apt update
-      run: apt update
-    - name: run apt list --upgradable
-      run: apt list --upgradeable
-    - name: run apt upgrade python3-rosdep -y
-      run: apt upgrade python3-rosdep -y
-    - name: Install Cyclone DDS
-      run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
-    - name: Temp Rolling transition to 24.04 leaves rosdep in 22.04 in the lurch use index prior to Feb 28 2024
-      run: sed -i 's@ros/rosdistro/master@ros/rosdistro/rolling/2024-02-28@' /etc/ros/rosdep/sources.list.d/20-default.list
-    - name: Build and run tests
-      id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.3
-      with:
-        package-name: "opennav_coverage_demo"
-        target-ros2-distro: ${{ matrix.ros_distro }}
-        vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
-        colcon-defaults: |
-          {
-            "test": {
-              "packages-select": [
-                  "opennav_coverage",
-                  "opennav_coverage_bt",
-                  "opennav_row_coverage",
-                  "opennav_coverage_navigator",
-                  "opennav_coverage_demo"
-              ]
+      - name: checkout source
+        uses: actions/checkout@v4
+      - name: run apt update
+        run: apt update
+      - name: run apt list --upgradable
+        run: apt list --upgradeable
+      - name: run apt upgrade python3-rosdep -y
+        run: apt upgrade python3-rosdep -y
+      - name: Install Cyclone DDS
+        run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
+      - name: Temp Rolling transition to 24.04 leaves rosdep in 22.04 in the lurch use index prior to Feb 28 2024
+        run: |
+          sed -i 's@ros/rosdistro/master@ros/rosdistro/rolling/2024-02-28@' /etc/ros/rosdep/sources.list.d/20-default.list
+      - name: Build and run tests
+        id: action-ros-ci
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          package-name: "opennav_coverage_demo"
+          target-ros2-distro: ${{ matrix.ros_distro }}
+          vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+          colcon-defaults: |
+            {
+              "test": {
+                "packages-select": [
+                    "opennav_coverage",
+                    "opennav_coverage_bt",
+                    "opennav_row_coverage",
+                    "opennav_coverage_navigator",
+                    "opennav_coverage_demo"
+                ]
+              }
             }
-          }
-       env:
-         ROSDISTRO_INDEX_URL: https://raw.githubusercontent.com/ros/rosdistro/rolling/2024-02-28/index-v4.yaml
-    - uses: actions/upload-artifact@v1
-      with:
-        name: colcon-logs
-        path: ros_ws/log
+        env:
+          ROSDISTRO_INDEX_URL: https://raw.githubusercontent.com/ros/rosdistro/rolling/2024-02-28/index-v4.yaml
+      - uses: actions/upload-artifact@v1
+        with:
+          name: colcon-logs
+          path: ros_ws/log
   noble_rolling:
     runs-on: ubuntu-latest
     env:
@@ -65,42 +67,42 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [rolling]
+        ros_distro: [rolling]
     steps:
-    - name: checkout source
-      uses: actions/checkout@v4
-    - name: run apt update
-      run: apt update
-    - name: run apt list --upgradable
-      run: apt list --upgradeable
-    - name: run apt upgrade python3-rosdep -y
-      run: apt upgrade python3-rosdep -y
-    - name: Unistall python nose - uses imp not supported python3.12
-      run: pip uninstall nose -y
-      env:
-        PIP_BREAK_SYSTEM_PACKAGES: 1
-    - name: Install Cyclone DDS
-      run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
-    - name: Build and run tests
-      id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.3
-      with:
-        package-name: "opennav_coverage_demo"
-        target-ros2-distro: ${{ matrix.ros_distro }}
-        vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
-        colcon-defaults: |
-          {
-            "test": {
-              "packages-select": [
-                  "opennav_coverage",
-                  "opennav_coverage_bt",
-                  "opennav_row_coverage",
-                  "opennav_coverage_navigator",
-                  "opennav_coverage_demo"
-              ]
+      - name: checkout source
+        uses: actions/checkout@v4
+      - name: run apt update
+        run: apt update
+      - name: run apt list --upgradable
+        run: apt list --upgradeable
+      - name: run apt upgrade python3-rosdep -y
+        run: apt upgrade python3-rosdep -y
+      - name: Unistall python nose - uses imp not supported python3.12
+        run: pip uninstall nose -y
+        env:
+          PIP_BREAK_SYSTEM_PACKAGES: 1
+      - name: Install Cyclone DDS
+        run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
+      - name: Build and run tests
+        id: action-ros-ci
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          package-name: "opennav_coverage_demo"
+          target-ros2-distro: ${{ matrix.ros_distro }}
+          vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+          colcon-defaults: |
+            {
+              "test": {
+                "packages-select": [
+                    "opennav_coverage",
+                    "opennav_coverage_bt",
+                    "opennav_row_coverage",
+                    "opennav_coverage_navigator",
+                    "opennav_coverage_demo"
+                ]
+              }
             }
-          }
-    - uses: actions/upload-artifact@v1
-      with:
-        name: noble-colcon-logs
-        path: ros_ws/log
+      - uses: actions/upload-artifact@v1
+        with:
+          name: noble-colcon-logs
+          path: ros_ws/log
