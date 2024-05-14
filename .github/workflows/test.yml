@@ -29,7 +29,7 @@ jobs:
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
     - name: Temp: Rolling transition to 24.04 leaves rosdep in 22.04 in the lurch use index prior to Feb 28, 2024
-      run: sed -i "s|ros\/rosdistro\/master|ros\/rosdistro\/rolling\/2024-02-28|" /etc/ros/rosdep/sources.list.d/20-default.list
+      run: sed -i 's|ros\/rosdistro\/master|ros\/rosdistro\/rolling\/2024-02-28|' /etc/ros/rosdep/sources.list.d/20-default.list
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
