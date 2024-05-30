@@ -1,9 +1,9 @@
 repositories:
-  Fields2Cover:
-    type: git
-    url: https://github.com/aosmw/Fields2Cover.git
-    version: feature/mw/ros2_build
   navigation2:
     type: git
     url: https://github.com/ros-planning/navigation2.git
     version: main
+  #Fields2Cover:
+  #  type: git
+  #  url: https://github.com/aosmw/Fields2Cover.git
+  #  version: main
