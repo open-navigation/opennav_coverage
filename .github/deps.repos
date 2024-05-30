@@ -7,3 +7,7 @@ repositories:
     type: git
     url: https://github.com/Fields2Cover/Fields2Cover.git
     version: main
+  ortools_vendor:
+    type: git
+    url: https://github.com/Fields2Cover/ortools_vendor.git
+    version: main
