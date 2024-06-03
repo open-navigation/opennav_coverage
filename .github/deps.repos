@@ -1,9 +1,9 @@
 repositories:
   navigation2:
     type: git
-    url: https://github.com/ros-planning/navigation2.git
+    url: https://github.com/ros-navigation/navigation2.git
     version: main
-  #Fields2Cover:
-  #  type: git
-  #  url: https://github.com/aosmw/Fields2Cover.git
-  #  version: main
+  fields2cover:
+    type: git
+    url: https://github.com/Fields2Cover/Fields2Cover.git
+    version: main
