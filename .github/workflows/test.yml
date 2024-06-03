@@ -18,6 +18,10 @@ jobs:
       matrix:
         ros_distro: [rolling]
     steps:
+      - name: Install node
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install nodejs
       - name: checkout source
         uses: actions/checkout@v4
       - name: Build and run tests
