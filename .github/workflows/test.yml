@@ -18,10 +18,13 @@ jobs:
       matrix:
         ros_distro: [rolling]
     steps:
-      - name: Install node
+      - name: Install node, libunwind-dev, libgoogle-glog-dev
         run: |
           sudo apt-get update
           sudo apt-get -y install nodejs
+          sudo apt-get -y install libunwind-dev
+          sudo apt-get -y install libgoogle-glog-dev
+          sudo apt-get -y install libceres-dev
       - name: checkout source
         uses: actions/checkout@v4
       - name: Build and run tests
