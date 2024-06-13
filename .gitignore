@@ -54,3 +54,6 @@ cmake-build-debug/
 
 # doxygen docs
 doc/html/
+
+#Vim
+*.swp
