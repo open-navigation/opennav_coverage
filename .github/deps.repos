@@ -5,9 +5,9 @@ repositories:
     version: main
   fields2cover:
     type: git
-    url: https://github.com/Fields2Cover/Fields2Cover.git
-    version: main
+    url: https://github.com/aosmw/Fields2Cover.git
+    version: 9c3c352ba1dc71f3f48706c298b82cd4641e536e
   ortools_vendor:
     type: git
     url: https://github.com/Fields2Cover/ortools_vendor.git
-    version: main
+    version: c28f53e50164645fa8cee0a7a307061ac6f83aa7
