@@ -19,9 +19,9 @@
          'polygons="{field_polygon}" polygons_frame_id="{polygon_frame_id}"' if set polygon via NavigateCompleteCoverage
          or file_field="{field_filepath}" if setting polygon file via NavigateCompleteCoverage -->
         <ComputeCoveragePath nav_path="{path}" polygons="{field_polygon}" polygons_frame_id="{polygon_frame_id}" error_code_id="{compute_coverage_error_code}"/>
-        <GetPoseFromPath path="{path}" pose="{startPose}" index="0" />
-        <ComputePathToPose goal="{startPose}" path="{pathToStart}" planner_id="GridBased" error_code_id="{compute_path_error_code}"/>
-        <FollowPath path="{pathToStart}" controller_id="FollowPath" error_code_id="{follow_path_error_code}"/>
+        <GetPoseFromPath path="{path}" pose="{start_pose}" index="0" />
+        <ComputePathToPose goal="{start_pose}" path="{path_to_start}" planner_id="GridBased" error_code_id="{compute_path_error_code}"/>
+        <FollowPath path="{path_to_start}" controller_id="FollowPath" error_code_id="{follow_path_error_code}"/>
         <FollowPath path="{path}" controller_id="FollowPath" error_code_id="{follow_path_error_code}"/>
       </Sequence>
     </RateController>
