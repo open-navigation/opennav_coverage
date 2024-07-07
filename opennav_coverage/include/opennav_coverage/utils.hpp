@@ -128,7 +128,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   msg.swaths_ordered = true;
   msg.header = header;
 
-  if (raw_path.states.size() == 0) {
+  if (raw_path.size() == 0) {
     return msg;
   }
 
@@ -142,54 +142,55 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
     path.moveTo(field.getRefPoint());
   }
 
-  PathSectionType curr_state = path.states[0].type;
-  if (curr_state == PathSectionType::SWATH) {
-    curr_swath_start = path.states[0].point;
-  } else if (curr_state == PathSectionType::TURN) {
+  PathSectionType curr_section_type = path.getState(0).type;
+  if (curr_section_type == PathSectionType::SWATH) {
+    curr_swath_start = path.getState(0).point;
+  } else if (curr_section_type == PathSectionType::TURN) {
     msg.turns.push_back(nav_msgs::msg::Path());
     msg.turns.back().header = header;
     curr_turn = &msg.turns.back();
   }
 
-  for (unsigned int i = 0; i != path.states.size(); i++) {
-    if (curr_state == path.states[i].type && path.states[i].type == PathSectionType::SWATH) {
+  for (unsigned int i = 0; i != path.size(); i++) {
+    auto idx_type = path.getState(i).type;
+    if (curr_section_type == idx_type && idx_type == PathSectionType::SWATH) {
       // Continuing swath so...
       // (1) no action required.
-    } else if (curr_state == path.states[i].type && path.states[i].type == PathSectionType::TURN) {
+    } else if (curr_section_type == idx_type && idx_type == PathSectionType::TURN) {
       // Continuing a turn so...
       // (1) keep populating
-      curr_turn->poses.push_back(toMsg(path.states[i]));
-    } else if (curr_state != path.states[i].type && path.states[i].type == PathSectionType::TURN) {
+      curr_turn->poses.push_back(toMsg(path.getState(i)));
+    } else if (curr_section_type != idx_type && idx_type == PathSectionType::TURN) {
       // Transitioning from a swath to a turn so...
       // (1) Complete the existing swath
       opennav_coverage_msgs::msg::Swath swath;
       swath.start = toMsg(curr_swath_start);
-      swath.end = toMsg(path.states[i - 1].point);
+      swath.end = toMsg(path.getState(i - 1).point);
       msg.swaths.push_back(swath);
       // (2) Start a new turn path
       msg.turns.push_back(nav_msgs::msg::Path());
       msg.turns.back().header = header;
       curr_turn = &msg.turns.back();
-      curr_turn->poses.push_back(toMsg(path.states[i]));
-    } else if (curr_state != path.states[i].type && path.states[i].type == PathSectionType::SWATH) {
+      curr_turn->poses.push_back(toMsg(path.getState(i)));
+    } else if (curr_section_type != idx_type && idx_type == PathSectionType::SWATH) {
       // Transitioning from a turn to a swath so...
       // (1) Update new swath starting point
-      curr_swath_start = path.states[i].point;
+      curr_swath_start = path.getState(i).point;
     }
 
-    curr_state = path.states[i].type;
+    curr_section_type = idx_type;
 
-    if (path.states[i].type != PathSectionType::SWATH &&
-      path.states[i].type != PathSectionType::TURN)
+    if (idx_type != PathSectionType::SWATH &&
+      idx_type != PathSectionType::TURN)
     {
       throw std::runtime_error("Unknown type of path state detected, cannot obtain path!");
     }
   }
 
-  if (curr_state == PathSectionType::SWATH) {
+  if (curr_section_type == PathSectionType::SWATH) {
     opennav_coverage_msgs::msg::Swath swath;
     swath.start = toMsg(curr_swath_start);
-    swath.end = toMsg(path.states.back().point);
+    swath.end = toMsg(path.back().point);
     msg.swaths.push_back(swath);
   }
 
@@ -215,7 +216,7 @@ inline nav_msgs::msg::Path toNavPathMsg(
   nav_msgs::msg::Path msg;
   msg.header = header;
 
-  if (raw_path.states.size() == 0) {
+  if (raw_path.size() == 0) {
     return msg;
   }
 
@@ -226,15 +227,15 @@ inline nav_msgs::msg::Path toNavPathMsg(
     path.moveTo(field.getRefPoint());
   }
 
-  for (unsigned int i = 0; i != path.states.size(); i++) {
+  for (unsigned int i = 0; i != path.size(); i++) {
     // Swaths come in pairs of start-end sequentially
-    if (i > 0 && path.states[i].type == PathSectionType::SWATH &&
-      path.states[i - 1].type == PathSectionType::SWATH)
+    if (i > 0 && path.getState(i).type == PathSectionType::SWATH &&
+      path.getState(i - 1).type == PathSectionType::SWATH)
     {
-      const float & x0 = path.states[i - 1].point.getX();
-      const float & y0 = path.states[i - 1].point.getY();
-      const float & x1 = path.states[i].point.getX();
-      const float & y1 = path.states[i].point.getY();
+      const float & x0 = path.getState(i - 1).point.getX();
+      const float & y0 = path.getState(i - 1).point.getY();
+      const float & x1 = path.getState(i).point.getX();
+      const float & y1 = path.getState(i).point.getY();
 
       const float dist = hypotf(x1 - x0, y1 - y0);
       const float ux = (x1 - x0) / dist;
@@ -243,10 +244,10 @@ inline nav_msgs::msg::Path toNavPathMsg(
 
       geometry_msgs::msg::PoseStamped pose;
       pose.pose.orientation =
-        nav2_util::geometry_utils::orientationAroundZAxis(path.states[i].angle);
+        nav2_util::geometry_utils::orientationAroundZAxis(path.getState(i).angle);
       pose.pose.position.x = x0;
       pose.pose.position.y = y0;
-      pose.pose.position.z = path.states[i].point.getZ();
+      pose.pose.position.z = path.getState(i).point.getZ();
 
       while (curr_dist < dist) {
         pose.pose.position.x += pt_dist * ux;
@@ -256,7 +257,7 @@ inline nav_msgs::msg::Path toNavPathMsg(
       }
     } else {
       // Turns are already dense paths
-      msg.poses.push_back(toMsg(path.states[i]));
+      msg.poses.push_back(toMsg(path.getState(i)));
     }
   }
 

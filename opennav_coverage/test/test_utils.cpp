@@ -105,12 +105,15 @@ TEST(UtilsTests, TesttoNavPathMsg)
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
-  path_in.states.resize(10);
+  path_in.getStates().resize(10);
+  EXPECT_EQ(path_in.size(), 10u);
   F2CField field;
 
   auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1);
   EXPECT_EQ(msg.header.frame_id, "test");
-  EXPECT_EQ(msg.poses.size(), 10u);
+
+  // Path goes nowhere so compressed into a dense path
+  EXPECT_EQ(msg.poses.size(), 1u);
 }
 
 TEST(UtilsTests, TesttoCoveragePathMsg2)
@@ -126,38 +129,39 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   EXPECT_EQ(msg.contains_turns, true);
   EXPECT_EQ(msg.swaths_ordered, true);
 
-  // states are not valid (e.g. non-marked as turn or swath)
-  path_in.states.resize(10);
-  EXPECT_THROW(util::toCoveragePathMsg(path_in, field, header_in, true), std::runtime_error);
+  // states are initalised as a valid swath
+  path_in.getStates().resize(10);
+  msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+  util::toCoveragePathMsg(path_in, field, header_in, true);
 
   // Now lets make it valid
   using f2c::types::PathSectionType;
-  path_in.states[0].type = PathSectionType::SWATH;
-  path_in.states[1].type = PathSectionType::SWATH;
-  path_in.states[2].type = PathSectionType::TURN;
-  path_in.states[3].type = PathSectionType::TURN;
-  path_in.states[4].type = PathSectionType::SWATH;
-  path_in.states[5].type = PathSectionType::SWATH;
-  path_in.states[6].type = PathSectionType::TURN;
-  path_in.states[7].type = PathSectionType::TURN;
-  path_in.states[8].type = PathSectionType::SWATH;
-  path_in.states[9].type = PathSectionType::SWATH;
+  path_in.getState(0).type = PathSectionType::SWATH;
+  path_in.getState(1).type = PathSectionType::SWATH;
+  path_in.getState(2).type = PathSectionType::TURN;
+  path_in.getState(3).type = PathSectionType::TURN;
+  path_in.getState(4).type = PathSectionType::SWATH;
+  path_in.getState(5).type = PathSectionType::SWATH;
+  path_in.getState(6).type = PathSectionType::TURN;
+  path_in.getState(7).type = PathSectionType::TURN;
+  path_in.getState(8).type = PathSectionType::SWATH;
+  path_in.getState(9).type = PathSectionType::SWATH;
 
   msg = util::toCoveragePathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.swaths.size(), 3u);
   EXPECT_EQ(msg.turns.size(), 2u);
   EXPECT_EQ(msg.turns[0].poses.size(), 2u);
 
-  path_in.states[0].type = PathSectionType::TURN;
-  path_in.states[1].type = PathSectionType::TURN;
-  path_in.states[2].type = PathSectionType::SWATH;
-  path_in.states[3].type = PathSectionType::SWATH;
-  path_in.states[4].type = PathSectionType::TURN;
-  path_in.states[5].type = PathSectionType::TURN;
-  path_in.states[6].type = PathSectionType::SWATH;
-  path_in.states[7].type = PathSectionType::SWATH;
-  path_in.states[8].type = PathSectionType::TURN;
-  path_in.states[9].type = PathSectionType::TURN;
+  path_in.getState(0).type = PathSectionType::TURN;
+  path_in.getState(1).type = PathSectionType::TURN;
+  path_in.getState(2).type = PathSectionType::SWATH;
+  path_in.getState(3).type = PathSectionType::SWATH;
+  path_in.getState(4).type = PathSectionType::TURN;
+  path_in.getState(5).type = PathSectionType::TURN;
+  path_in.getState(6).type = PathSectionType::SWATH;
+  path_in.getState(7).type = PathSectionType::SWATH;
+  path_in.getState(8).type = PathSectionType::TURN;
+  path_in.getState(9).type = PathSectionType::TURN;
 
   msg = util::toCoveragePathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.swaths.size(), 2u);
@@ -181,7 +185,7 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   // Should work now, with a trivial polygon of 3 nodes of (0, 0)
   goal->polygons[0].coordinates[2].axis1 = 0.0;
   auto field = util::getFieldFromGoal(goal);
-  EXPECT_EQ(field.field.getGeometry(0).getGeometry(0).size(), 3u);
+  EXPECT_EQ(field.getField().getGeometry(0).getGeometry(0).size(), 3u);
 
   // Test with inner polygons, first invalid
   goal->polygons.resize(2);
@@ -193,7 +197,7 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   goal->polygons[0].coordinates[0].axis1 = 0.0;
   goal->polygons[1].coordinates[0].axis1 = 1.0;
   auto field2 = util::getFieldFromGoal(goal);
-  EXPECT_EQ(field2.field.getGeometry(0).getGeometry(1).size(), 3u);
+  EXPECT_EQ(field2.getField().getGeometry(0).getGeometry(1).size(), 3u);
 }
 
 TEST(UtilsTests, TestPathComponentsIterator)

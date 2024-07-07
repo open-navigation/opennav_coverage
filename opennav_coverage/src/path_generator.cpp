@@ -26,17 +26,16 @@ Path PathGenerator::generatePath(
   PathType action_type = toType(settings.mode);
   PathContinuityType action_continuity_type = toContinuityType(settings.continuity_mode);
   std::shared_ptr<f2c::pp::TurningBase> curve{nullptr};
-  float turn_point_distance;
 
   // If not set by action, use default mode
   if (action_type == PathType::UNKNOWN || action_continuity_type == PathContinuityType::UNKNOWN) {
     action_type = default_type_;
     action_continuity_type = default_continuity_type_;
     curve = default_curve_;
-    turn_point_distance = default_turn_point_distance_;
+    curve->setDiscretization(default_turn_point_distance_);
   } else {
     curve = createCurve(action_type, action_continuity_type);
-    turn_point_distance = settings.turn_point_distance;
+    curve->setDiscretization(settings.turn_point_distance);
   }
 
   if (!curve) {
@@ -46,8 +45,7 @@ Path PathGenerator::generatePath(
   RCLCPP_DEBUG(
     logger_,
     "Generating path with curve: %s", toString(action_type, action_continuity_type).c_str());
-  generator_->turn_point_dist = turn_point_distance;
-  return generator_->searchBestPath(robot_params_->getRobot(), swaths, *curve);
+  return generator_->planPath(robot_params_->getRobot(), swaths, *curve);
 }
 
 void PathGenerator::setPathMode(const std::string & new_mode)

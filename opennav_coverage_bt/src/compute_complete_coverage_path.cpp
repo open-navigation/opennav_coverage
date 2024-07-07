@@ -46,6 +46,7 @@ void ComputeCoveragePathAction::on_tick()
     // Convert from vector of Polygons to coverage sp. message
     std::vector<geometry_msgs::msg::Polygon> polys;
     getInput("polygons", polys);
+    goal_.polygons.clear();
     goal_.polygons.resize(polys.size());
     for (unsigned int i = 0; i != polys.size(); i++) {
       for (unsigned int j = 0; j != polys[i].points.size(); j++) {
@@ -98,7 +99,7 @@ void ComputeCoveragePathAction::halt()
 
 }  // namespace opennav_coverage_bt
 
-#include "behaviortree_cpp_v3/bt_factory.h"
+#include "behaviortree_cpp/bt_factory.h"
 BT_REGISTER_NODES(factory)
 {
   BT::NodeBuilder builder =

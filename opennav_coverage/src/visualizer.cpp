@@ -46,6 +46,7 @@ void Visualizer::visualize(
     for (unsigned int i = 0; i != utm_path->poses.size(); i++) {
       utm_path->poses[i].pose.position.x += ref_pt.getX();
       utm_path->poses[i].pose.position.y += ref_pt.getY();
+      utm_path->poses[i].header.frame_id = GLOBAL_FRAME;
     }
     nav_plan_pub_->publish(std::move(utm_path));
   }

@@ -16,7 +16,7 @@
 #define OPENNAV_COVERAGE_BT__UTILS_HPP_
 
 #include <charconv>
-#include "behaviortree_cpp_v3/behavior_tree.h"
+#include "behaviortree_cpp/behavior_tree.h"
 
 namespace BT
 {

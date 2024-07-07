@@ -180,7 +180,7 @@ void RowCoverageServer::computeCoveragePath()
     // (0) Obtain field and rows to use
     F2CField master_field = f2c::Parser::importFieldGml(goal->gml_field, true);
     Rows rows = util::parseRows(goal->gml_field, order_ids_);
-    std::string frame_id = master_field.coord_sys;
+    std::string frame_id = master_field.getCRS();
 
     if (!cartesian_frame_) {
       f2c::Transform::transformToUTM(master_field);
@@ -188,7 +188,7 @@ void RowCoverageServer::computeCoveragePath()
     } else {
       rows = util::removeRowsRefPoint(rows, master_field);
     }
-    Field field = master_field.field.getGeometry(0);
+    Field field = master_field.getField().getGeometry(0);
 
     RCLCPP_INFO(
       get_logger(),
@@ -263,10 +263,10 @@ RowCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> para
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
-        robot.robot_width = parameter.as_double();
+        robot.setWidth(parameter.as_double());
       } else if (name == "operation_width") {
         auto & robot = robot_params_->getRobot();
-        robot.op_width = parameter.as_double();
+        robot.setCovWidth(parameter.as_double());
       } else if (name == "default_offset") {
         swath_gen_->setOffset(parameter.as_double());
       }

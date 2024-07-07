@@ -63,10 +63,12 @@ def generate_launch_description():
             '-R', '0.0', '-P', '0.0', '-Y', '0.0'])
 
     # start the visualization
+    rviz_config = os.path.join(coverage_demo_dir, 'opennav_coverage_demo.rviz')
+    # print("rviz_config:", rviz_config)
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav2_bringup_dir, 'launch', 'rviz_launch.py')),
-        launch_arguments={'namespace': ''}.items())
+        launch_arguments={'namespace': '', 'rviz_config': rviz_config}.items())
 
     # start navigation
     bringup_cmd = IncludeLaunchDescription(
