@@ -25,6 +25,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     coverage_demo_dir = get_package_share_directory('opennav_coverage_demo')
+    rviz_config_file = os.path.join(coverage_demo_dir, "rviz_config.rviz")
 
     world = os.path.join(coverage_demo_dir, 'blank.world')
     param_file_path = os.path.join(coverage_demo_dir, 'demo_params.yaml')
@@ -66,7 +67,7 @@ def generate_launch_description():
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav2_bringup_dir, 'launch', 'rviz_launch.py')),
-        launch_arguments={'namespace': ''}.items())
+        launch_arguments={'namespace': '','rviz_config': rviz_config_file}.items())
 
     # start navigation
     bringup_cmd = IncludeLaunchDescription(
