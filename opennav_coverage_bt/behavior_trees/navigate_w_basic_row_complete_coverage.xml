@@ -11,7 +11,7 @@
   This BT shows field file usage with the row coverage server
 -->
 
-<root main_tree_to_execute="MainTree">
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <RateController hz="0.0000001"> <!-- once, for demo -->
       <Sequence name="NavigateWithoutReplanning">
