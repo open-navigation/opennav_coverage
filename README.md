@@ -6,6 +6,8 @@ This capability was created by [Open Navigation LLC](https://www.opennav.org/) i
 
 ![BonsaixOpenNavigation](https://github.com/ros-planning/navigation2/assets/14944147/b5c23851-0694-4b87-b5ab-fb7c957413f4)
 
+**⚠️ Need ROS 2, Nav2 help or support? Contact [Open Navigation](https://www.opennav.org/)! ⚠️**
+
 This server exposes all of the features of Fields2Cover as a Lifecycle-Component Nav2 Task Server like all others within the Nav2 Framework, so it should feel very familiar to those using Nav2 already. The server is split into modular stages with factories and enum types for all known options which can be easily expanded up over time scalably. It even could be expanded to include custom coverage capabilities separate of F2C if desired. This capability is split into 5 packages:
 
 - `opennav_coverage`: Contains the main Nav2 Task Server. Given a **field polygon**, computes swaths, routes, and paths. Best of 'open field' applications with regular rows desired.
