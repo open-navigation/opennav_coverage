@@ -17,7 +17,7 @@
 #include <set>
 #include <string>
 
-#include "behaviortree_cpp_v3/bt_factory.h"
+#include "behaviortree_cpp/bt_factory.h"
 
 #include "nav2_behavior_tree/utils/test_action_server.hpp"
 #include "opennav_coverage_bt/cancel_complete_coverage_path.hpp"
@@ -125,7 +125,7 @@ TEST_F(CancelCoverageActionTestFixture, test_ports)
 {
   std::string xml_txt =
     R"(
-      <root main_tree_to_execute = "MainTree" >
+      <root BTCPP_format="4" main_tree_to_execute="MainTree" >
         <BehaviorTree ID="MainTree">
              <CancelCoverage name="CoverageCancel"/>
         </BehaviorTree>
