@@ -32,6 +32,8 @@ Have pre-annotated rows due to physical constraints and want to still compute th
 
 PS: Click on either image to see the demo videos! :-)
 
+https://github.com/user-attachments/assets/e44d8f10-c5b0-4345-81ad-25f3bcd06030
+
 ## Interfaces
 
 The two main interfaces are `NavigateCompleteCoverage` and `ComputeCoveragePath`. The first is the action definition to request the BT Navigator's `CoverageNavigator` plugin to navigate usign a Complete Coverage task input. The latter is an analog to the `PlannerServer`'s action definition for computing Complete Coverage paths using the `opennav_coverage` action server. See `opennav_coverage_msgs` for complete details.
