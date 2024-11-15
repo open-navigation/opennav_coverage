@@ -20,7 +20,7 @@
 #include "nav_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 
-#include "behaviortree_cpp_v3/bt_factory.h"
+#include "behaviortree_cpp/bt_factory.h"
 
 #include "nav2_behavior_tree/utils/test_action_server.hpp"
 #include "opennav_coverage_bt/compute_complete_coverage_path.hpp"
@@ -123,7 +123,7 @@ TEST_F(ComputeCoveragePathActionTestFixture, test_tick)
   // create tree
   std::string xml_txt =
     R"(
-      <root main_tree_to_execute = "MainTree" >
+      <root BTCPP_format="4" main_tree_to_execute="MainTree" >
         <BehaviorTree ID="MainTree">
             <ComputeCoveragePath nav_path="{path}"/>
         </BehaviorTree>
@@ -141,13 +141,13 @@ TEST_F(ComputeCoveragePathActionTestFixture, test_tick)
 
   // check if returned path is correct
   nav_msgs::msg::Path path;
-  config_->blackboard->get<nav_msgs::msg::Path>("path", path);
+  [[maybe_unused]] auto res = config_->blackboard->get("path", path);
   EXPECT_EQ(path.poses.size(), 2u);
   EXPECT_EQ(path.poses[0].pose.position.x, 0.0);
   EXPECT_EQ(path.poses[1].pose.position.x, 1.0);
 
   // halt node so another goal can be sent
-  tree_->rootNode()->halt();
+  tree_->haltTree();
   EXPECT_EQ(tree_->rootNode()->status(), BT::NodeStatus::IDLE);
 }
 

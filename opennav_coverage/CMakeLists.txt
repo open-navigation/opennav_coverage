@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(opennav_coverage)
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
@@ -42,6 +43,7 @@ set(dependencies
   builtin_interfaces
   tf2_ros
   opennav_coverage_msgs
+  ament_index_cpp
 )
 
 add_library(${library_name} SHARED

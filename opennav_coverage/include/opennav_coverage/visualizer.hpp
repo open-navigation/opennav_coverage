@@ -46,16 +46,16 @@ public:
   {
     nav_plan_pub_ = rclcpp::create_publisher<nav_msgs::msg::Path>(
       node->get_node_topics_interface(),
-      "coverage_server/coverage_plan", rclcpp::QoS(1));
+      "coverage_server/coverage_plan", rclcpp::QoS(1).transient_local());
     headlands_pub_ = rclcpp::create_publisher<geometry_msgs::msg::PolygonStamped>(
       node->get_node_topics_interface(),
-      "coverage_server/field_boundary", rclcpp::QoS(1));
+      "coverage_server/field_boundary", rclcpp::QoS(1).transient_local());
     planning_field_pub_ = rclcpp::create_publisher<geometry_msgs::msg::PolygonStamped>(
       node->get_node_topics_interface(),
-      "coverage_server/planning_field", rclcpp::QoS(1));
+      "coverage_server/planning_field", rclcpp::QoS(1).transient_local());
     swaths_pub_ = rclcpp::create_publisher<visualization_msgs::msg::Marker>(
       node->get_node_topics_interface(),
-      "coverage_server/swaths", rclcpp::QoS(1));
+      "coverage_server/swaths", rclcpp::QoS(1).transient_local());
   }
 
   void deactivate();

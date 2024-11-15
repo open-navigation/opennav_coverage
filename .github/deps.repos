@@ -3,3 +3,7 @@ repositories:
     type: git
     url: https://github.com/Fields2Cover/Fields2Cover.git
     version: main
+  navigation2:
+    type: git
+    url: https://github.com/ros-planning/navigation2/
+    version: main
