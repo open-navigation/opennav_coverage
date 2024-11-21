@@ -50,7 +50,7 @@ RowCoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
     node, "order_ids", rclcpp::ParameterValue(true));
   get_parameter("order_ids", order_ids_);
 
-  double action_server_result_timeout;
+  double action_server_result_timeout = 10.0;
   nav2_util::declare_parameter_if_not_declared(
     node, "action_server_result_timeout", rclcpp::ParameterValue(10.0));
   get_parameter("action_server_result_timeout", action_server_result_timeout);
