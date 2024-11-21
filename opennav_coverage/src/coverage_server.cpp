@@ -46,7 +46,7 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
     node, "coordinates_in_cartesian_frame", rclcpp::ParameterValue(true));
   get_parameter("coordinates_in_cartesian_frame", cartesian_frame_);
 
-  double action_server_result_timeout;
+  double action_server_result_timeout = 10.0;
   nav2_util::declare_parameter_if_not_declared(
     node, "action_server_result_timeout", rclcpp::ParameterValue(10.0));
   get_parameter("action_server_result_timeout", action_server_result_timeout);
