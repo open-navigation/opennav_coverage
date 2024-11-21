@@ -17,6 +17,8 @@
   <depend>opennav_row_coverage</depend>
   <depend>opennav_coverage_navigator</depend>
 
+  <exec_depend>nav2_minimal_tb3_sim</exec_depend>
+
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_lint_auto</test_depend>
 
