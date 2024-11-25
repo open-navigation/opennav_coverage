@@ -17,7 +17,12 @@ import tempfile
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, OpaqueFunction, RegisterEventHandler
+from launch.actions import (
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
 from launch.event_handlers import OnShutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -27,18 +32,18 @@ def generate_launch_description():
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     coverage_demo_dir = get_package_share_directory('opennav_coverage_demo')
     rviz_config_file = os.path.join(coverage_demo_dir, 'rviz_config.rviz')
-    sim_dir = get_package_share_directory("nav2_minimal_tb3_sim")
+    sim_dir = get_package_share_directory('nav2_minimal_tb3_sim')
 
     world = os.path.join(coverage_demo_dir, 'blank.world')
     param_file_path = os.path.join(coverage_demo_dir, 'demo_params.yaml')
-    robot_sdf = os.path.join(sim_dir, "urdf", "gz_waffle.sdf.xacro")
+    robot_sdf = os.path.join(sim_dir, 'urdf', 'gz_waffle.sdf.xacro')
 
     # start the simulation
-    world_sdf = tempfile.mktemp(prefix="nav2_", suffix=".sdf")
-    world_sdf_xacro = ExecuteProcess(cmd=["xacro", "-o", world_sdf, "headless:=false", world])
+    world_sdf = tempfile.mktemp(prefix='nav2_', suffix='.sdf')
+    world_sdf_xacro = ExecuteProcess(cmd=['xacro', '-o', world_sdf, 'headless:=false', world])
     gazebo_server = ExecuteProcess(
-        cmd=["gz", "sim", "-r", "-s", world_sdf],
-        output="screen",
+        cmd=['gz', 'sim', '-r', '-s', world_sdf],
+        output='screen',
     )
 
     urdf = os.path.join(sim_dir, 'urdf', 'turtlebot3_waffle.urdf')
@@ -50,58 +55,64 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        parameters=[{'use_sim_time': True,
-                     'robot_description': robot_description}])
+        parameters=[{'use_sim_time': True, 'robot_description': robot_description}],
+    )
 
     remove_temp_sdf_file = RegisterEventHandler(
-        event_handler=OnShutdown(on_shutdown=[OpaqueFunction(function=lambda _: os.remove(world_sdf))])
+        event_handler=OnShutdown(
+            on_shutdown=[OpaqueFunction(function=lambda _: os.remove(world_sdf))]
+        )
     )
 
     gazebo_client = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory("ros_gz_sim"), "launch", "gz_sim.launch.py")
+            os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
         ),
-        launch_arguments={"gz_args": ["-v4 -g "]}.items(),
+        launch_arguments={'gz_args': ['-v4 -g ']}.items(),
     )
 
     start_gazebo_spawner_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(sim_dir, 'launch', 'spawn_tb3.launch.py')),
-        launch_arguments={'namespace': '',
-                          'robot_name': 'turtlebot3_waffle',
-                          'robot_sdf': robot_sdf,
-                          'x_pose': str(5.0),
-                          'y_pose': str(5.0),
-                          'z_pose': str(0.1),
-                          'roll': str(0.0),
-                          'pitch': str(0.0),
-                          'yaw': str(0.0)}.items())
+        PythonLaunchDescriptionSource(os.path.join(sim_dir, 'launch', 'spawn_tb3.launch.py')),
+        launch_arguments={
+            'namespace': '',
+            'robot_name': 'turtlebot3_waffle',
+            'robot_sdf': robot_sdf,
+            'x_pose': str(5.0),
+            'y_pose': str(5.0),
+            'z_pose': str(0.1),
+            'roll': str(0.0),
+            'pitch': str(0.0),
+            'yaw': str(0.0),
+        }.items(),
+    )
 
     # start the visualization
     rviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(nav2_bringup_dir, 'launch', 'rviz_launch.py')),
-        launch_arguments={'namespace': '', 'rviz_config': rviz_config_file}.items())
+        PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'rviz_launch.py')),
+        launch_arguments={'namespace': '', 'rviz_config': rviz_config_file}.items(),
+    )
 
     # start navigation
     bringup_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(coverage_demo_dir, 'bringup_launch.py')),
-        launch_arguments={'params_file': param_file_path}.items())
+        PythonLaunchDescriptionSource(os.path.join(coverage_demo_dir, 'bringup_launch.py')),
+        launch_arguments={'params_file': param_file_path}.items(),
+    )
 
     # world->odom transform, no localization. For visualization & controller transform
     fake_localization_cmd = Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            output='screen',
-            arguments=['5.0', '5.0', '0', '0', '0', '0', 'map', 'odom'])
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        output='screen',
+        arguments=['5.0', '5.0', '0', '0', '0', '0', 'map', 'odom'],
+    )
 
     # start the demo task
     demo_cmd = Node(
         package='opennav_coverage_demo',
         executable='demo_coverage',
         emulate_tty=True,
-        output='screen')
+        output='screen',
+    )
 
     ld = LaunchDescription()
     ld.add_action(world_sdf_xacro)
