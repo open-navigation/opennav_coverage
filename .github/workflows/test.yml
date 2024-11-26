@@ -12,11 +12,11 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     container:
-      image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+      image: rostooling/setup-ros-docker:ubuntu-noble-latest
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [iron]
+          ros_distro: [jazzy]
     steps:
     - uses: actions/checkout@v2
     - name: Install Cyclone DDS
