@@ -123,7 +123,7 @@ TEST_F(ComputeCoveragePathActionTestFixture, test_tick)
   // create tree
   std::string xml_txt =
     R"(
-      <root main_tree_to_execute = "MainTree" >
+      <root BTCPP_format="4" main_tree_to_execute="MainTree">
         <BehaviorTree ID="MainTree">
             <ComputeCoveragePath nav_path="{path}"/>
         </BehaviorTree>
