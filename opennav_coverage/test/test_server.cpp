@@ -98,7 +98,7 @@ TEST(ServerTest, testServerTransactions)
   auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
   goal_msg.use_gml_file = true;  // Use file
   goal_msg.gml_field =
-    ament_index_cpp::get_package_share_directory("opennav_coverage") + "/test_field.xml";
+    ament_index_cpp::get_package_share_directory("opennav_coverage") + "/cartesian_test_field.xml";
 
   auto future_goal_handle = action_client->async_send_goal(goal_msg);
   EXPECT_EQ(

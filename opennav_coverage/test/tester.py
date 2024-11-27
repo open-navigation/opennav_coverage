@@ -125,7 +125,7 @@ def main():
     goal.generate_path = True
 
     goal.use_gml_file = True
-    goal.gml_field = get_package_share_directory('opennav_coverage') + '/test_field.xml'
+    goal.gml_field = get_package_share_directory('opennav_coverage') + '/cartesian_test_field.xml'
     goal.gml_field_id = 0
 
     # Cartesian coordinates corresponding to a similar XML as test_field.xml
