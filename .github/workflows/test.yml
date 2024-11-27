@@ -28,6 +28,14 @@ jobs:
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
         vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+        colcon-defaults: |
+          {
+            "build": {
+              "cmake-args": [
+                  "-DCMAKE_CXX_FLAGS=-Wno-error=pessimizing-move -Wno-error=deprecated-declarations"
+              ]
+            }
+          }
     - uses: actions/upload-artifact@v4
       with:
         name: colcon-logs
