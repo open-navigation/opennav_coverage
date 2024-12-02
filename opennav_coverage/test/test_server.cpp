@@ -41,7 +41,7 @@ public:
   void configure(const rclcpp_lifecycle::State & state)
   {
     this->on_configure(state);
-    cartesian_frame_ = false;  // Test files in GPS
+    cartesian_frame_ = true;  // Test files in GPS
   }
   void activate(const rclcpp_lifecycle::State & state) {this->on_activate(state);}
   void deactivate(const rclcpp_lifecycle::State & state) {this->on_deactivate(state);}
