@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(opennav_coverage)
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
@@ -29,6 +30,7 @@ set(executable_name opennav_coverage)
 set(library_name ${executable_name}_core)
 
 set(dependencies
+  ament_index_cpp
   rclcpp
   rclcpp_action
   rclcpp_lifecycle
