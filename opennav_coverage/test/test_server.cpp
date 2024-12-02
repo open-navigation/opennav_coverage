@@ -41,7 +41,7 @@ public:
   void configure(const rclcpp_lifecycle::State & state)
   {
     this->on_configure(state);
-    cartesian_frame_ = true;  // Test files in GPS
+    cartesian_frame_ = false;  // Test files in GPS
   }
   void activate(const rclcpp_lifecycle::State & state) {this->on_activate(state);}
   void deactivate(const rclcpp_lifecycle::State & state) {this->on_deactivate(state);}
@@ -98,7 +98,7 @@ TEST(ServerTest, testServerTransactions)
   auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
   goal_msg.use_gml_file = true;  // Use file
   goal_msg.gml_field =
-    ament_index_cpp::get_package_share_directory("opennav_coverage") + "/cartesian_test_field.xml";
+    ament_index_cpp::get_package_share_directory("opennav_coverage") + "/test_field.xml";
 
   auto future_goal_handle = action_client->async_send_goal(goal_msg);
   EXPECT_EQ(
