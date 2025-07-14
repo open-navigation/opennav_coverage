@@ -16,6 +16,7 @@ string behavior_tree
 uint16 NONE=0
 uint16 UNKNOWN=800
 uint16 FAILED_TO_LOAD_BEHAVIOR_TREE=801
+uint16 TF_ERROR=802
 
 uint16 error_code
 string error_msg

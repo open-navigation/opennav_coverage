@@ -51,6 +51,20 @@ CoverageNavigator::configure(
 
   // Odometry smoother object for getting current speed
   odom_smoother_ = odom_smoother;
+
+  // Groot monitoring
+  if (!node->has_parameter(getName() + ".enable_groot_monitoring")) {
+    node->declare_parameter(getName() + ".enable_groot_monitoring", false);
+  }
+
+  if (!node->has_parameter(getName() + ".groot_server_port")) {
+    node->declare_parameter(getName() + ".groot_server_port", 1667);
+  }
+
+  bt_action_server_->setGrootMonitoring(
+      node->get_parameter(getName() + ".enable_groot_monitoring").as_bool(),
+      node->get_parameter(getName() + ".groot_server_port").as_int());
+
   return true;
 }
 
@@ -90,11 +104,12 @@ CoverageNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
     RCLCPP_ERROR(
       logger_, "BT file not found: %s. Navigation canceled.",
       bt_xml_filename.c_str());
+    bt_action_server_->setInternalError(ActionT::Result::FAILED_TO_LOAD_BEHAVIOR_TREE,
+      std::string("Error loading XML file: ") + bt_xml_filename + ". Navigation canceled.");
     return false;
   }
 
-  initializeGoalPose(goal);
-  return true;
+  return initializeGoalPose(goal);
 }
 
 void
@@ -185,7 +200,13 @@ CoverageNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
     // if pending goal requests the same BT as the current goal, accept the pending goal
     // if pending goal has an empty behavior_tree field, it requests the default BT file
     // accept the pending goal if the current goal is running the default BT file
-    initializeGoalPose(bt_action_server_->acceptPendingGoal());
+    if (!initializeGoalPose(bt_action_server_->acceptPendingGoal())) {
+      RCLCPP_WARN(
+        logger_,
+        "Preemption request was rejected since the goal could not be "
+        "initialized. For now, continuing to track the last goal until completion.");
+      bt_action_server_->terminatePendingGoal();
+    }
   } else {
     RCLCPP_WARN(
       logger_,
@@ -198,14 +219,19 @@ CoverageNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
   }
 }
 
-void
+bool
 CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
 {
   geometry_msgs::msg::PoseStamped current_pose;
-  nav2_util::getCurrentPose(
-    current_pose, *feedback_utils_.tf,
-    feedback_utils_.global_frame, feedback_utils_.robot_frame,
-    feedback_utils_.transform_tolerance);
+  if (!nav2_util::getCurrentPose(
+      current_pose, *feedback_utils_.tf,
+      feedback_utils_.global_frame, feedback_utils_.robot_frame,
+      feedback_utils_.transform_tolerance))
+  {
+    bt_action_server_->setInternalError(ActionT::Result::TF_ERROR,
+      "Initial robot pose is not available.");
+    return false;
+  }
 
   if (goal->field_filepath.size() == 0) {
     RCLCPP_INFO(
@@ -227,6 +253,8 @@ CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
   blackboard->set<std::vector<geometry_msgs::msg::Polygon>>(
     polygon_blackboard_id_, goal->polygons);
   blackboard->set<std::string>(polygon_frame_blackboard_id_, goal->frame_id);
+
+  return true;
 }
 
 }  // namespace opennav_coverage_navigator
