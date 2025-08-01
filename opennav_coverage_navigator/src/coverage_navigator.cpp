@@ -50,12 +50,11 @@ std::string
 CoverageNavigator::getDefaultBTFilepath(
   nav2::LifecycleNode::WeakPtr parent_node)
 {
-  std::string default_bt_xml_filename;
   auto node = parent_node.lock();
 
   std::string pkg_share_dir = ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
 
-  auto default_bt_xml_filename = node->declare_or_get_parameter(
+  const auto default_bt_xml_filename = node->declare_or_get_parameter(
     "default_coverage_bt_xml",
     pkg_share_dir +
     "/behavior_trees/navigate_w_basic_complete_coverage.xml");
