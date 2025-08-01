@@ -20,7 +20,7 @@ This server exposes all of the features of Fields2Cover as a Lifecycle-Component
 
 - `opennav_coverage_navigator`: Contains the BT Navigator plugin exposing `NavigateCompleteCoverage` action server analog to `NavigateToPose` and `NavigateThroughPoses`.
 
-- `opennav_coverage_demo`: Contains an example launch and python node to trigger the coverage planner for a demonstration of the Navigator Plugin, Server, BT nodes, XML, and such. 
+- `opennav_coverage_demo`: Contains an example launch and python node to trigger the coverage planner for a demonstration of the Navigator Plugin, Server, BT nodes, XML, and such.
 
 Fields2Cover is a living library with new features planned to be added (for example those discussed in a [Nav2 integration ticket](https://github.com/Fields2Cover/Fields2Cover/issues/73)). As such, as new F2C capabilities are created, they will be welcome for integration here. If you see anything missing, please let us know or submit a PR to expose it!
 
@@ -61,7 +61,7 @@ The result returns a `result.nav_path` -- which is a `nav_msgs/Path` containing 
 
 It also returns an error code, if any error occurred and the total planning time for metrics analysis.
 
-Note that `SwathMode` settings are to be paired with the `opennav_coverage` server with polygons, while the `RowSwathMode` settings are to be paired with the `opennav_row_coverage` server based on annotated rows. 
+Note that `SwathMode` settings are to be paired with the `opennav_coverage` server with polygons, while the `RowSwathMode` settings are to be paired with the `opennav_row_coverage` server based on annotated rows.
 
 ### NavigateCompleteCoverage
 
@@ -82,7 +82,6 @@ The complete set of options are exposed as both dynamic parameters and through t
 
 | Parameter                    | Description                                    | Type   |
 |------------------------------|------------------------------------------------|--------|
-| action_server_result_timeout | Action server result holding timeout (s)       | double |
 | coordinates_in_cartesian_frame | Whether incoming requests are in cartesian or GPS coordinates | bool |
 | robot_width  | Robots width (m)  | double |
 | operation_width  | Width of implement or task for coverage  | double |
@@ -146,7 +145,7 @@ N/A
 
 #### A Quick Note On Skipping
 
-Rows(r) and swaths(s) are numbered as such. r1, s1, r2, s2, .... rN-1, sN-1, rN. 
+Rows(r) and swaths(s) are numbered as such. r1, s1, r2, s2, .... rN-1, sN-1, rN.
 In order to skip particular rows the 'opennav_coverage_msgs/RowSwathMode' provides 'skip_ids'
 to be populated. For example, if the skip ids were set to {1, 3} for five rows the output would be the following: s2, s4.
 
@@ -156,7 +155,7 @@ As noted about `opennav_row_coverage` provides three ways to compute swaths whic
 
 The `CENTER` generator iterates through each row, calculating a center between consecutive rows.
 
-The `OFFSET` generator iterates through each row, calculating a relative offset between consecutive rows. 
+The `OFFSET` generator iterates through each row, calculating a relative offset between consecutive rows.
 
 The `SWATHSAREROWS` generator iterates through each row and uses that row as the swath.
 

@@ -21,9 +21,9 @@
 #include "fields2cover.h" // NOLINT
 
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_util/lifecycle_node.hpp"
-#include "nav2_util/node_utils.hpp"
-#include "nav2_util/simple_action_server.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp.hpp"
+#include "nav2_ros_common/node_utils.hpp"
+#include "nav2_ros_common/simple_action_server.hpp"
 #include "opennav_row_coverage/row_swath_generator.hpp"
 #include "opennav_coverage/route_generator.hpp"
 #include "opennav_coverage/path_generator.hpp"
@@ -36,10 +36,10 @@ namespace opennav_row_coverage
  * @brief An action server which implements highly reconfigurable complete
  * coverage planning using the Fields2Cover library with pre-established rows
  */
-class RowCoverageServer : public nav2_util::LifecycleNode
+class RowCoverageServer : public nav2::LifecycleNode
 {
 public:
-  using ActionServer = nav2_util::SimpleActionServer<ComputeCoveragePath>;
+  using ActionServer = nav2::SimpleActionServer<ComputeCoveragePath>;
 
   /**
    * @brief A constructor for opennav_row_coverage::RowCoverageServer
@@ -78,35 +78,35 @@ protected:
    * @param state Reference to LifeCycle node state
    * @return SUCCESS or FAILURE
    */
-  nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
   /**
    * @brief Activate member variables
    * @param state Reference to LifeCycle node state
    * @return SUCCESS or FAILURE
    */
-  nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
 
   /**
    * @brief Deactivate member variables
    * @param state Reference to LifeCycle node state
    * @return SUCCESS or FAILURE
    */
-  nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
 
   /**
    * @brief Reset member variables
    * @param state Reference to LifeCycle node state
    * @return SUCCESS or FAILURE
    */
-  nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
 
   /**
    * @brief Called when in shutdown state
    * @param state Reference to LifeCycle node state
    * @return SUCCESS or FAILURE
    */
-  nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
 
   /**
    * @brief Callback executed when a parameter change is detected
@@ -119,7 +119,7 @@ protected:
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
   std::mutex dynamic_params_lock_;
 
-  std::unique_ptr<ActionServer> action_server_;
+  typename ActionServer::SharedPtr action_server_;
 
   std::unique_ptr<opennav_coverage::RobotParams> robot_params_;
   std::unique_ptr<RowSwathGenerator> swath_gen_;

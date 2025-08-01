@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage_navigator/coverage_navigator.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/create_timer_ros.h"
@@ -93,7 +94,7 @@ inline std::vector<std::string> getLibs()
 TEST(CoverageNavigatorTests, TestBasicFunctionality)
 {
   opennav_coverage_navigator::CoverageNavigator navigator;
-  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("test_node");
+  auto node = std::make_shared<nav2::LifecycleNode>("test_node");
   auto odom_smoother = std::make_shared<nav2_util::OdomSmoother>(node, 0.3, "odom");
   nav2_core::NavigatorMuxer plugin_muxer;
 
@@ -129,7 +130,7 @@ TEST(CoverageNavigatorTests, TestBasicServer)
 {
   // Create server
   opennav_coverage_navigator::CoverageNavigator navigator;
-  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("test_node");
+  auto node = std::make_shared<nav2::LifecycleNode>("test_node");
   auto odom_smoother = std::make_shared<nav2_util::OdomSmoother>(node, 0.3, "odom");
   nav2_core::NavigatorMuxer plugin_muxer;
 

@@ -11,6 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>nav2_util</depend>
+  <depend>nav2_ros_common</depend>
   <depend>fields2cover</depend>
   <depend>opennav_coverage</depend>
   <depend>opennav_coverage_msgs</depend>

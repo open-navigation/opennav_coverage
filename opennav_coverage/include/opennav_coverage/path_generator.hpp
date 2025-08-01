@@ -22,7 +22,7 @@
 #include "fields2cover.h" // NOLINT
 
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_util/lifecycle_node.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp.hpp"
 #include "nav2_util/node_utils.hpp"
 #include "opennav_coverage_msgs/msg/path_mode.hpp"
 #include "opennav_coverage/utils.hpp"

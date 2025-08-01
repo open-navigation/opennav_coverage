@@ -22,12 +22,12 @@ namespace opennav_row_coverage
 {
 
 RowCoverageServer::RowCoverageServer(const rclcpp::NodeOptions & options)
-: nav2_util::LifecycleNode("row_coverage_server", "", options)
+: nav2::LifecycleNode("row_coverage_server", "", options)
 {
   RCLCPP_INFO(get_logger(), "Creating %s", get_name());
 }
 
-nav2_util::CallbackReturn
+nav2::CallbackReturn
 RowCoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Configuring %s", get_name());
@@ -50,26 +50,18 @@ RowCoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
     node, "order_ids", rclcpp::ParameterValue(true));
   get_parameter("order_ids", order_ids_);
 
-  double action_server_result_timeout = 10.0;
-  nav2_util::declare_parameter_if_not_declared(
-    node, "action_server_result_timeout", rclcpp::ParameterValue(10.0));
-  get_parameter("action_server_result_timeout", action_server_result_timeout);
-  rcl_action_server_options_t server_options = rcl_action_server_get_default_options();
-  server_options.result_timeout.nanoseconds = RCL_S_TO_NS(action_server_result_timeout);
-
   // Create the action servers for path planning to a pose and through poses
-  action_server_ = std::make_unique<ActionServer>(
-    shared_from_this(),
+  action_server_ = node->create_action_server<ComputeCoveragePath>(
     "compute_coverage_path",
     std::bind(&RowCoverageServer::computeCoveragePath, this),
     nullptr,
     std::chrono::milliseconds(500),
-    true, server_options);
+    true);
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
+nav2::CallbackReturn
 RowCoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Activating %s", get_name());
@@ -84,10 +76,10 @@ RowCoverageServer::on_activate(const rclcpp_lifecycle::State & /*state*/)
   // create bond connection
   createBond();
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
+nav2::CallbackReturn
 RowCoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Deactivating %s", get_name());
@@ -98,10 +90,10 @@ RowCoverageServer::on_deactivate(const rclcpp_lifecycle::State & /*state*/)
   // destroy bond connection
   destroyBond();
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
+nav2::CallbackReturn
 RowCoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Cleaning up %s", get_name());
@@ -111,14 +103,14 @@ RowCoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   route_gen_.reset();
   swath_gen_.reset();
   robot_params_.reset();
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
+nav2::CallbackReturn
 RowCoverageServer::on_shutdown(const rclcpp_lifecycle::State &)
 {
   RCLCPP_INFO(get_logger(), "Shutting down %s", get_name());
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
 

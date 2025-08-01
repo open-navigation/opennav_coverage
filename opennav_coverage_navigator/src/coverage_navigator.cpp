@@ -23,68 +23,42 @@ namespace opennav_coverage_navigator
 
 bool
 CoverageNavigator::configure(
-  rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node,
+  nav2::LifecycleNode::WeakPtr parent_node,
   std::shared_ptr<nav2_util::OdomSmoother> odom_smoother)
 {
   start_time_ = rclcpp::Time(0);
   auto node = parent_node.lock();
 
-  if (!node->has_parameter("path_blackboard_id")) {
-    node->declare_parameter("path_blackboard_id", std::string("path"));
-  }
-  path_blackboard_id_ = node->get_parameter("path_blackboard_id").as_string();
-
-  if (!node->has_parameter("field_file_blackboard_id")) {
-    node->declare_parameter("field_file_blackboard_id", std::string("field_filepath"));
-  }
-  field_blackboard_id_ = node->get_parameter("field_file_blackboard_id").as_string();
-
-  if (!node->has_parameter("field_polygon_blackboard_id")) {
-    node->declare_parameter("field_polygon_blackboard_id", std::string("field_polygon"));
-  }
-  polygon_blackboard_id_ = node->get_parameter("field_polygon_blackboard_id").as_string();
-
-  if (!node->has_parameter("polygon_frame_blackboard_id")) {
-    node->declare_parameter("polygon_frame_blackboard_id", std::string("polygon_frame_id"));
-  }
-  polygon_frame_blackboard_id_ = node->get_parameter("polygon_frame_blackboard_id").as_string();
+  node->declare_or_get_parameter("path_blackboard_id", std::string("path"));
+  node->declare_or_get_parameter("field_file_blackboard_id", std::string("field_filepath"));
+  node->declare_or_get_parameter("field_polygon_blackboard_id", std::string("field_polygon"));
+  node->declare_or_get_parameter("polygon_frame_blackboard_id", std::string("polygon_frame_id"));
 
   // Odometry smoother object for getting current speed
   odom_smoother_ = odom_smoother;
 
   // Groot monitoring
-  if (!node->has_parameter(getName() + ".enable_groot_monitoring")) {
-    node->declare_parameter(getName() + ".enable_groot_monitoring", false);
-  }
+  bool enable_groot_monitoring = node->declare_or_get_parameter(getName() + ".enable_groot_monitoring", false);
+  int groot_server_port = node->declare_or_get_parameter(getName() + ".groot_server_port", 1667);
 
-  if (!node->has_parameter(getName() + ".groot_server_port")) {
-    node->declare_parameter(getName() + ".groot_server_port", 1667);
-  }
-
-  bt_action_server_->setGrootMonitoring(
-      node->get_parameter(getName() + ".enable_groot_monitoring").as_bool(),
-      node->get_parameter(getName() + ".groot_server_port").as_int());
+  bt_action_server_->setGrootMonitoring(enable_groot_monitoring, groot_server_port);
 
   return true;
 }
 
 std::string
 CoverageNavigator::getDefaultBTFilepath(
-  rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node)
+  nav2::LifecycleNode::WeakPtr parent_node)
 {
   std::string default_bt_xml_filename;
   auto node = parent_node.lock();
 
-  if (!node->has_parameter("default_coverage_bt_xml")) {
-    std::string pkg_share_dir =
-      ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
-    node->declare_parameter<std::string>(
-      "default_coverage_bt_xml",
-      pkg_share_dir +
-      "/behavior_trees/navigate_w_basic_complete_coverage.xml");
-  }
+  std::string pkg_share_dir = ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
 
-  node->get_parameter("default_coverage_bt_xml", default_bt_xml_filename);
+  auto default_bt_xml_filename = node->declare_or_get_parameter(
+    "default_coverage_bt_xml",
+    pkg_share_dir +
+    "/behavior_trees/navigate_w_basic_complete_coverage.xml");
 
   return default_bt_xml_filename;
 }
