@@ -148,7 +148,7 @@ TEST(CoverageNavigatorTests, TestBasicServer)
 
   navigator.on_configure(node, getLibs(), feedback_utils, &plugin_muxer, odom_smoother);
   navigator.on_activate();
-  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
 
   // Call server
   auto client_node = std::make_shared<rclcpp::Node>("my_node");

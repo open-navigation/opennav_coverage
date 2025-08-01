@@ -86,7 +86,7 @@ TEST(ServerTest, testServerTransactions)
   rclcpp_lifecycle::State state;
   node->configure(state);
   node->activate(state);
-  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
 
   // Send some requests
   auto client_node = std::make_shared<rclcpp::Node>("my_node");

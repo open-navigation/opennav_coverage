@@ -21,7 +21,7 @@
 #include "fields2cover.h" // NOLINT
 
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_ros_common/lifecycle_node.hpp.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
 #include "nav2_ros_common/node_utils.hpp"
 #include "nav2_ros_common/simple_action_server.hpp"
 #include "opennav_coverage/headland_generator.hpp"

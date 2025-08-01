@@ -21,8 +21,8 @@
 #include "fields2cover.h" // NOLINT
 
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_ros_common/lifecycle_node.hpp.hpp"
-#include "nav2_util/node_utils.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
+#include "nav2_ros_common/node_utils.hpp"
 #include "opennav_coverage_msgs/msg/headland_mode.hpp"
 #include "opennav_coverage/utils.hpp"
 #include "opennav_coverage/types.hpp"
@@ -45,13 +45,13 @@ public:
   {
     logger_ = node->get_logger();
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_headland_type", rclcpp::ParameterValue("CONSTANT"));
     std::string type_str = node->get_parameter("default_headland_type").as_string();
     default_type_ = toType(type_str);
     default_generator_ = createGenerator(default_type_);
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_headland_width", rclcpp::ParameterValue(2.0));
     default_headland_width_ = node->get_parameter("default_headland_width").as_double();
   }

@@ -21,8 +21,8 @@
 #include "fields2cover.h" // NOLINT
 
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_ros_common/lifecycle_node.hpp.hpp"
-#include "nav2_util/node_utils.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
+#include "nav2_ros_common/node_utils.hpp"
 #include "opennav_coverage/utils.hpp"
 #include "opennav_coverage/types.hpp"
 
@@ -42,19 +42,19 @@ public:
   template<typename NodeT>
   explicit RobotParams(const NodeT & node)
   {
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "robot_width", rclcpp::ParameterValue(2.1));
     robot_.robot_width = node->get_parameter("robot_width").as_double();
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "operation_width", rclcpp::ParameterValue(2.5));
     robot_.op_width = node->get_parameter("operation_width").as_double();
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "min_turning_radius", rclcpp::ParameterValue(0.4));
     robot_.setMinRadius(node->get_parameter("min_turning_radius").as_double());
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "linear_curv_change", rclcpp::ParameterValue(2.0));
     robot_.linear_curv_change = node->get_parameter("linear_curv_change").as_double();
   }

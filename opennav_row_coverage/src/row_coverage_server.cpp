@@ -41,12 +41,12 @@ RowCoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
 
   // If in GPS coordinates, we must convert to a CRS to compute coverage
   // Then, reconvert back to GPS for the user.
-  nav2_util::declare_parameter_if_not_declared(
+  nav2::declare_parameter_if_not_declared(
     node, "coordinates_in_cartesian_frame", rclcpp::ParameterValue(true));
   get_parameter("coordinates_in_cartesian_frame", cartesian_frame_);
 
   // Whether to reorder IDs in file by value instead of file ordering
-  nav2_util::declare_parameter_if_not_declared(
+  nav2::declare_parameter_if_not_declared(
     node, "order_ids", rclcpp::ParameterValue(true));
   get_parameter("order_ids", order_ids_);
 
