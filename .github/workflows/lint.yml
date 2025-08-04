@@ -17,7 +17,7 @@ jobs:
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
-        distribution: jazzy
+        distribution: kilted
         package-name: |
             opennav_coverage
             opennav_coverage_bt
