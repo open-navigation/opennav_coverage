@@ -29,10 +29,10 @@ CoverageNavigator::configure(
   start_time_ = rclcpp::Time(0);
   auto node = parent_node.lock();
 
-  node->declare_or_get_parameter("path_blackboard_id", std::string("path"));
-  node->declare_or_get_parameter("field_file_blackboard_id", std::string("field_filepath"));
-  node->declare_or_get_parameter("field_polygon_blackboard_id", std::string("field_polygon"));
-  node->declare_or_get_parameter("polygon_frame_blackboard_id", std::string("polygon_frame_id"));
+  path_blackboard_id_ = node->declare_or_get_parameter("path_blackboard_id", std::string("path"));
+  field_blackboard_id_ = node->declare_or_get_parameter("field_file_blackboard_id", std::string("field_filepath"));
+  polygon_blackboard_id_ = node->declare_or_get_parameter("field_polygon_blackboard_id", std::string("field_polygon"));
+  polygon_frame_blackboard_id_ = node->declare_or_get_parameter("polygon_frame_blackboard_id", std::string("polygon_frame_id"));
 
   // Odometry smoother object for getting current speed
   odom_smoother_ = odom_smoother;
