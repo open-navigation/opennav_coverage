@@ -12,11 +12,11 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     container:
-      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-noble-ros-kilted-ros-base:master
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-noble-ros-rolling-ros-base:master
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [kilted]
+          ros_distro: [rolling]
     steps:
     - uses: actions/checkout@v2
     - name: Install Cyclone DDS
