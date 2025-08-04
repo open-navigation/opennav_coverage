@@ -12,18 +12,18 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-latest
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-noble-ros-kilted-desktop:master
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [jazzy]
+          ros_distro: [kilted]
     steps:
     - uses: actions/checkout@v2
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
     - name: Build and run tests
       id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.3
+      uses: ros-tooling/action-ros-ci@v0.4
       with:
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
