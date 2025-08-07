@@ -30,13 +30,13 @@ CoverageNavigator::configure(
   auto node = parent_node.lock();
 
   path_blackboard_id_ = node->declare_or_get_parameter(
-    getName() + ".path_blackboard_id", std::string("path"));
+    "path_blackboard_id", std::string("path"));
   field_blackboard_id_ = node->declare_or_get_parameter(
-    getName() + ".field_file_blackboard_id", std::string("field_filepath"));
+    "field_file_blackboard_id", std::string("field_filepath"));
   polygon_blackboard_id_ = node->declare_or_get_parameter(
-    getName() + ".field_polygon_blackboard_id", std::string("field_polygon"));
+    "field_polygon_blackboard_id", std::string("field_polygon"));
   polygon_frame_blackboard_id_ = node->declare_or_get_parameter(
-    getName() + ".polygon_frame_blackboard_id", std::string("polygon_frame_id"));
+    "polygon_frame_blackboard_id", std::string("polygon_frame_id"));
 
   // Odometry smoother object for getting current speed
   odom_smoother_ = odom_smoother;
