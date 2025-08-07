@@ -111,8 +111,9 @@ protected:
   /**
    * @brief Goal pose initialization on the blackboard
    * @param goal Action template's goal message to process
+   * @return bool if goal was initialized successfully to be processed
    */
-  void initializeGoalPose(ActionT::Goal::ConstSharedPtr goal);
+  bool initializeGoalPose(ActionT::Goal::ConstSharedPtr goal);
 
   rclcpp::Time start_time_;
   std::string path_blackboard_id_, field_blackboard_id_, polygon_blackboard_id_;
