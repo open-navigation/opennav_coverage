@@ -16,7 +16,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage/robot_params.hpp"
 #include "opennav_coverage/swath_generator.hpp"
-#include "tf2/utils.h"
+#include "tf2/utils.hpp"
 #include "fields2cover/utils/random.h"
 
 // Luckily, F2C has very high test coverage so we only need to test what we touch

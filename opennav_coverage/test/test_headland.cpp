@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage/headland_generator.hpp"
-#include "tf2/utils.h"
+#include "tf2/utils.hpp"
 #include "fields2cover/utils/random.h"
 
 // Luckily, F2C has very high test coverage so we only need to test what we touch

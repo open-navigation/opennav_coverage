@@ -16,10 +16,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage_navigator/coverage_navigator.hpp"
 #include "nav2_ros_common/lifecycle_node.hpp"
-#include "tf2/utils.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/create_timer_ros.h"
-#include "tf2_ros/transform_listener.h"
+#include "tf2/utils.hpp"
+#include "tf2_ros/buffer.hpp"
+#include "tf2_ros/create_timer_ros.hpp"
+#include "tf2_ros/transform_listener.hpp"
 
 class RosLockGuard
 {
