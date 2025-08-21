@@ -42,9 +42,10 @@ CoverageNavigator::configure(
   odom_smoother_ = odom_smoother;
 
   // Groot monitoring
-  bool enable_groot_monitoring = node->declare_or_get_parameter(
+  const bool enable_groot_monitoring = node->declare_or_get_parameter(
     getName() + ".enable_groot_monitoring", false);
-  int groot_server_port = node->declare_or_get_parameter(getName() + ".groot_server_port", 1667);
+  const int groot_server_port = node->declare_or_get_parameter(
+    getName() + ".groot_server_port", 1667);
 
   bt_action_server_->setGrootMonitoring(enable_groot_monitoring, groot_server_port);
 
@@ -57,7 +58,8 @@ CoverageNavigator::getDefaultBTFilepath(
 {
   auto node = parent_node.lock();
 
-  std::string pkg_share_dir = ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
+  const std::string pkg_share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
 
   const auto default_bt_xml_filename = node->declare_or_get_parameter(
     "default_coverage_bt_xml",
