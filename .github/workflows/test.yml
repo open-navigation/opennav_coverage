@@ -25,7 +25,7 @@ jobs:
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.4
       with:
-        package-name: opennav_coverage opennav_coverage_bt opennav_coverage_demo opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage
+        package-name: nav2_bt_navigator opennav_coverage opennav_coverage_bt opennav_coverage_demo opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
         vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"

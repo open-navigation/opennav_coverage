@@ -6,6 +6,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav2_util REQUIRED)
+find_package(nav2_bt_navigator REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav2_core REQUIRED)
 find_package(nav2_behavior_tree REQUIRED)
@@ -27,6 +28,7 @@ set(dependencies
   rclcpp_action
   std_msgs
   nav2_util
+  nav2_bt_navigator
   nav2_msgs
   nav2_core
   nav2_behavior_tree
