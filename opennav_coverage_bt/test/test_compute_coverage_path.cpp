@@ -55,7 +55,7 @@ class ComputeCoveragePathActionTestFixture : public ::testing::Test
 public:
   static void SetUpTestCase()
   {
-    node_ = std::make_shared<rclcpp::Node>("compute_coverage_path_action_test_fixture");
+    node_ = std::make_shared<nav2::LifecycleNode>("compute_coverage_path_action_test_fixture");
     factory_ = std::make_shared<BT::BehaviorTreeFactory>();
 
     config_ = new BT::NodeConfiguration();
@@ -63,7 +63,7 @@ public:
     // Create the blackboard that will be shared by all of the nodes in the tree
     config_->blackboard = BT::Blackboard::create();
     // Put items on the blackboard
-    config_->blackboard->set<rclcpp::Node::SharedPtr>(
+    config_->blackboard->set<nav2::LifecycleNode::SharedPtr>(
       "node",
       node_);
     config_->blackboard->set<std::chrono::milliseconds>(
@@ -105,13 +105,13 @@ public:
   static std::shared_ptr<ComputeCompleteCoveragePathActionServer> action_server_;
 
 protected:
-  static rclcpp::Node::SharedPtr node_;
+  static nav2::LifecycleNode::SharedPtr node_;
   static BT::NodeConfiguration * config_;
   static std::shared_ptr<BT::BehaviorTreeFactory> factory_;
   static std::shared_ptr<BT::Tree> tree_;
 };
 
-rclcpp::Node::SharedPtr ComputeCoveragePathActionTestFixture::node_ = nullptr;
+nav2::LifecycleNode::SharedPtr ComputeCoveragePathActionTestFixture::node_ = nullptr;
 std::shared_ptr<ComputeCompleteCoveragePathActionServer>
 ComputeCoveragePathActionTestFixture::action_server_ = nullptr;
 BT::NodeConfiguration * ComputeCoveragePathActionTestFixture::config_ = nullptr;

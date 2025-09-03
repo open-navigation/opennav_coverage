@@ -23,54 +23,48 @@ namespace opennav_coverage_navigator
 
 bool
 CoverageNavigator::configure(
-  rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node,
+  nav2::LifecycleNode::WeakPtr parent_node,
   std::shared_ptr<nav2_util::OdomSmoother> odom_smoother)
 {
   start_time_ = rclcpp::Time(0);
   auto node = parent_node.lock();
 
-  if (!node->has_parameter("path_blackboard_id")) {
-    node->declare_parameter("path_blackboard_id", std::string("path"));
-  }
-  path_blackboard_id_ = node->get_parameter("path_blackboard_id").as_string();
-
-  if (!node->has_parameter("field_file_blackboard_id")) {
-    node->declare_parameter("field_file_blackboard_id", std::string("field_filepath"));
-  }
-  field_blackboard_id_ = node->get_parameter("field_file_blackboard_id").as_string();
-
-  if (!node->has_parameter("field_polygon_blackboard_id")) {
-    node->declare_parameter("field_polygon_blackboard_id", std::string("field_polygon"));
-  }
-  polygon_blackboard_id_ = node->get_parameter("field_polygon_blackboard_id").as_string();
-
-  if (!node->has_parameter("polygon_frame_blackboard_id")) {
-    node->declare_parameter("polygon_frame_blackboard_id", std::string("polygon_frame_id"));
-  }
-  polygon_frame_blackboard_id_ = node->get_parameter("polygon_frame_blackboard_id").as_string();
+  path_blackboard_id_ = node->declare_or_get_parameter(
+    "path_blackboard_id", std::string("path"));
+  field_blackboard_id_ = node->declare_or_get_parameter(
+    "field_file_blackboard_id", std::string("field_filepath"));
+  polygon_blackboard_id_ = node->declare_or_get_parameter(
+    "field_polygon_blackboard_id", std::string("field_polygon"));
+  polygon_frame_blackboard_id_ = node->declare_or_get_parameter(
+    "polygon_frame_blackboard_id", std::string("polygon_frame_id"));
 
   // Odometry smoother object for getting current speed
   odom_smoother_ = odom_smoother;
+
+  // Groot monitoring
+  const bool enable_groot_monitoring = node->declare_or_get_parameter(
+    getName() + ".enable_groot_monitoring", false);
+  const int groot_server_port = node->declare_or_get_parameter(
+    getName() + ".groot_server_port", 1667);
+
+  bt_action_server_->setGrootMonitoring(enable_groot_monitoring, groot_server_port);
+
   return true;
 }
 
 std::string
 CoverageNavigator::getDefaultBTFilepath(
-  rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node)
+  nav2::LifecycleNode::WeakPtr parent_node)
 {
-  std::string default_bt_xml_filename;
   auto node = parent_node.lock();
 
-  if (!node->has_parameter("default_coverage_bt_xml")) {
-    std::string pkg_share_dir =
-      ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
-    node->declare_parameter<std::string>(
-      "default_coverage_bt_xml",
-      pkg_share_dir +
-      "/behavior_trees/navigate_w_basic_complete_coverage.xml");
-  }
+  const std::string pkg_share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
 
-  node->get_parameter("default_coverage_bt_xml", default_bt_xml_filename);
+  const auto default_bt_xml_filename = node->declare_or_get_parameter(
+    "default_coverage_bt_xml",
+    pkg_share_dir +
+    "/behavior_trees/navigate_w_basic_complete_coverage.xml");
 
   return default_bt_xml_filename;
 }
@@ -90,11 +84,12 @@ CoverageNavigator::goalReceived(ActionT::Goal::ConstSharedPtr goal)
     RCLCPP_ERROR(
       logger_, "BT file not found: %s. Navigation canceled.",
       bt_xml_filename.c_str());
+    bt_action_server_->setInternalError(ActionT::Result::FAILED_TO_LOAD_BEHAVIOR_TREE,
+      std::string("Error loading XML file: ") + bt_xml_filename + ". Navigation canceled.");
     return false;
   }
 
-  initializeGoalPose(goal);
-  return true;
+  return initializeGoalPose(goal);
 }
 
 void
@@ -185,7 +180,13 @@ CoverageNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
     // if pending goal requests the same BT as the current goal, accept the pending goal
     // if pending goal has an empty behavior_tree field, it requests the default BT file
     // accept the pending goal if the current goal is running the default BT file
-    initializeGoalPose(bt_action_server_->acceptPendingGoal());
+    if (!initializeGoalPose(bt_action_server_->acceptPendingGoal())) {
+      RCLCPP_WARN(
+        logger_,
+        "Preemption request was rejected since the goal could not be "
+        "initialized. For now, continuing to track the last goal until completion.");
+      bt_action_server_->terminatePendingGoal();
+    }
   } else {
     RCLCPP_WARN(
       logger_,
@@ -198,14 +199,19 @@ CoverageNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
   }
 }
 
-void
+bool
 CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
 {
   geometry_msgs::msg::PoseStamped current_pose;
-  nav2_util::getCurrentPose(
-    current_pose, *feedback_utils_.tf,
-    feedback_utils_.global_frame, feedback_utils_.robot_frame,
-    feedback_utils_.transform_tolerance);
+  if (!nav2_util::getCurrentPose(
+      current_pose, *feedback_utils_.tf,
+      feedback_utils_.global_frame, feedback_utils_.robot_frame,
+      feedback_utils_.transform_tolerance))
+  {
+    bt_action_server_->setInternalError(ActionT::Result::TF_ERROR,
+      "Initial robot pose is not available.");
+    return false;
+  }
 
   if (goal->field_filepath.size() == 0) {
     RCLCPP_INFO(
@@ -227,6 +233,8 @@ CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
   blackboard->set<std::vector<geometry_msgs::msg::Polygon>>(
     polygon_blackboard_id_, goal->polygons);
   blackboard->set<std::string>(polygon_frame_blackboard_id_, goal->frame_id);
+
+  return true;
 }
 
 }  // namespace opennav_coverage_navigator

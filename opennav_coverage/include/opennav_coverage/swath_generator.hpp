@@ -22,8 +22,8 @@
 #include "fields2cover.h" // NOLINT
 
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_util/lifecycle_node.hpp"
-#include "nav2_util/node_utils.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
+#include "nav2_ros_common/node_utils.hpp"
 #include "opennav_coverage_msgs/msg/swath_mode.hpp"
 #include "opennav_coverage/utils.hpp"
 #include "opennav_coverage/types.hpp"
@@ -48,25 +48,25 @@ public:
     logger_ = node->get_logger();
     robot_params_ = robot_params;
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_swath_type", rclcpp::ParameterValue("LENGTH"));
     std::string type_str = node->get_parameter("default_swath_type").as_string();
     default_type_ = toType(type_str);
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_swath_angle_type", rclcpp::ParameterValue("BRUTE_FORCE"));
     std::string angle_str = node->get_parameter("default_swath_angle_type").as_string();
     default_angle_type_ = toAngleType(angle_str);
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_swath_angle", rclcpp::ParameterValue(0.0));
     default_swath_angle_ = node->get_parameter("default_swath_angle").as_double();
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_step_angle", rclcpp::ParameterValue(1.7453e-2));
     default_step_angle_ = node->get_parameter("default_step_angle").as_double();
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_allow_overlap", rclcpp::ParameterValue(false));
     default_allow_overlap_ = node->get_parameter("default_allow_overlap").as_bool();
 

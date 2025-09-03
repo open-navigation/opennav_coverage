@@ -18,7 +18,7 @@
 #include "opennav_coverage/route_generator.hpp"
 #include "opennav_coverage/swath_generator.hpp"
 #include "opennav_coverage/path_generator.hpp"
-#include "tf2/utils.h"
+#include "tf2/utils.hpp"
 #include "fields2cover/utils/random.h"
 
 // Luckily, F2C has very high test coverage so we only need to test what we touch

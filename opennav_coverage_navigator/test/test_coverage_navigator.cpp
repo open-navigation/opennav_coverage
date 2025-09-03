@@ -15,10 +15,11 @@
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage_navigator/coverage_navigator.hpp"
-#include "tf2/utils.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/create_timer_ros.h"
-#include "tf2_ros/transform_listener.h"
+#include "nav2_ros_common/lifecycle_node.hpp"
+#include "tf2/utils.hpp"
+#include "tf2_ros/buffer.hpp"
+#include "tf2_ros/create_timer_ros.hpp"
+#include "tf2_ros/transform_listener.hpp"
 
 class RosLockGuard
 {
@@ -66,7 +67,7 @@ inline std::vector<std::string> getLibs()
     "nav2_round_robin_node_bt_node",
     "nav2_transform_available_condition_bt_node",
     "nav2_time_expired_condition_bt_node",
-    "nav2_path_expiring_timer_condition",
+    "nav2_path_expiring_timer_condition_bt_node",
     "nav2_distance_traveled_condition_bt_node",
     "nav2_single_trigger_bt_node",
     "nav2_goal_updated_controller_bt_node",
@@ -93,7 +94,7 @@ inline std::vector<std::string> getLibs()
 TEST(CoverageNavigatorTests, TestBasicFunctionality)
 {
   opennav_coverage_navigator::CoverageNavigator navigator;
-  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("test_node");
+  auto node = std::make_shared<nav2::LifecycleNode>("test_node");
   auto odom_smoother = std::make_shared<nav2_util::OdomSmoother>(node, 0.3, "odom");
   nav2_core::NavigatorMuxer plugin_muxer;
 
@@ -129,7 +130,7 @@ TEST(CoverageNavigatorTests, TestBasicServer)
 {
   // Create server
   opennav_coverage_navigator::CoverageNavigator navigator;
-  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("test_node");
+  auto node = std::make_shared<nav2::LifecycleNode>("test_node");
   auto odom_smoother = std::make_shared<nav2_util::OdomSmoother>(node, 0.3, "odom");
   nav2_core::NavigatorMuxer plugin_muxer;
 
@@ -147,7 +148,7 @@ TEST(CoverageNavigatorTests, TestBasicServer)
 
   navigator.on_configure(node, getLibs(), feedback_utils, &plugin_muxer, odom_smoother);
   navigator.on_activate();
-  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
 
   // Call server
   auto client_node = std::make_shared<rclcpp::Node>("my_node");

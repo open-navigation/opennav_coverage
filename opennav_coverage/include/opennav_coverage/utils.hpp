@@ -24,7 +24,7 @@
 #include "fields2cover.h" // NOLINT
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage/types.hpp"
-#include "nav2_util/node_utils.hpp"
+#include "nav2_ros_common/node_utils.hpp"
 #include "nav2_util/geometry_utils.hpp"
 #include "geometry_msgs/msg/point32.hpp"
 

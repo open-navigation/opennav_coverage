@@ -7,7 +7,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-ros-jazzy-ros-base-latest
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-noble-ros-rolling-ros-base:master
     strategy:
       fail-fast: false
       matrix:
@@ -17,7 +17,7 @@ jobs:
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
-        distribution: jazzy
+        distribution: rolling
         package-name: |
             opennav_coverage
             opennav_coverage_bt

@@ -3,3 +3,8 @@ repositories:
     type: git
     url: https://github.com/Fields2Cover/Fields2Cover.git
     version: v1.2.1-devel
+
+  navigation2:
+    type: git
+    url: https://github.com/ros-navigation/navigation2.git
+    version: main

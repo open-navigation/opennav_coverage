@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_row_coverage/utils.hpp"
-#include "tf2/utils.h"
+#include "tf2/utils.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 
 class RosLockGuard

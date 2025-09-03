@@ -12,19 +12,20 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-latest
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-noble-ros-rolling-ros-base:master
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [jazzy]
+          ros_distro: [rolling]
     steps:
     - uses: actions/checkout@v2
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
     - name: Build and run tests
       id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.3
+      uses: ros-tooling/action-ros-ci@v0.4
       with:
+        package-name: nav2_bt_navigator nav2_behavior_tree opennav_coverage opennav_coverage_bt opennav_coverage_demo opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage
         import-token: ${{ secrets.GITHUB_TOKEN }}
         target-ros2-distro: ${{ matrix.ros_distro }}
         vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"

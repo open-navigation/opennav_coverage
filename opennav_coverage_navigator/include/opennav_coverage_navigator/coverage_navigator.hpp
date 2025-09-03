@@ -19,15 +19,16 @@
 #include <vector>
 #include <memory>
 
+#include "opennav_coverage_msgs/action/navigate_complete_coverage.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav2_core/behavior_tree_navigator.hpp"
-#include "opennav_coverage_msgs/action/navigate_complete_coverage.hpp"
 #include "nav2_util/geometry_utils.hpp"
-#include "nav2_util/robot_utils.hpp"
-#include "nav_msgs/msg/path.hpp"
 #include "nav2_util/odometry_utils.hpp"
+#include "nav2_util/robot_utils.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
+#include "nav_msgs/msg/path.hpp"
 
 namespace opennav_coverage_navigator
 {
@@ -55,7 +56,7 @@ public:
    * @param odom_smoother Object to get current smoothed robot's speed
    */
   bool configure(
-    rclcpp_lifecycle::LifecycleNode::WeakPtr node,
+    nav2::LifecycleNode::WeakPtr node,
     std::shared_ptr<nav2_util::OdomSmoother> odom_smoother) override;
 
   /**
@@ -74,7 +75,7 @@ public:
    * @param node WeakPtr to the lifecycle node
    * @return string Filepath to default XML
    */
-  std::string getDefaultBTFilepath(rclcpp_lifecycle::LifecycleNode::WeakPtr node) override;
+  std::string getDefaultBTFilepath(nav2::LifecycleNode::WeakPtr node) override;
 
 protected:
   /**
@@ -111,8 +112,9 @@ protected:
   /**
    * @brief Goal pose initialization on the blackboard
    * @param goal Action template's goal message to process
+   * @return bool if goal was initialized successfully to be processed
    */
-  void initializeGoalPose(ActionT::Goal::ConstSharedPtr goal);
+  bool initializeGoalPose(ActionT::Goal::ConstSharedPtr goal);
 
   rclcpp::Time start_time_;
   std::string path_blackboard_id_, field_blackboard_id_, polygon_blackboard_id_;

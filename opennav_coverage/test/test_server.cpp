@@ -16,7 +16,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "opennav_coverage/coverage_server.hpp"
-#include "tf2/utils.h"
+#include "tf2/utils.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 
 // Luckily, F2C has very high test coverage so we only need to test what we touch
@@ -86,7 +86,7 @@ TEST(ServerTest, testServerTransactions)
   rclcpp_lifecycle::State state;
   node->configure(state);
   node->activate(state);
-  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
 
   // Send some requests
   auto client_node = std::make_shared<rclcpp::Node>("my_node");

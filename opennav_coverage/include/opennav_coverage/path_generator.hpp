@@ -22,8 +22,8 @@
 #include "fields2cover.h" // NOLINT
 
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_util/lifecycle_node.hpp"
-#include "nav2_util/node_utils.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
+#include "nav2_ros_common/node_utils.hpp"
 #include "opennav_coverage_msgs/msg/path_mode.hpp"
 #include "opennav_coverage/utils.hpp"
 #include "opennav_coverage/types.hpp"
@@ -48,17 +48,17 @@ public:
     logger_ = node->get_logger();
     robot_params_ = robot_params;
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_path_type", rclcpp::ParameterValue("DUBIN"));
     std::string type_str = node->get_parameter("default_path_type").as_string();
     default_type_ = toType(type_str);
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_path_continuity_type", rclcpp::ParameterValue("CONTINUOUS"));
     std::string type_cont_str = node->get_parameter("default_path_continuity_type").as_string();
     default_continuity_type_ = toContinuityType(type_cont_str);
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_turn_point_distance", rclcpp::ParameterValue(0.1));
     default_turn_point_distance_ = node->get_parameter("default_turn_point_distance").as_double();
 

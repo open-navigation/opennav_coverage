@@ -15,6 +15,7 @@
   <depend>nav2_util</depend>
   <depend>nav2_core</depend>
   <depend>nav2_msgs</depend>
+  <depend>nav2_ros_common</depend>
   <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>opennav_coverage_msgs</depend>
@@ -28,6 +29,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
-    <nav2_core prefix="$(prefix)/navigator_plugins.xml"/> 
+    <nav2_core prefix="$(prefix)/navigator_plugins.xml"/>
   </export>
 </package>

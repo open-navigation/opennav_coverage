@@ -22,7 +22,7 @@
 
 #include "opennav_row_coverage/types.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_util/node_utils.hpp"
+#include "nav2_ros_common/node_utils.hpp"
 #include "opennav_coverage/utils.hpp"
 #include "opennav_row_coverage/utils.hpp"
 
@@ -96,12 +96,12 @@ public:
   explicit RowSwathGenerator(const NodeT & node)
   {
     logger_ = node->get_logger();
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_swath_type", rclcpp::ParameterValue("CENTER"));
     std::string type_str = node->get_parameter("default_swath_type").as_string();
     default_type_ = toType(type_str);
 
-    nav2_util::declare_parameter_if_not_declared(
+    nav2::declare_parameter_if_not_declared(
       node, "default_offset", rclcpp::ParameterValue(0.5));
     default_offset_ = static_cast<float>(node->get_parameter("default_offset").as_double());
   }
