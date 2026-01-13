@@ -11,8 +11,8 @@
   This BT shows set polygon usage with the coverage server
 -->
 
-<root BTCPP_format="4" main_tree_to_execute="MainTree">
-  <BehaviorTree ID="MainTree">
+<root BTCPP_format="4" main_tree_to_execute="NavigateWBasicCompleteCoverage">
+  <BehaviorTree ID="NavigateWBasicCompleteCoverage">
     <RateController hz="0.0000001"> <!-- once, for demo -->
       <Sequence name="NavigateWithoutReplanning">
         <!-- May use:
