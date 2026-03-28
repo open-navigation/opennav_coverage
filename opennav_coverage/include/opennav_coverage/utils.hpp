@@ -408,7 +408,7 @@ public:
    */
   bool isValid()
   {
-    return idx_ <= max_idx_;
+    return idx_ < max_idx_;
   }
 
   /**

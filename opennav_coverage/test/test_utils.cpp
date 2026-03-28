@@ -428,6 +428,9 @@ TEST(UtilsTests, TestPathComponentsIterator)
     i++;
   }
 
+  // validate that our iteration value is equal to the size of the input swath
+  EXPECT_EQ(i, msg.swaths.size());
+
   auto last_row_info = it.getNext();
   EXPECT_EQ(std::get<1>(last_row_info), nullptr);
 }
