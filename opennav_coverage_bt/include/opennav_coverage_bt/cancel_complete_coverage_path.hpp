@@ -28,6 +28,11 @@ namespace opennav_coverage_bt
 /**
  * @brief A nav2_behavior_tree::BtActionNode class that wraps
  * opennav_coverage_msgs::action::ComputeCoveragePath
+ *
+ * Usage in XML:
+ * @code
+ * <CancelCoverage server_name="compute_complete_coverage" server_timeout="10"/>
+ * @endcode
  */
 class CoverageCancel
   : public nav2_behavior_tree::BtCancelActionNode<
