@@ -29,6 +29,13 @@ namespace opennav_coverage_bt
 
 /**
  * @brief nav2_behavior_tree::BtActionNode class that wraps nav2_msgs::action::ComputeCoveragePath
+ *
+ * Usage in XML:
+ * @code
+ * <ComputeCoveragePath file_field="{field_filepath}" nav_path="{path}" coverage_path="{cov_path}"
+ *                      server_name="ComputeCoverage" server_timeout="10"
+ *                      error_code_id="{compute_coverage_error_code}" error_msg="{compute_coverage_error_msg}"/>
+ * @endcode
  */
 class ComputeCoveragePathAction
   : public nav2_behavior_tree::BtActionNode<
