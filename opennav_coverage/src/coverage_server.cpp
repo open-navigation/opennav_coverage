@@ -261,10 +261,10 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
-        robot.robot_width = parameter.as_double();
+        robot.setWidth(parameter.as_double());
       } else if (name == "operation_width") {
         auto & robot = robot_params_->getRobot();
-        robot.op_width = parameter.as_double();
+        robot.setCovWidth(parameter.as_double());
       }
     } else if (type == ParameterType::PARAMETER_STRING) {
       if (name == "default_headland_type") {

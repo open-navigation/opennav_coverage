@@ -255,10 +255,10 @@ RowCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> para
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
-        robot.robot_width = parameter.as_double();
+        robot.setWidth(parameter.as_double());
       } else if (name == "operation_width") {
         auto & robot = robot_params_->getRobot();
-        robot.op_width = parameter.as_double();
+        robot.setCovWidth(parameter.as_double());
       } else if (name == "default_offset") {
         swath_gen_->setOffset(parameter.as_double());
       }
