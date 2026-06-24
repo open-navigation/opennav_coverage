@@ -172,7 +172,7 @@ void RowCoverageServer::computeCoveragePath()
     // (0) Obtain field and rows to use
     F2CField master_field = f2c::Parser::importFieldGml(goal->gml_field, true);
     Rows rows = util::parseRows(goal->gml_field, order_ids_);
-    std::string frame_id = master_field.coord_sys;
+    std::string frame_id = master_field.getCRS();
 
     if (!cartesian_frame_) {
       f2c::Transform::transformToUTM(master_field);
@@ -180,7 +180,7 @@ void RowCoverageServer::computeCoveragePath()
     } else {
       rows = util::removeRowsRefPoint(rows, master_field);
     }
-    Field field = master_field.field.getGeometry(0);
+    Field field = master_field.getField().getGeometry(0);
 
     RCLCPP_INFO(
       get_logger(),
