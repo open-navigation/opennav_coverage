@@ -7,9 +7,11 @@ find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(Fields2Cover REQUIRED)
+find_package(GDAL REQUIRED)
 find_package(opennav_coverage REQUIRED)
 find_package(opennav_coverage_msgs REQUIRED)
-find_package(tinyxml2 REQUIRED)
+find_package(tinyxml2_vendor REQUIRED)
+find_package(TinyXML2 REQUIRED)
 
 # potentially replace with nav2_common, nav2_package()
 set(CMAKE_CXX_STANDARD 20)
@@ -46,7 +48,22 @@ ament_target_dependencies(${library_name}
   ${dependencies}
 )
 
-target_link_libraries(${library_name} Fields2Cover tinyxml2::tinyxml2)
+# Fields2Cover exposes a different target name depending on the install method
+# (source install: Fields2Cover; ROS/apt package: Fields2Cover::Fields2Cover).
+if(TARGET Fields2Cover::Fields2Cover)
+  set(FIELDS2COVER_LIBRARIES Fields2Cover::Fields2Cover)
+else()
+  set(FIELDS2COVER_LIBRARIES Fields2Cover)
+endif()
+
+target_link_libraries(${library_name} ${FIELDS2COVER_LIBRARIES} tinyxml2::tinyxml2 GDAL::GDAL)
+
+# Treat Fields2Cover headers as SYSTEM so their own warnings do not break this
+# project's -Werror build. Uses the config-provided include variable (path- and
+# target-name-agnostic; apt /opt/ros or source /usr/local).
+if(Fields2Cover_INCLUDE_DIR)
+  target_include_directories(${library_name} SYSTEM PUBLIC ${Fields2Cover_INCLUDE_DIR})
+endif()
 
 add_executable(${executable_name}
   src/main.cpp
@@ -58,7 +75,7 @@ ament_target_dependencies(${executable_name}
   ${dependencies}
 )
 
-target_link_libraries(${executable_name} Fields2Cover tinyxml2::tinyxml2)
+target_link_libraries(${executable_name} ${FIELDS2COVER_LIBRARIES} tinyxml2::tinyxml2 GDAL::GDAL)
 
 rclcpp_components_register_nodes(${library_name} "opennav_row_coverage::RowCoverageServer")
 
