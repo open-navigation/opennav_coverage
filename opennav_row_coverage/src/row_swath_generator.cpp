@@ -176,7 +176,7 @@ Rows RowSwathGenerator::adjustRowOrientations(const Rows & input_rows)
   Rows rows = input_rows;
 
   auto unitVectorize = [&](const Row & row) {
-      Point v = row.first.EndPoint() - row.first.StartPoint();
+      Point v = row.first.endPoint() - row.first.startPoint();
       double normalize = 1.0 / std::sqrt(
         v.getX() * v.getX() + v.getY() * v.getY());
       return v * normalize;
