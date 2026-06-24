@@ -175,7 +175,7 @@ void CoverageServer::computeCoveragePath()
     std::string frame_id;
     if (goal->use_gml_file) {
       master_field = f2c::Parser::importFieldGml(goal->gml_field, true);
-      frame_id = master_field.coord_sys;
+      frame_id = master_field.getCRS();
     } else {
       master_field = util::getFieldFromGoal(goal);
       master_field.setCRS(goal->frame_id);
@@ -185,7 +185,7 @@ void CoverageServer::computeCoveragePath()
     if (!cartesian_frame_) {
       f2c::Transform::transformToUTM(master_field);
     }
-    field = master_field.field.getGeometry(0);
+    field = master_field.getField().getGeometry(0);
 
     RCLCPP_INFO(
       get_logger(),
