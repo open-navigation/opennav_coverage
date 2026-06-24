@@ -80,13 +80,13 @@ TEST(HeadlandTests, TestheadlandGeneration)
 
   // Generate some toy field
   f2c::Random rand;
-  auto field = rand.generateRandField(5, 1e5);
+  auto field = rand.generateRandField(1e5, 5);
 
   // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::HeadlandMode settings;
-  auto field_out = generator.generateHeadlands(field.field.getGeometry(0), settings);
+  auto field_out = generator.generateHeadlands(field.getField().getGeometry(0), settings);
   settings.mode = "CONSTANT";
-  auto field_out2 = generator.generateHeadlands(field.field.getGeometry(0), settings);
+  auto field_out2 = generator.generateHeadlands(field.getField().getGeometry(0), settings);
 }
 
 }  // namespace opennav_coverage
