@@ -14,7 +14,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(opennav_coverage_msgs REQUIRED)
 
 # potentially replace with nav2_common, nav2_package()
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wdeprecated -fPIC -Wnull-dereference)
 
 include_directories(
