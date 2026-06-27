@@ -391,11 +391,12 @@ public:
   std::pair<opennav_coverage_msgs::msg::Swath *, nav_msgs::msg::Path *>
   getNext()
   {
-    if (idx_ < max_idx_ - 1) {
-      return std::make_pair(&path_components_.swaths[idx_], &path_components_.turns[idx_]);
-    } else {
-      return std::make_pair(&path_components_.swaths[idx_], nullptr);
-    }
+    opennav_coverage_msgs::msg::Swath * swath =
+      idx_ < path_components_.swaths.size() ? &path_components_.swaths[idx_] : nullptr;
+    nav_msgs::msg::Path * turn =
+      (idx_ + 1 < max_idx_ && idx_ < path_components_.turns.size()) ?
+      &path_components_.turns[idx_] : nullptr;
+    return std::make_pair(swath, turn);
   }
 
   opennav_coverage_msgs::msg::PathComponents & path_components_;
