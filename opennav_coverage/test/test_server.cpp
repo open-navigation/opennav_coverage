@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <filesystem>
+
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -97,8 +99,16 @@ TEST(ServerTest, testServerTransactions)
 
   auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
   goal_msg.use_gml_file = true;  // Use file
-  goal_msg.gml_field =
-    ament_index_cpp::get_package_share_directory("opennav_coverage") + "/test_field.xml";
+  // get_package_share_directory(string) is the only overload present on all of
+  // humble, jazzy and rolling. Its replacement get_package_share_path() does
+  // not exist on humble/jazzy, so we keep using it and locally silence the
+  // deprecation warning that rolling emits (otherwise -Werror fails the build).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
 
   auto future_goal_handle = action_client->async_send_goal(goal_msg);
   EXPECT_EQ(

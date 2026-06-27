@@ -38,9 +38,15 @@ public:
     node_ = std::make_unique<rclcpp::Node>("test_node");
     generator_ = std::make_unique<RowSwathGenerator>(node_);
 
+    // get_package_share_directory(string) is deprecated on rolling; locally
+    // silence the warning so -Werror does not fail the build (kept for jazzy
+    // compatibility, where its get_package_share_path() replacement is absent).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     const std::string file_path =
       ament_index_cpp::get_package_share_directory("opennav_coverage") +
       "/cartesian_test_field.xml";
+#pragma GCC diagnostic pop
     rows_ = opennav_row_coverage::util::parseRows(file_path);
   }
 
