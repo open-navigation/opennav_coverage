@@ -11,16 +11,26 @@ jobs:
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      # Ubuntu 26.04 ships CMake 4.x, which hard-errors on dependencies that
+      # declare cmake_minimum_required(VERSION < 3.5) (e.g. the zlib bundled by
+      # ortools_vendor's OR-Tools). This lets CMake 4 accept those old minimums;
+      # it propagates into nested FetchContent/ExternalProject sub-builds too.
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     container:
-      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-noble-ros-rolling-ros-base:master
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-lyrical-ros-base:master
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [rolling]
+          ros_distro: [lyrical]
     steps:
     - uses: actions/checkout@v4
     - name: Install Cyclone DDS
       run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
+    # nav2 (navigation2 main) and Fields2Cover are built from source via
+    # deps.repos. Rolling left Ubuntu Noble for Lyrical/Ubuntu 26.04 (resolute),
+    # so we run on the Lyrical image where the apt repo is consistent and rosdep
+    # resolves all source-build dependencies (backward_ros, geographic_msgs, the
+    # BT stack, ...) automatically -- no manual apt step needed.
     - name: Build and run tests
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.4

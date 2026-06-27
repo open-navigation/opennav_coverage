@@ -8,3 +8,16 @@ repositories:
     type: git
     url: https://github.com/ros-navigation/navigation2.git
     version: main
+
+  # Not yet released for Lyrical/Ubuntu 26.04, so build from source.
+  # ortools_vendor is a Fields2Cover dependency; slam_toolbox is pulled in by
+  # nav2_bringup. Both are absent from the lyrical apt repo (fresh distro).
+  ortools_vendor:
+    type: git
+    url: https://github.com/Fields2Cover/ortools_vendor.git
+    version: 9.9.0
+
+  slam_toolbox:
+    type: git
+    url: https://github.com/SteveMacenski/slam_toolbox.git
+    version: ros2
