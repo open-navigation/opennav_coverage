@@ -1,6 +1,6 @@
 # Open Navigation's Nav2 Complete Coverage
 
-> **Note:** This branch migrates `main` to **Fields2Cover v2** (verified against `v2.0.0`), replacing the previous Fields2Cover 1.2.1 dependency. See the companion `humble-v2` branch for the same upgrade on ROS 2 Humble.
+> **Note:** This branch migrates `main` to **Fields2Cover v2** (verified against `v2.0.0`), replacing the previous Fields2Cover 1.2.1 dependency. See the companion `humble-v2` branch and the `jazzy` branch for the same upgrade on ROS 2 Humble and Jazzy.
 
 This package contains the Complete Coverage Task Server & auxiliary tools utilizing the [Fields2Cover](https://github.com/Fields2Cover/Fields2Cover) complete coverage planning system which includes a great deal of options in headland, swath, route, and final path planning. You can find more information about Fields2Cover (F2C) in its [ReadTheDocs Documentation](https://fields2cover.github.io/index.html). It can accept both GPS and Cartesian coordinates and publishes the field, headland, swaths, and route as separate topics in cartesian coordinates for debugging and visualization. It can also compute coverage paths based on open-field polygons **or** based on annotated rows as might exist in a tree farm or other applications with both irregular and regular pre-established rows.
 
@@ -38,12 +38,20 @@ https://github.com/user-attachments/assets/e44d8f10-c5b0-4345-81ad-25f3bcd06030
 
 ### Fields2Cover Installation
 
-opennav_coverage works with Field2Cover v1.2.1. The newest version v2.0.0 is not supported at the moment.
+On `main`, opennav_coverage works with **Fields2Cover v2** (verified against `v2.0.0`). Support for the older 1.2.1 series has been dropped on this branch.
 
-To install Fields2Cover, clone it into a colcon workspace and build with `colcon build`.
+Fields2Cover is **not** available as a binary on Lyrical (rosdep cannot resolve the `fields2cover` key there), so it is built from source. The recommended way to pull F2C together with the other source dependencies is via `vcs`:
 
-- Humble & Iron: Use tag `v1.2.1`
-- Jazzy & rolling: Use branch `v1.2.1-devel`
+```bash
+vcs import src < src/opennav_coverage/.github/deps.repos
+```
+
+This imports Fields2Cover `v2.0.0` along with the `nav2`/`ortools_vendor`/`slam_toolbox`/`behaviortree_cpp` sources `main` builds against, then build the workspace with `colcon build`.
+
+Older distributions remain on Fields2Cover 1.2.1 (or have a separate F2C v2 upgrade where a binary exists):
+
+- Humble & Iron: tag `v1.2.1` (or the `humble-v2` branch for the F2C v2 upgrade; `apt install ros-humble-fields2cover` is 2.0.0)
+- Jazzy: branch `v1.2.1-devel` (or the `jazzy` F2C v2 PR; `apt install ros-jazzy-fields2cover` is 2.0.0)
 
 ## Interfaces
 
