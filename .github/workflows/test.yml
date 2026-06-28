@@ -16,6 +16,11 @@ jobs:
       # ortools_vendor's OR-Tools). This lets CMake 4 accept those old minimums;
       # it propagates into nested FetchContent/ExternalProject sub-builds too.
       CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+      # Pin GCC 15 (Ubuntu 26.04's default, and what the dev container uses, 15.2.0)
+      # so CI compiles with the same toolchain we validate against locally and
+      # rosdep cannot silently swap in gcc-16 as a transitive dependency.
+      CC: gcc-15
+      CXX: g++-15
     container:
       image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-lyrical-ros-base:master
     strategy:
@@ -41,6 +46,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends \
+          gcc-15 g++-15 \
           python3-vcstool python3-colcon-common-extensions \
           ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp \
           ros-${{ matrix.ros_distro }}-tinyxml2-vendor \
@@ -64,13 +70,23 @@ jobs:
         rosdep install --from-paths ros_ws/src --ignore-src \
           --rosdistro ${{ matrix.ros_distro }} -r -y || true
 
-    - name: Drop shadowing apt behaviortree_cpp
-      # behaviortree_cpp is built from source (deps.repos: master) because nav2
-      # main uses its unreleased wakeUpSignal() API. If a transitive dependency
-      # pulled in the Lyrical binary 4.9.0, its headers in the shared /opt/ros
-      # include tree would shadow the source-built master and break
-      # nav2_behavior_tree, so drop it if present.
-      run: sudo apt-get remove -y ros-${{ matrix.ros_distro }}-behaviortree-cpp || true
+    - name: Drop shadowing apt packages
+      # Both are resolved into the shared /opt/ros/<distro> tree (by the image or
+      # by rosdep) and shadow the version nav2 main is written against, so drop
+      # them here -- after rosdep -- and let find_package fall back to the right one.
+      #
+      # behaviortree_cpp: built from source (deps.repos: master) because nav2 main
+      #   uses its unreleased wakeUpSignal() API; the Lyrical binary 4.9.0 headers
+      #   would shadow the source-built master and break nav2_behavior_tree.
+      # ompl: rosdep resolves the 'ompl' key to ros-lyrical-ompl 2.0.1, whose
+      #   ReedsShepp API differs (ReedsSheppStateSpace::ReedsSheppPath / reedsShepp()
+      #   were renamed/removed), so nav2 main's nav2_smac_planner fails to compile
+      #   against it. Removing it makes find_package(ompl) use the system
+      #   libompl-dev 1.6.0 installed above -- the API nav2 main expects, matching
+      #   the dev container.
+      run: |
+        sudo apt-get remove -y ros-${{ matrix.ros_distro }}-behaviortree-cpp || true
+        sudo apt-get remove -y ros-${{ matrix.ros_distro }}-ompl || true
 
     - name: Build
       run: |
