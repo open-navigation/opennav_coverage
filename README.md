@@ -36,12 +36,20 @@ https://github.com/user-attachments/assets/e44d8f10-c5b0-4345-81ad-25f3bcd06030
 
 ### Fields2Cover Installation
 
-opennav_coverage works with Field2Cover v1.2.1. The newest version v2.0.0 is not supported at the moment.
+> **Note:** This `jazzy` branch targets **Fields2Cover v2** (verified against `v2.0.0`).
 
-To install Fields2Cover, clone it into a colcon workspace and build with `colcon build`.
+Fields2Cover v2 is available as a binary package on ROS 2 Jazzy — no source build required:
 
-- Humble & Iron: Use tag `v1.2.1`
-- Jazzy & rolling: Use branch `v1.2.1-devel`
+```bash
+sudo apt install ros-jazzy-fields2cover
+```
+
+Alternatively, build from source:
+
+```bash
+git clone --branch v2.0.0 https://github.com/Fields2Cover/Fields2Cover.git
+colcon build --packages-select Fields2Cover
+```
 
 ## Interfaces
 
