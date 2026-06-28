@@ -12,12 +12,23 @@ repositories:
   # Not yet released for Lyrical/Ubuntu 26.04, so build from source.
   # ortools_vendor is a Fields2Cover dependency; slam_toolbox is pulled in by
   # nav2_bringup. Both are absent from the lyrical apt repo (fresh distro).
+  # 'main' branch (not tag 9.9.0): USE_SCIP=OFF removes the SCIP/tinycthread
+  # build that fails on Ubuntu 26.04's GCC 15, and forwards
+  # CMAKE_POLICY_VERSION_MINIMUM=3.5 into the OR-Tools sub-build. PR #8.
   ortools_vendor:
     type: git
     url: https://github.com/Fields2Cover/ortools_vendor.git
-    version: 9.9.0
+    version: main
 
   slam_toolbox:
     type: git
     url: https://github.com/SteveMacenski/slam_toolbox.git
     version: ros2
+
+  # nav2 main uses BehaviorTree.CPP's wakeUpSignal() getter, which only exists on
+  # master (the latest release 4.9.0 -- what lyrical ships -- lacks it). Build
+  # BT.CPP from master so it overlays lyrical's 4.9.0 and nav2_behavior_tree compiles.
+  behaviortree_cpp:
+    type: git
+    url: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+    version: master

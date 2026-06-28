@@ -22,24 +22,78 @@ jobs:
       fail-fast: false
       matrix:
           ros_distro: [lyrical]
+    # ROS Rolling has been released as Lyrical on Ubuntu 26.04 (resolute), where
+    # the apt repo is consistent and rosdep works. nav2 (navigation2 main) and
+    # Fields2Cover are not released as binaries there, so they are built from
+    # source via deps.repos. We drive the build manually instead of
+    # action-ros-ci because nav2 main needs a source patch (-Werror) applied
+    # between vcs import and colcon build, which action-ros-ci does not allow.
     steps:
     - uses: actions/checkout@v4
-    - name: Install Cyclone DDS
-      run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
-    # nav2 (navigation2 main) and Fields2Cover are built from source via
-    # deps.repos. Rolling left Ubuntu Noble for Lyrical/Ubuntu 26.04 (resolute),
-    # so we run on the Lyrical image where the apt repo is consistent and rosdep
-    # resolves all source-build dependencies (backward_ros, geographic_msgs, the
-    # BT stack, ...) automatically -- no manual apt step needed.
-    - name: Build and run tests
-      id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.4
       with:
-        package-name: nav2_bt_navigator nav2_behavior_tree opennav_coverage opennav_coverage_bt opennav_coverage_demo opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage
-        import-token: ${{ secrets.GITHUB_TOKEN }}
-        target-ros2-distro: ${{ matrix.ros_distro }}
-        vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+        path: ros_ws/src/opennav_coverage
+
+    - name: Install system dependencies
+      # libompl-dev: nav2_smac_planner's find_package(ompl) -- rosdep cannot
+      #   resolve the 'ompl' key on Lyrical (no ros-lyrical-ompl).
+      # The rest: Fields2Cover (gdal/eigen/geos/tinyxml2), tinyxml2-vendor for
+      #   opennav_row_coverage, Cyclone DDS, and vcstool/colcon.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          python3-vcstool python3-colcon-common-extensions \
+          ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp \
+          ros-${{ matrix.ros_distro }}-tinyxml2-vendor \
+          libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev
+
+    - name: Import source dependencies
+      run: |
+        cd ros_ws
+        vcs import src < src/opennav_coverage/.github/deps.repos
+
+    - name: Patch nav2_common (drop -Werror)
+      # nav2 main is not -Werror-clean under Ubuntu 26.04's GCC 15 (deprecated
+      # std::atomic_load on shared_ptr, null-dereference via builtin_interfaces,
+      # ...). nav2_common applies -Werror to every nav2 package, so strip it
+      # centrally. Our own opennav packages keep their own -Werror.
+      run: sed -i 's/ -Werror//' ros_ws/src/navigation2/nav2_common/cmake/nav2_package.cmake
+
+    - name: Install ROS dependencies (rosdep)
+      run: |
+        rosdep update --rosdistro ${{ matrix.ros_distro }}
+        rosdep install --from-paths ros_ws/src --ignore-src \
+          --rosdistro ${{ matrix.ros_distro }} -r -y || true
+
+    - name: Drop shadowing apt behaviortree_cpp
+      # behaviortree_cpp is built from source (deps.repos: master) because nav2
+      # main uses its unreleased wakeUpSignal() API. If a transitive dependency
+      # pulled in the Lyrical binary 4.9.0, its headers in the shared /opt/ros
+      # include tree would shadow the source-built master and break
+      # nav2_behavior_tree, so drop it if present.
+      run: sudo apt-get remove -y ros-${{ matrix.ros_distro }}-behaviortree-cpp || true
+
+    - name: Build
+      run: |
+        cd ros_ws
+        . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+        colcon build --packages-up-to \
+          nav2_bt_navigator nav2_behavior_tree \
+          opennav_coverage opennav_coverage_bt opennav_coverage_demo \
+          opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage
+
+    - name: Test
+      run: |
+        cd ros_ws
+        . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+        . install/setup.sh
+        colcon test --packages-select \
+          opennav_coverage opennav_coverage_bt opennav_coverage_demo \
+          opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage \
+          --event-handlers console_cohesion+
+        colcon test-result --verbose
+
     - uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: colcon-logs
         path: ros_ws/log
