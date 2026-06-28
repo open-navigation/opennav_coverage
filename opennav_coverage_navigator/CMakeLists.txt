@@ -13,6 +13,7 @@ find_package(nav2_behavior_tree REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(opennav_coverage_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
 
 # potentially replace with nav2_common, nav2_package()
 set(CMAKE_CXX_STANDARD 20)
@@ -36,12 +37,31 @@ set(dependencies
   opennav_coverage_msgs
 )
 
+# Modern CMake targets for the dependencies above. Rolling/Lyrical removed the
+# ament_target_dependencies macro, so we link these targets directly; this also
+# works on jazzy. Message packages expose a ${pkg_TARGETS} variable, regular
+# packages a pkg::pkg target.
+set(dep_targets
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
+  ${std_msgs_TARGETS}
+  nav2_util::nav2_util_core
+  nav2_ros_common::nav2_ros_common
+  ${nav2_msgs_TARGETS}
+  nav2_core::nav2_core
+  nav2_behavior_tree::nav2_behavior_tree
+  ${nav_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${opennav_coverage_msgs_TARGETS}
+  pluginlib::pluginlib
+)
+
 include_directories(
   include
 )
 
 add_library(opennav_coverage_navigator SHARED src/coverage_navigator.cpp)
-ament_target_dependencies(opennav_coverage_navigator ${dependencies})
+target_link_libraries(opennav_coverage_navigator PUBLIC ${dep_targets})
 
 pluginlib_export_plugin_description_file(nav2_core navigator_plugins.xml)
 

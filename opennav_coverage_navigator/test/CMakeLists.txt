@@ -1,3 +1,2 @@
 ament_add_gtest(test_coverage_navigator test_coverage_navigator.cpp)
-target_link_libraries(test_coverage_navigator opennav_coverage_navigator)
-ament_target_dependencies(test_coverage_navigator ${dependencies})
+target_link_libraries(test_coverage_navigator opennav_coverage_navigator ${dep_targets})
