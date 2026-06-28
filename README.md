@@ -36,12 +36,13 @@ https://github.com/user-attachments/assets/e44d8f10-c5b0-4345-81ad-25f3bcd06030
 
 ### Fields2Cover Installation
 
-opennav_coverage works with Field2Cover v1.2.1. The newest version v2.0.0 is not supported at the moment.
+> **Note:** This `jazzy` branch targets **Fields2Cover v2** (verified against `v2.0.0`).
 
-To install Fields2Cover, clone it into a colcon workspace and build with `colcon build`.
+opennav_coverage requires Fields2Cover v2.0.0. Clone it into a colcon workspace and build with `colcon build`:
 
-- Humble & Iron: Use tag `v1.2.1`
-- Jazzy & rolling: Use branch `v1.2.1-devel`
+```bash
+git clone --branch v2.0.0 https://github.com/Fields2Cover/Fields2Cover.git
+```
 
 ## Interfaces
 

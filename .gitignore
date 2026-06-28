@@ -54,3 +54,10 @@ cmake-build-debug/
 
 # doxygen docs
 doc/html/
+
+.devcontainer
+
+F2C_V2_MIGRATION_AUDIT.md
+F2C_V2_GUNCELLEME_VE_YENI_OZELLIKLER.md
+F2C_V2_MAIN_MIGRATION_PLAN.md
+Fields2Cover/
