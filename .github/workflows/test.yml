@@ -16,11 +16,6 @@ jobs:
       # ortools_vendor's OR-Tools). This lets CMake 4 accept those old minimums;
       # it propagates into nested FetchContent/ExternalProject sub-builds too.
       CMAKE_POLICY_VERSION_MINIMUM: "3.5"
-      # Pin GCC 15 (Ubuntu 26.04's default, and what the dev container uses, 15.2.0)
-      # so CI compiles with the same toolchain we validate against locally and
-      # rosdep cannot silently swap in gcc-16 as a transitive dependency.
-      CC: gcc-15
-      CXX: g++-15
     container:
       image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-lyrical-ros-base:master
     strategy:
@@ -46,7 +41,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends \
-          gcc-15 g++-15 \
           python3-vcstool python3-colcon-common-extensions \
           ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp \
           ros-${{ matrix.ros_distro }}-tinyxml2-vendor \
