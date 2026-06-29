@@ -37,10 +37,6 @@ set(dependencies
   opennav_coverage_msgs
 )
 
-# Modern CMake targets for the dependencies above. Rolling/Lyrical removed the
-# ament_target_dependencies macro, so we link these targets directly; this also
-# works on jazzy. Message packages expose a ${pkg_TARGETS} variable, regular
-# packages a pkg::pkg target.
 set(dep_targets
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action

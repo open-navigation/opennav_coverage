@@ -38,9 +38,7 @@ public:
     node_ = std::make_unique<rclcpp::Node>("test_node");
     generator_ = std::make_unique<RowSwathGenerator>(node_);
 
-    // get_package_share_directory(string) is deprecated on rolling; locally
-    // silence the warning so -Werror does not fail the build (kept for jazzy
-    // compatibility, where its get_package_share_path() replacement is absent).
+    // get_package_share_directory is deprecated on rolling; silence -Werror (kept for jazzy).
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     const std::string file_path =

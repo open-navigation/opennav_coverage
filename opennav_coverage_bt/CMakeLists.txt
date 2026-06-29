@@ -38,11 +38,7 @@ set(dependencies
   behaviortree_cpp
 )
 
-# Modern CMake targets for the dependencies above. Rolling/Lyrical removed the
-# ament_target_dependencies macro, so we link these targets directly; this also
-# works on jazzy. Message packages expose a ${pkg_TARGETS} variable, regular
-# packages a pkg::pkg target. (nav2_bt_navigator is not used by the sources, so
-# it is exported as a dependency but not linked here.)
+# nav2_bt_navigator is exported as a dependency but not linked (unused by sources).
 set(dep_targets
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action

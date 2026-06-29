@@ -41,14 +41,7 @@ set(dependencies
   opennav_coverage_msgs
 )
 
-# Modern CMake targets for the dependencies above. Rolling removed the
-# ament_target_dependencies macro, so we link these targets directly; this also
-# works on jazzy, which still exports the same targets. Message/interface
-# packages expose a ${pkg_TARGETS} variable, regular packages a pkg::pkg target.
-# opennav_coverage uses the classic ament_export_libraries (no namespaced
-# target), so it is consumed via ${opennav_coverage_LIBRARIES}/_INCLUDE_DIRS
-# below. tf2_ros and the message packages are pulled in transitively by
-# find_package(opennav_coverage) through its ament_export_dependencies.
+# opennav_coverage has no namespaced target; consumed via ${opennav_coverage_LIBRARIES}/_INCLUDE_DIRS below.
 set(dep_targets
   nav2_util::nav2_util_core
   nav2_ros_common::nav2_ros_common
@@ -87,9 +80,7 @@ target_link_libraries(${library_name} PUBLIC
 )
 target_include_directories(${library_name} PUBLIC ${opennav_coverage_INCLUDE_DIRS})
 
-# Treat Fields2Cover headers as SYSTEM so their own warnings do not break this
-# project's -Werror build. Uses the config-provided include variable (path- and
-# target-name-agnostic; apt /opt/ros or source /usr/local).
+# Fields2Cover headers as SYSTEM so their warnings don't fail our -Werror build.
 if(Fields2Cover_INCLUDE_DIR)
   target_include_directories(${library_name} SYSTEM PUBLIC ${Fields2Cover_INCLUDE_DIR})
 endif()

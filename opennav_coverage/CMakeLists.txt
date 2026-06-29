@@ -49,10 +49,6 @@ set(dependencies
   opennav_coverage_msgs
 )
 
-# Modern CMake targets for the dependencies above. Rolling removed the
-# ament_target_dependencies macro, so we link these targets directly; this also
-# works on jazzy, which still exports the same targets. Message/interface
-# packages expose a ${pkg_TARGETS} variable, regular packages a pkg::pkg target.
 set(dep_targets
   ament_index_cpp::ament_index_cpp
   rclcpp::rclcpp
@@ -94,10 +90,7 @@ target_link_libraries(${library_name} PUBLIC
   GDAL::GDAL
 )
 
-# Treat Fields2Cover headers as SYSTEM so their own warnings (e.g. -Wshadow in
-# objectives/rp_obj/*) do not break this project's -Werror build. Uses the
-# config-provided include variable, so it is both path-agnostic (apt /opt/ros
-# or source /usr/local) and independent of the target name.
+# Fields2Cover headers as SYSTEM so their warnings don't fail our -Werror build.
 if(Fields2Cover_INCLUDE_DIR)
   target_include_directories(${library_name} SYSTEM PUBLIC ${Fields2Cover_INCLUDE_DIR})
 endif()

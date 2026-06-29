@@ -33,9 +33,7 @@ namespace opennav_row_coverage
 
 TEST(UtilsTests, TestRowParserSimple)
 {
-  // get_package_share_directory(string) is deprecated on rolling; locally
-  // silence the warning so -Werror does not fail the build (kept for jazzy
-  // compatibility, where its get_package_share_path() replacement is absent).
+  // get_package_share_directory is deprecated on rolling; silence -Werror (kept for jazzy).
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   const std::string file_path =

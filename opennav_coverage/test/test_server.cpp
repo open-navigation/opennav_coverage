@@ -99,10 +99,7 @@ TEST(ServerTest, testServerTransactions)
 
   auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
   goal_msg.use_gml_file = true;  // Use file
-  // get_package_share_directory(string) is the only overload present on all of
-  // humble, jazzy and rolling. Its replacement get_package_share_path() does
-  // not exist on humble/jazzy, so we keep using it and locally silence the
-  // deprecation warning that rolling emits (otherwise -Werror fails the build).
+  // get_package_share_directory is deprecated on rolling; silence -Werror (kept for humble/jazzy).
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   const std::filesystem::path share_dir =
