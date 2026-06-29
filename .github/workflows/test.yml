@@ -36,6 +36,8 @@ jobs:
     - name: Install system dependencies
       # libompl-dev: nav2_smac_planner's find_package(ompl) -- the rosdep 'ompl'
       #   key resolves to a ROS ompl whose API nav2 main doesn't match (see below).
+      # backward-ros: nav2 build dependency; install explicitly so a transient
+      #   rosdep gap can't fail the nav2 configure (seen in the rolling dev container).
       # The rest: Fields2Cover (gdal/eigen/geos/tinyxml2), tinyxml2-vendor for
       #   opennav_row_coverage, Cyclone DDS, and vcstool/colcon.
       run: |
@@ -44,6 +46,7 @@ jobs:
           python3-vcstool python3-colcon-common-extensions \
           ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp \
           ros-${{ matrix.ros_distro }}-tinyxml2-vendor \
+          ros-${{ matrix.ros_distro }}-backward-ros \
           libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev
 
     - name: Restore colcon cache
