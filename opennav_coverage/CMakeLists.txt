@@ -17,6 +17,7 @@ find_package(builtin_interfaces REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(opennav_coverage_msgs REQUIRED)
 find_package(Fields2Cover REQUIRED)
+find_package(GDAL REQUIRED)
 
 # potentially replace with nav2_common, nav2_package()
 set(CMAKE_CXX_STANDARD 17)
@@ -59,7 +60,23 @@ ament_target_dependencies(${library_name}
   ${dependencies}
 )
 
-target_link_libraries(${library_name} Fields2Cover)
+# Fields2Cover exposes a different target name depending on the install method
+# (source install: Fields2Cover; ROS/apt package: Fields2Cover::Fields2Cover).
+if(TARGET Fields2Cover::Fields2Cover)
+  set(FIELDS2COVER_LIBRARIES Fields2Cover::Fields2Cover)
+else()
+  set(FIELDS2COVER_LIBRARIES Fields2Cover)
+endif()
+
+target_link_libraries(${library_name} ${FIELDS2COVER_LIBRARIES} GDAL::GDAL)
+
+# Treat Fields2Cover headers as SYSTEM so their own warnings (e.g. -Wshadow in
+# objectives/rp_obj/*) do not break this project's -Werror build. Uses the
+# config-provided include variable, so it is both path-agnostic (apt /opt/ros
+# or source /usr/local) and independent of the target name.
+if(Fields2Cover_INCLUDE_DIR)
+  target_include_directories(${library_name} SYSTEM PUBLIC ${Fields2Cover_INCLUDE_DIR})
+endif()
 
 add_executable(${executable_name}
   src/main.cpp

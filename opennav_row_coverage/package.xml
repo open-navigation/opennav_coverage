@@ -11,10 +11,11 @@
 
   <depend>rclcpp</depend>
   <depend>nav2_util</depend>
+  <depend>libgdal-dev</depend>
   <depend>fields2cover</depend>
   <depend>opennav_coverage</depend>
   <depend>opennav_coverage_msgs</depend>
-  <depend>tinyxml2</depend>
+  <depend>tinyxml2_vendor</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
