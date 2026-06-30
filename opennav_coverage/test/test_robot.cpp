@@ -37,7 +37,7 @@ TEST(RobotTests, Testrobot)
 
   EXPECT_EQ(robot.getWidth(), 2.1);
   EXPECT_EQ(robot.getOperationWidth(), 2.5);
-  EXPECT_EQ(robot.getRobot().linear_curv_change, 2.0);
+  EXPECT_EQ(robot.getRobot().getMaxDiffCurv(), 2.0);
 }
 
 }  // namespace opennav_coverage

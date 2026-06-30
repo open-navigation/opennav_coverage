@@ -175,7 +175,7 @@ void CoverageServer::computeCoveragePath()
     std::string frame_id;
     if (goal->use_gml_file) {
       master_field = f2c::Parser::importFieldGml(goal->gml_field, true);
-      frame_id = master_field.coord_sys;
+      frame_id = master_field.getCRS();
     } else {
       master_field = util::getFieldFromGoal(goal);
       master_field.setCRS(goal->frame_id);
@@ -185,7 +185,7 @@ void CoverageServer::computeCoveragePath()
     if (!cartesian_frame_) {
       f2c::Transform::transformToUTM(master_field);
     }
-    field = master_field.field.getGeometry(0);
+    field = master_field.getField().getGeometry(0);
 
     RCLCPP_INFO(
       get_logger(),
@@ -269,10 +269,10 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
-        robot.robot_width = parameter.as_double();
+        robot.setWidth(parameter.as_double());
       } else if (name == "operation_width") {
         auto & robot = robot_params_->getRobot();
-        robot.op_width = parameter.as_double();
+        robot.setCovWidth(parameter.as_double());
       }
     } else if (type == ParameterType::PARAMETER_STRING) {
       if (name == "default_headland_type") {

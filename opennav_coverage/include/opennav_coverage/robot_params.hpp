@@ -44,19 +44,19 @@ public:
   {
     nav2_util::declare_parameter_if_not_declared(
       node, "robot_width", rclcpp::ParameterValue(2.1));
-    robot_.robot_width = node->get_parameter("robot_width").as_double();
+    robot_.setWidth(node->get_parameter("robot_width").as_double());
 
     nav2_util::declare_parameter_if_not_declared(
       node, "operation_width", rclcpp::ParameterValue(2.5));
-    robot_.op_width = node->get_parameter("operation_width").as_double();
+    robot_.setCovWidth(node->get_parameter("operation_width").as_double());
 
     nav2_util::declare_parameter_if_not_declared(
       node, "min_turning_radius", rclcpp::ParameterValue(0.4));
-    robot_.setMinRadius(node->get_parameter("min_turning_radius").as_double());
+    robot_.setMinTurningRadius(node->get_parameter("min_turning_radius").as_double());
 
     nav2_util::declare_parameter_if_not_declared(
       node, "linear_curv_change", rclcpp::ParameterValue(2.0));
-    robot_.linear_curv_change = node->get_parameter("linear_curv_change").as_double();
+    robot_.setMaxDiffCurv(node->get_parameter("linear_curv_change").as_double());
   }
 
   /**
@@ -65,7 +65,7 @@ public:
    */
   double getWidth()
   {
-    return robot_.robot_width;
+    return robot_.getWidth();
   }
 
   /**
@@ -74,7 +74,7 @@ public:
    */
   double getOperationWidth()
   {
-    return robot_.op_width;
+    return robot_.getCovWidth();
   }
 
   /**
