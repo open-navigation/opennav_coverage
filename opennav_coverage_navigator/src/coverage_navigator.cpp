@@ -58,8 +58,14 @@ CoverageNavigator::getDefaultBTFilepath(
 {
   auto node = parent_node.lock();
 
+  // get_package_share_directory is deprecated on rolling/lyrical in favour of
+  // get_package_share_path, which does not exist on jazzy. Suppress the
+  // deprecation locally to keep a single code path across distros.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   const std::string pkg_share_dir =
     ament_index_cpp::get_package_share_directory("opennav_coverage_bt");
+#pragma GCC diagnostic pop
 
   const auto default_bt_xml_filename = node->declare_or_get_parameter(
     "default_coverage_bt_xml",

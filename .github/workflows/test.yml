@@ -11,25 +11,145 @@ jobs:
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      # Ubuntu 26.04 ships CMake 4.x, which hard-errors on dependencies that
+      # declare cmake_minimum_required(VERSION < 3.5) (e.g. the zlib bundled by
+      # ortools_vendor's OR-Tools). This lets CMake 4 accept those old minimums;
+      # it propagates into nested FetchContent/ExternalProject sub-builds too.
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     container:
-      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-noble-ros-rolling-ros-base:master
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-lyrical-ros-base:master
     strategy:
       fail-fast: false
       matrix:
-          ros_distro: [rolling]
+          ros_distro: [lyrical]
+    # ROS Rolling has been released as Lyrical on Ubuntu 26.04 (resolute), where
+    # the apt repo is consistent and rosdep works. nav2 (navigation2 main) and
+    # Fields2Cover are not released as binaries there, so they are built from
+    # source via deps.repos. We drive the build manually instead of
+    # action-ros-ci because nav2 main needs a source patch (-Werror) applied
+    # between vcs import and colcon build, which action-ros-ci does not allow.
     steps:
-    - uses: actions/checkout@v2
-    - name: Install Cyclone DDS
-      run: sudo apt install ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp -y
-    - name: Build and run tests
-      id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.4
+    - uses: actions/checkout@v4
       with:
-        package-name: nav2_bt_navigator nav2_behavior_tree opennav_coverage opennav_coverage_bt opennav_coverage_demo opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage
-        import-token: ${{ secrets.GITHUB_TOKEN }}
-        target-ros2-distro: ${{ matrix.ros_distro }}
-        vcs-repo-file-url: "${{ github.workspace }}/.github/deps.repos"
+        path: ros_ws/src/opennav_coverage
+
+    - name: Install system dependencies
+      # libompl-dev: nav2_smac_planner's find_package(ompl) -- rosdep cannot
+      #   resolve the 'ompl' key on Lyrical (no ros-lyrical-ompl).
+      # The rest: Fields2Cover (gdal/eigen/geos/tinyxml2), tinyxml2-vendor for
+      #   opennav_row_coverage, Cyclone DDS, and vcstool/colcon.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          python3-vcstool python3-colcon-common-extensions \
+          ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp \
+          ros-${{ matrix.ros_distro }}-tinyxml2-vendor \
+          libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev
+
+    - name: Restore colcon cache
+      id: colcon_cache
+      uses: actions/cache/restore@v4
+      with:
+        # The vcs-imported third-party sources (nav2, Fields2Cover,
+        # ortools_vendor, behaviortree_cpp) plus the colcon build/
+        # and install/ trees. These take ~1h to build from source; caching them
+        # means they build exactly once and are reused, so the ortools_vendor
+        # parallel-build race cannot recur and CI drops from ~60 min to minutes.
+        # Keyed on deps.repos, so any change to the third-party pins rebuilds all
+        # of them. Our own opennav_coverage lives outside src/deps (checked out
+        # separately) and is therefore always rebuilt against the cached deps.
+        # The container workspace path is stable across runs, so the absolute
+        # paths baked into install/ stay valid.
+        path: |
+          ros_ws/src/deps
+          ros_ws/build
+          ros_ws/install
+        key: colcon-${{ matrix.ros_distro }}-${{ hashFiles('ros_ws/src/opennav_coverage/.github/deps.repos') }}
+
+    - name: Import source dependencies
+      # Only on a cache miss. On a hit, src/deps is restored with its original
+      # mtimes so colcon skips the unchanged third-party packages; re-importing
+      # would reset those mtimes and force a full rebuild.
+      if: steps.colcon_cache.outputs.cache-hit != 'true'
+      run: |
+        cd ros_ws
+        mkdir -p src/deps
+        vcs import src/deps < src/opennav_coverage/.github/deps.repos
+
+    - name: Patch nav2_common (drop -Werror)
+      # nav2 main is not -Werror-clean under Ubuntu 26.04's GCC 15 (deprecated
+      # std::atomic_load on shared_ptr, null-dereference via builtin_interfaces,
+      # ...). nav2_common applies -Werror to every nav2 package, so strip it
+      # centrally. Our own opennav packages keep their own -Werror.
+      # Skipped on a cache hit: the cached sources are already patched, and
+      # sed -i would rewrite the file (new mtime) and trigger a nav2 rebuild.
+      if: steps.colcon_cache.outputs.cache-hit != 'true'
+      run: sed -i 's/ -Werror//' ros_ws/src/deps/navigation2/nav2_common/cmake/nav2_package.cmake
+
+    - name: Install ROS dependencies (rosdep)
+      run: |
+        rosdep update --rosdistro ${{ matrix.ros_distro }}
+        rosdep install --from-paths ros_ws/src --ignore-src \
+          --rosdistro ${{ matrix.ros_distro }} -r -y || true
+
+    - name: Drop shadowing apt packages
+      # Both are resolved into the shared /opt/ros/<distro> tree (by the image or
+      # by rosdep) and shadow the version nav2 main is written against, so drop
+      # them here -- after rosdep -- and let find_package fall back to the right one.
+      #
+      # behaviortree_cpp: built from source (deps.repos: master) because nav2 main
+      #   uses its unreleased wakeUpSignal() API; the Lyrical binary 4.9.0 headers
+      #   would shadow the source-built master and break nav2_behavior_tree.
+      # ompl: rosdep resolves the 'ompl' key to ros-lyrical-ompl 2.0.1, whose
+      #   ReedsShepp API differs (ReedsSheppStateSpace::ReedsSheppPath / reedsShepp()
+      #   were renamed/removed), so nav2 main's nav2_smac_planner fails to compile
+      #   against it. Removing it makes find_package(ompl) use the system
+      #   libompl-dev 1.6.0 installed above -- the API nav2 main expects, matching
+      #   the dev container.
+      run: |
+        sudo apt-get remove -y ros-${{ matrix.ros_distro }}-behaviortree-cpp || true
+        sudo apt-get remove -y ros-${{ matrix.ros_distro }}-ompl || true
+
+    - name: Build
+      # slam_toolbox is only pulled in transitively as a runtime dep of
+      # nav2_bringup (via opennav_coverage_demo); nothing here builds against it,
+      # so skip it -- no reason to build it for these tests.
+      run: |
+        cd ros_ws
+        . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+        colcon build --packages-up-to \
+          nav2_bt_navigator nav2_behavior_tree \
+          opennav_coverage opennav_coverage_bt opennav_coverage_demo \
+          opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage \
+          --packages-skip slam_toolbox
+
+    - name: Save colcon cache
+      # Save only after a successful build, and only when we didn't already have
+      # a hit -- so a broken or partial build (e.g. a raced ortools_vendor) is
+      # never cached. Runs before Test so a good build is preserved even if a
+      # test later fails.
+      if: success() && steps.colcon_cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ros_ws/src/deps
+          ros_ws/build
+          ros_ws/install
+        key: ${{ steps.colcon_cache.outputs.cache-primary-key }}
+
+    - name: Test
+      run: |
+        cd ros_ws
+        . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+        . install/setup.sh
+        colcon test --packages-select \
+          opennav_coverage opennav_coverage_bt opennav_coverage_demo \
+          opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage \
+          --event-handlers console_cohesion+
+        colcon test-result --verbose
+
     - uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: colcon-logs
         path: ros_ws/log
