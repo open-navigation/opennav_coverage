@@ -51,7 +51,7 @@ Swaths SwathGenerator::generateSwaths(
       if (!objective) {
         throw CoverageException("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
       }
-      generator_->step_angle = step_angle;
+      generator_->setStepAngle(step_angle);
       return generator_->generateBestSwaths(*objective, robot_params_->getOperationWidth(), field);
     case SwathAngleType::SET_ANGLE:
       return generator_->generateSwaths(swath_angle, robot_params_->getOperationWidth(), field);

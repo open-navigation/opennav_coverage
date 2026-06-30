@@ -108,17 +108,17 @@ TEST(SwathTests, TestswathGeneration)
 
   // Generate some toy field
   f2c::Random rand;
-  auto field = rand.generateRandField(5, 1e5);
+  auto field = rand.generateRandField(1e5, 5);
 
   // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::SwathMode settings;
-  auto swaths1 = generator.generateSwaths(field.field.getGeometry(0), settings);
+  auto swaths1 = generator.generateSwaths(field.getField().getGeometry(0), settings);
   settings.mode = "BRUTE_FORCE";
   settings.objective = "LENGTH";
-  auto swaths2 = generator.generateSwaths(field.field.getGeometry(0), settings);
+  auto swaths2 = generator.generateSwaths(field.getField().getGeometry(0), settings);
   settings.mode = "SET_ANGLE";
   settings.objective = "NUMBER";
-  auto swaths3 = generator.generateSwaths(field.field.getGeometry(0), settings);
+  auto swaths3 = generator.generateSwaths(field.getField().getGeometry(0), settings);
 }
 
 }  // namespace opennav_coverage

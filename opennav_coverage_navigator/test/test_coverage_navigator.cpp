@@ -50,7 +50,6 @@ inline std::vector<std::string> getLibs()
     "nav2_initial_pose_received_condition_bt_node",
     "nav2_goal_updated_condition_bt_node",
     "nav2_globally_updated_goal_condition_bt_node",
-    "nav2_is_path_valid_condition_bt_node",
     "nav2_are_error_codes_active_condition_bt_node",
     "nav2_would_a_controller_recovery_help_condition_bt_node",
     "nav2_would_a_planner_recovery_help_condition_bt_node",
@@ -157,8 +156,13 @@ TEST(CoverageNavigatorTests, TestBasicServer)
     client_node, "navigate_complete_coverage");
 
   auto goal_msg = opennav_coverage_msgs::action::NavigateCompleteCoverage::Goal();
+  // get_package_share_directory is deprecated on rolling/lyrical (replacement
+  // get_package_share_path does not exist on jazzy); suppress locally.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   goal_msg.field_filepath =
     ament_index_cpp::get_package_share_directory("opennav_coverage") + "/test_field.xml";
+#pragma GCC diagnostic pop
 
   // Send it
   auto future_goal_handle = action_client->async_send_goal(goal_msg);

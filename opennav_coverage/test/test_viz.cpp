@@ -95,8 +95,13 @@ TEST(VizTests, TestVizPubs)
   nav_msgs::msg::Path path;
   viz.visualize(total_field, no_headland_field, Point(), path, swaths, header);
 
-  // Give a moment to process for stability, then check if received
-  rclcpp::spin_some(node);
+  // Give a moment to process for stability, then check if received.
+  // rclcpp::spin_some(node) was deprecated in rolling; use an executor instead
+  // (portable across jazzy and rolling).
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(node);
+  executor.spin_some();
+  executor.remove_node(node);
   r.sleep();
   EXPECT_FALSE(got_path_msg);  // Path empty, unpublished
   EXPECT_TRUE(got_headland_msg);

@@ -33,18 +33,25 @@ namespace opennav_row_coverage
 
 TEST(UtilsTests, TestRowParserSimple)
 {
+  // get_package_share_directory is deprecated on rolling; silence -Werror (kept for jazzy).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   const std::string file_path =
     ament_index_cpp::get_package_share_directory("opennav_coverage") +
     "/cartesian_test_field.xml";
+#pragma GCC diagnostic pop
   auto rows = opennav_row_coverage::util::parseRows(file_path);
   ASSERT_EQ(rows.size(), 7);
 }
 
 TEST(UtilsTests, TestRowParserComplex)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   const std::string file_path =
     ament_index_cpp::get_package_share_directory("opennav_coverage") +
     "/irregular_test_field.xml";
+#pragma GCC diagnostic pop
   auto rows = opennav_row_coverage::util::parseRows(file_path);
 
   ASSERT_EQ(rows.size(), 10);
