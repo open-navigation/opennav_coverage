@@ -24,6 +24,7 @@
 #include "nav2_ros_common/lifecycle_node.hpp"
 #include "nav2_ros_common/node_utils.hpp"
 #include "nav2_ros_common/simple_action_server.hpp"
+#include "opennav_coverage/decomp_generator.hpp"
 #include "opennav_coverage/headland_generator.hpp"
 #include "opennav_coverage/swath_generator.hpp"
 #include "opennav_coverage/route_generator.hpp"
@@ -123,12 +124,14 @@ protected:
   typename ActionServer::SharedPtr action_server_;
 
   std::unique_ptr<RobotParams> robot_params_;
+  std::unique_ptr<DecompGenerator> decomp_gen_;
   std::unique_ptr<HeadlandGenerator> headland_gen_;
   std::unique_ptr<SwathGenerator> swath_gen_;
   std::unique_ptr<RouteGenerator> route_gen_;
   std::unique_ptr<PathGenerator> path_gen_;
   std::unique_ptr<Visualizer> visualizer_;
   bool cartesian_frame_;
+  bool default_generate_decomp_{false};
 };
 
 }  // namespace opennav_coverage

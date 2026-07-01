@@ -36,11 +36,16 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   auto node = shared_from_this();
 
   robot_params_ = std::make_unique<RobotParams>(node);
+  decomp_gen_ = std::make_unique<DecompGenerator>(node);
   headland_gen_ = std::make_unique<HeadlandGenerator>(node);
   swath_gen_ = std::make_unique<SwathGenerator>(node, robot_params_.get());
   route_gen_ = std::make_unique<RouteGenerator>(node);
   path_gen_ = std::make_unique<PathGenerator>(node, robot_params_.get());
   visualizer_ = std::make_unique<Visualizer>();
+
+  nav2::declare_parameter_if_not_declared(
+    node, "default_generate_decomp", rclcpp::ParameterValue(false));
+  get_parameter("default_generate_decomp", default_generate_decomp_);
 
   // If in GPS coordinates, we must convert to a CRS to compute coverage
   // Then, reconvert back to GPS for the user.
@@ -101,6 +106,7 @@ CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   route_gen_.reset();
   swath_gen_.reset();
   headland_gen_.reset();
+  decomp_gen_.reset();
   robot_params_.reset();
   return nav2::CallbackReturn::SUCCESS;
 }
@@ -186,14 +192,32 @@ void CoverageServer::computeCoveragePath()
       "Generating coverage path in %s frame for zone with %zu outer nodes and %zu inner polygons.",
       frame_id.c_str(), field.getGeometry(0).size(), field.size() - 1);
 
-    // (1) Optional: Remove headland from polygon field
-    Field field_no_headland = field;
-    if (goal->generate_headland) {
-      field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
-    }
+    // (1) Optional: decompose non-convex field, then remove headland, then generate swaths
+    const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
-    // (2) Generate swaths to cover polygon field, including internal voids
-    Swaths swaths = swath_gen_->generateSwaths(field_no_headland, goal->swath_mode);
+    Field field_no_headland = field;  // kept for the non-decomp path + visualization
+    Swaths swaths;
+    if (do_decomp) {
+      F2CCells raw_cells;
+      raw_cells.addGeometry(field);
+      F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
+
+      // Apply a separate headland to each sub-cell (F2C tutorial order: decompose then headland)
+      F2CCells cells_no_headland = decomposed;
+      if (goal->generate_headland) {
+        cells_no_headland = headland_gen_->generateHeadlands(decomposed, goal->headland_mode);
+      }
+      swaths = swath_gen_->generateSwaths(cells_no_headland, goal->swath_mode);
+      // field_no_headland stays the outer boundary; decomposed cells aren't visualized separately.
+    } else {
+      // (1) Optional: Remove headland from polygon field
+      if (goal->generate_headland) {
+        field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
+      }
+
+      // (2) Generate swaths to cover polygon field, including internal voids
+      swaths = swath_gen_->generateSwaths(field_no_headland, goal->swath_mode);
+    }
 
     // (3) Optional: Generate an ordered route through the unordered swaths
     std_msgs::msg::Header header;
