@@ -237,6 +237,44 @@ inline nav_msgs::msg::Path toNavPathMsg(
 }
 
 /**
+ * @brief Overload of toNavPathMsg that also populates per-pose velocity and direction vectors,
+ * parallel to the returned nav_path.poses. Vectors are cleared before filling.
+ */
+inline nav_msgs::msg::Path toNavPathMsg(
+  const Path & raw_path, const F2CField & field,
+  const std_msgs::msg::Header & header, const bool is_cartesian,
+  const float & pt_dist,
+  std::vector<double> & out_velocities,
+  std::vector<bool> & out_is_backward)
+{
+  nav_msgs::msg::Path msg;
+  msg.header = header;
+  out_velocities.clear();
+  out_is_backward.clear();
+
+  if (raw_path.size() == 0) {
+    return msg;
+  }
+
+  Path path = raw_path;
+  if (!is_cartesian) {
+    path = f2c::Transform::transformToPrevCRS(raw_path, field);
+  } else {
+    path.moveTo(field.getRefPoint());
+  }
+
+  path = path.discretizeSwath(static_cast<double>(pt_dist));
+
+  for (const auto & state : path) {
+    msg.poses.push_back(toMsg(state));
+    out_velocities.push_back(state.velocity);
+    out_is_backward.push_back(state.dir == f2c::types::PathDirection::BACKWARD);
+  }
+
+  return msg;
+}
+
+/**
  * @brief Converts full path to nav_msgs/path message in cartesian UTM frame
  * @param path Full path to convert
  * @param header header
