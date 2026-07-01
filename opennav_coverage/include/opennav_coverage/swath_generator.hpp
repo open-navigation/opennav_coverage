@@ -85,6 +85,15 @@ public:
     const Field & field, const opennav_coverage_msgs::msg::SwathMode & settings);
 
   /**
+   * @brief Multi-cell overload: generate swaths across decomposed cells
+   * @param cells Cells to generate swaths from
+   * @param settings Action request information
+   * @return Flattened swaths across all cells
+   */
+  Swaths generateSwaths(
+    const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings);
+
+  /**
    * @brief Sets the mode manually of the swath for dynamic parameters
    * @param mode String for mode to use
    */
@@ -115,6 +124,25 @@ public:
   void setStepAngle(const bool & setting) {default_step_angle_ = setting;}
 
 protected:
+  /**
+   * @struct Resolved swath parameters shared by the single- and multi-cell paths
+   */
+  struct ResolvedSwathParams
+  {
+    SwathObjectivePtr objective;
+    SwathAngleType angle_type;
+    float swath_angle;
+    float step_angle;
+  };
+
+  /**
+   * @brief Resolves action-vs-default swath parameters (shared logic)
+   * @param settings Action request information
+   * @return Resolved parameters
+   */
+  ResolvedSwathParams resolveSwathParams(
+    const opennav_coverage_msgs::msg::SwathMode & settings);
+
   /**
    * @brief Creates objective pointer of a requested type
    * @param type Swaths generator type to create
