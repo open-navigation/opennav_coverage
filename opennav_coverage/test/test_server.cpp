@@ -242,7 +242,12 @@ TEST(ServerTest, testDynamicParams)
       rclcpp::Parameter("default_allow_overlap", true),
       rclcpp::Parameter("default_spiral_n", 41),
       rclcpp::Parameter("coordinates_in_cartesian_frame", false),
-      rclcpp::Parameter("default_custom_order", std::vector<int>{1, 2, 3})});
+      rclcpp::Parameter("default_custom_order", std::vector<int>{1, 2, 3}),
+      // B1-T13: TSP dynamic params
+      rclcpp::Parameter("default_tsp_redirect_swaths", false),
+      rclcpp::Parameter("default_tsp_time_limit", 5),
+      rclcpp::Parameter("default_tsp_search_for_optimum", true),
+      rclcpp::Parameter("default_tsp_d_tol", 1e-3)});
 
   rclcpp::spin_until_future_complete(
     node->get_node_base_interface(),
@@ -253,6 +258,11 @@ TEST(ServerTest, testDynamicParams)
   EXPECT_EQ(node->get_parameter("default_allow_overlap").as_bool(), true);
   EXPECT_EQ(node->get_parameter("default_spiral_n").as_int(), 41);
   EXPECT_EQ(node->get_parameter("coordinates_in_cartesian_frame").as_bool(), false);
+  // B1-T13: verify TSP params are declared and callback-connected
+  EXPECT_EQ(node->get_parameter("default_tsp_redirect_swaths").as_bool(), false);
+  EXPECT_EQ(node->get_parameter("default_tsp_time_limit").as_int(), 5);
+  EXPECT_EQ(node->get_parameter("default_tsp_search_for_optimum").as_bool(), true);
+  EXPECT_NEAR(node->get_parameter("default_tsp_d_tol").as_double(), 1e-3, 1e-9);
 }
 
 }  // namespace opennav_coverage

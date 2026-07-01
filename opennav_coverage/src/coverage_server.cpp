@@ -224,12 +224,44 @@ void CoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
+      const bool is_tsp =
+        (route_gen_->resolveType(goal->route_mode) == RouteType::TSP);
 
-      // (4) Optional: Generate connection turns between ordered swaths
-      // Converts UTM back to GPS, if necessary, for action returns
-      if (goal->generate_path) {
-        path = path_gen_->generatePath(route, goal->path_mode);
+      if (is_tsp) {
+        // K5: TSP requires generate_path=true (connections only useful with full path)
+        if (!goal->generate_path) {
+          throw CoverageException(
+            "TSP route mode requires generate_path=true; "
+            "headland connections are only meaningful in the full path output.");
+        }
+
+        // (a) Wrap field into F2CCells for RoutePlannerBase.
+        // NOTE: swaths generated twice when TSP is used — accepted tradeoff (K2/plan Adım 6).
+        F2CCells field_cells;
+        if (do_decomp) {
+          F2CCells raw_cells;
+          raw_cells.addGeometry(field);
+          F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
+          field_cells = goal->generate_headland ?
+            headland_gen_->generateHeadlands(decomposed, goal->headland_mode) : decomposed;
+        } else {
+          Field tsp_field = goal->generate_headland ?
+            headland_gen_->generateHeadlands(field, goal->headland_mode) : field;
+          field_cells.addGeometry(tsp_field);
+        }
+
+        // (b) Per-cell swaths without flattening (second generation, TSP branch only)
+        F2CSwathsByCells sbc =
+          swath_gen_->generateSwathsByCells(field_cells, goal->swath_mode);
+
+        // (c) TSP route + path (K4: F2CRoute → planPath → Path)
+        F2CRoute tsp_route =
+          route_gen_->generateRouteTSP(field_cells, sbc, goal->route_mode);
+        if (tsp_route.isEmpty()) {
+          throw CoverageException("TSP route planner returned an empty route.");
+        }
+        path = path_gen_->generatePath(tsp_route, goal->path_mode);
+
         result->coverage_path =
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
         result->nav_path = util::toNavPathMsg(
@@ -238,8 +270,24 @@ void CoverageServer::computeCoveragePath()
         const double task_time = path.getTaskTime();
         result->task_time = std::isfinite(task_time) ? task_time : 0.0;
       } else {
-        result->coverage_path =
-          util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);
+        // Non-TSP pattern-order route
+        Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
+
+        // (4) Optional: Generate connection turns between ordered swaths
+        // Converts UTM back to GPS, if necessary, for action returns
+        if (goal->generate_path) {
+          path = path_gen_->generatePath(route, goal->path_mode);
+          result->coverage_path =
+            util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
+          result->nav_path = util::toNavPathMsg(
+            path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance(),
+            &result->coverage_path.velocities, &result->coverage_path.is_backward);
+          const double task_time = path.getTaskTime();
+          result->task_time = std::isfinite(task_time) ? task_time : 0.0;
+        } else {
+          result->coverage_path =
+            util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);
+        }
       }
     } else {
       result->coverage_path =
@@ -287,6 +335,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         swath_gen_->setStepAngle(parameter.as_double());
       } else if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
+      } else if (name == "default_tsp_d_tol") {
+        route_gen_->setTspDTol(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
         robot.setWidth(parameter.as_double());
@@ -313,10 +363,16 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         swath_gen_->setOVerlap(parameter.as_bool());
       } else if (name == "coordinates_in_cartesian_frame") {
         cartesian_frame_ = parameter.as_bool();
+      } else if (name == "default_tsp_redirect_swaths") {
+        route_gen_->setTspRedirectSwaths(parameter.as_bool());
+      } else if (name == "default_tsp_search_for_optimum") {
+        route_gen_->setTspSearchForOptimum(parameter.as_bool());
       }
     } else if (type == ParameterType::PARAMETER_INTEGER) {
       if (name == "default_spiral_n") {
         route_gen_->setSpiralN(parameter.as_int());
+      } else if (name == "default_tsp_time_limit") {
+        route_gen_->setTspTimeLimit(parameter.as_int());
       }
     } else if (type == ParameterType::PARAMETER_INTEGER_ARRAY) {
       if (name == "default_custom_order") {
