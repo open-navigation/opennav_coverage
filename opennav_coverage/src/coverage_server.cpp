@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
+
 #include "opennav_coverage/coverage_server.hpp"
 
 using namespace std::chrono_literals;
@@ -209,6 +211,8 @@ void CoverageServer::computeCoveragePath()
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
         result->nav_path = util::toNavPathMsg(
           path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance());
+        const double task_time = path.getTaskTime();
+        result->task_time = std::isfinite(task_time) ? task_time : 0.0;
       } else {
         result->coverage_path =
           util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);

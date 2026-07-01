@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
 #include <utility>
 
 #include "gtest/gtest.h"
@@ -201,6 +202,71 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   goal->polygons[1].coordinates[0].axis1 = 1.0;
   auto field2 = util::getFieldFromGoal(goal);
   EXPECT_EQ(field2.getField().getGeometry(0).getGeometry(1).size(), 3u);
+}
+
+TEST(UtilsTests, TesttoNavPathMsgDiscreteSwathPointCount)
+{
+  // A single SWATH state with len=1.0 at step=0.1 → n_steps = round(1.0/0.1) = 10
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+  PathState s;
+  s.type = f2c::types::PathSectionType::SWATH;
+  s.point = Point(0.0, 0.0);
+  s.len = 1.0;
+  s.angle = 0.0;
+  path_in.addState(s);
+  F2CField field;
+
+  auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1f);
+  EXPECT_EQ(msg.poses.size(), 10u);
+}
+
+TEST(UtilsTests, TesttoNavPathMsgTurnUnchanged)
+{
+  // TURN states must pass through discretizeSwath unmodified (regression guard)
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+  path_in.getStates().resize(10);
+  for (auto & state : path_in.getStates()) {
+    state.type = f2c::types::PathSectionType::TURN;
+  }
+  F2CField field;
+
+  auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1f);
+  EXPECT_EQ(msg.poses.size(), 10u);
+}
+
+TEST(UtilsTests, TestGetTaskTime)
+{
+  Path path;
+  PathState s;
+  s.len = 5.0;
+  s.velocity = 2.0;
+  path.addState(s);
+
+  EXPECT_NEAR(path.getTaskTime(), 2.5, 0.01);
+}
+
+TEST(UtilsTests, TestGetTaskTimeZeroVelocity)
+{
+  // velocity=0 → getTaskTime() returns inf; caller must guard with std::isfinite
+  Path path;
+  PathState s;
+  s.len = 1.0;
+  s.velocity = 0.0;
+  path.addState(s);
+
+  EXPECT_FALSE(std::isfinite(path.getTaskTime()));
+  const double guarded = std::isfinite(path.getTaskTime()) ? path.getTaskTime() : 0.0;
+  EXPECT_NEAR(guarded, 0.0, 1e-9);
+}
+
+TEST(UtilsTests, TestGetTaskTimeEmptyPath)
+{
+  Path empty;
+  EXPECT_NEAR(empty.getTaskTime(), 0.0, 1e-9);
 }
 
 TEST(UtilsTests, TestPathComponentsIterator)
