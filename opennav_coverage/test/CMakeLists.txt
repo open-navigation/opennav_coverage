@@ -22,6 +22,14 @@ target_link_libraries(test_viz
   ${library_name}
 )
 
+# Test decomp
+ament_add_gtest(test_decomp_generator
+  test_decomp_generator.cpp
+)
+target_link_libraries(test_decomp_generator
+  ${library_name}
+)
+
 # Test headland
 ament_add_gtest(test_headland
   test_headland.cpp
