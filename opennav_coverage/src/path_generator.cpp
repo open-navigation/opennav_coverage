@@ -46,7 +46,9 @@ Path PathGenerator::generatePath(
   const Swaths & swaths, const opennav_coverage_msgs::msg::PathMode & settings)
 {
   auto [curve, turn_point_distance] = resolveCurve(settings);
-  RCLCPP_DEBUG(logger_, "Generating path with curve: %s", toString(default_type_, default_continuity_type_).c_str());
+  RCLCPP_DEBUG(
+    logger_, "Generating path with curve: %s",
+    toString(default_type_, default_continuity_type_).c_str());
   curve->setDiscretization(turn_point_distance);
   return generator_->planPath(robot_params_->getRobot(), swaths, *curve);
 }
@@ -55,7 +57,9 @@ Path PathGenerator::generatePath(
   const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings)
 {
   auto [curve, turn_point_distance] = resolveCurve(settings);
-  RCLCPP_DEBUG(logger_, "Generating path from F2CRoute with curve: %s", toString(default_type_, default_continuity_type_).c_str());
+  RCLCPP_DEBUG(
+    logger_, "Generating path from F2CRoute with curve: %s",
+    toString(default_type_, default_continuity_type_).c_str());
   curve->setDiscretization(turn_point_distance);
   return generator_->planPath(robot_params_->getRobot(), route, *curve);
 }

@@ -15,6 +15,7 @@
 #ifndef OPENNAV_COVERAGE__PATH_GENERATOR_HPP_
 #define OPENNAV_COVERAGE__PATH_GENERATOR_HPP_
 
+#include <utility>
 #include <vector>
 #include <string>
 #include <memory>
