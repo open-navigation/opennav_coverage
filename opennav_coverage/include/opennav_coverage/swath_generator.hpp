@@ -94,6 +94,16 @@ public:
     const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings);
 
   /**
+   * @brief Generate swaths per cell without flattening (for TSP route planner).
+   *        Does NOT modify the existing generateSwaths paths.
+   * @param cells Cells to generate swaths from
+   * @param settings Action request information
+   * @return Per-cell swaths (F2CSwathsByCells) — caller calls .flatten() if needed
+   */
+  F2CSwathsByCells generateSwathsByCells(
+    const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings);
+
+  /**
    * @brief Sets the mode manually of the swath for dynamic parameters
    * @param mode String for mode to use
    */

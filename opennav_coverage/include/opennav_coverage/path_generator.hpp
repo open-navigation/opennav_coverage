@@ -77,6 +77,15 @@ public:
     const Swaths & swaths, const opennav_coverage_msgs::msg::PathMode & settings);
 
   /**
+   * @brief Generate path from a TSP F2CRoute (K4 minimal B.2 slice).
+   * @param route Route produced by generateRouteTSP
+   * @param settings PathMode for curve selection
+   * @return Path complete path including headland connections
+   */
+  Path generatePath(
+    const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings);
+
+  /**
    * @brief Sets the mode manually of the paths for dynamic parameters
    * @param mode String for mode to use
    */
@@ -103,6 +112,12 @@ protected:
    * @return Generator to use
    */
   TurningBasePtr createCurve(const PathType & type, const PathContinuityType & c_type);
+
+  /**
+   * @brief Resolve curve and turn_point_distance from PathMode (shared by both overloads)
+   */
+  std::pair<TurningBasePtr, float> resolveCurve(
+    const opennav_coverage_msgs::msg::PathMode & settings);
 
   /**
    * @brief Converts the path mode into a string for publication

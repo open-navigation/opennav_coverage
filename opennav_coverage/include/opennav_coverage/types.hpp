@@ -84,7 +84,8 @@ enum class RouteType
   BOUSTROPHEDON = 1,
   SNAKE = 2,
   SPIRAL = 3,
-  CUSTOM = 4
+  CUSTOM = 4,
+  TSP = 5
 };
 
 /**

@@ -128,4 +128,32 @@ TEST(PathTests, TestpathGeneration)
   auto path2 = generator.generatePath(route, settings);
 }
 
+TEST(PathTests, TestpathGenerationFromF2CRoute)
+{
+  // B1-T6: generatePath(F2CRoute) overload returns non-empty path with finite task time
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteGenerator route_gen(node);
+  PathShim generator(node, &robot_params);
+
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  F2CCells cells;
+  cells.addGeometry(field.getField().getGeometry(0));
+
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode rt_settings;
+  rt_settings.mode = "TSP";
+  F2CRoute tsp_route = route_gen.generateRouteTSP(cells, sbc, rt_settings);
+  ASSERT_FALSE(tsp_route.isEmpty());
+
+  opennav_coverage_msgs::msg::PathMode path_settings;
+  auto path = generator.generatePath(tsp_route, path_settings);
+  EXPECT_GT(path.size(), 0u);
+  EXPECT_TRUE(std::isfinite(path.getTaskTime()));
+}
+
 }  // namespace opennav_coverage

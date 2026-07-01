@@ -53,6 +53,45 @@ Swaths RouteGenerator::generateRoute(
   return generator->genSortedSwaths(swaths);
 }
 
+F2CRoute RouteGenerator::generateRouteTSP(
+  const F2CCells & cells,
+  const F2CSwathsByCells & swaths_by_cells,
+  const opennav_coverage_msgs::msg::RouteMode & settings)
+{
+  RouteType action_type = toType(settings.mode);
+  bool redirect_swaths;
+  long int time_limit;   // NOLINT
+  bool search_for_optimum;
+  double d_tol;
+
+  if (action_type == RouteType::UNKNOWN) {
+    redirect_swaths = default_tsp_redirect_swaths_;
+    time_limit = default_tsp_time_limit_;
+    search_for_optimum = default_tsp_search_for_optimum_;
+    d_tol = default_tsp_d_tol_;
+  } else {
+    redirect_swaths = settings.tsp_redirect_swaths;
+    time_limit = settings.tsp_time_limit;
+    search_for_optimum = settings.tsp_search_for_optimum;
+    d_tol = settings.tsp_d_tol;
+  }
+
+  RCLCPP_DEBUG(
+    logger_,
+    "Generating TSP route: redirect=%s time_limit=%ld optimum=%s d_tol=%f",
+    redirect_swaths ? "true" : "false", time_limit,
+    search_for_optimum ? "true" : "false", d_tol);
+
+  f2c::rp::RoutePlannerBase rp;
+  return rp.genRoute(
+    cells, swaths_by_cells,
+    /*show_log=*/false,
+    d_tol,
+    redirect_swaths,
+    time_limit,
+    search_for_optimum);
+}
+
 void RouteGenerator::setMode(const std::string & new_mode)
 {
   default_type_ = toType(new_mode);
@@ -70,6 +109,9 @@ RouteGeneratorPtr RouteGenerator::createGenerator(const RouteType & type)
       return std::move(std::make_shared<f2c::rp::SpiralOrder>());
     case RouteType::CUSTOM:
       return std::move(std::make_shared<f2c::rp::CustomOrder>());
+    case RouteType::TSP:
+      // TSP uses RoutePlannerBase via generateRouteTSP, not SingleCellSwathsOrderBase
+      return RouteGeneratorPtr{nullptr};
     default:
       RCLCPP_WARN(logger_, "Unknown route type set!");
       return RouteGeneratorPtr{nullptr};
@@ -87,6 +129,8 @@ std::string RouteGenerator::toString(const RouteType & type)
       return "Spiral";
     case RouteType::CUSTOM:
       return "Custom";
+    case RouteType::TSP:
+      return "TSP";
     default:
       return "Unknown";
   }
@@ -104,6 +148,8 @@ RouteType RouteGenerator::toType(const std::string & str)
     return RouteType::SPIRAL;
   } else if (mode_str == "CUSTOM") {
     return RouteType::CUSTOM;
+  } else if (mode_str == "TSP") {
+    return RouteType::TSP;
   } else {
     return RouteType::UNKNOWN;
   }

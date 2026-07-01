@@ -65,6 +65,25 @@ public:
         "default_custom_order was not set! "
         "If using Custom Route mode, the custom order must be set per-request!");
     }
+
+    nav2::declare_parameter_if_not_declared(
+      node, "default_tsp_redirect_swaths", rclcpp::ParameterValue(true));
+    default_tsp_redirect_swaths_ =
+      node->get_parameter("default_tsp_redirect_swaths").as_bool();
+
+    nav2::declare_parameter_if_not_declared(
+      node, "default_tsp_time_limit", rclcpp::ParameterValue(1));
+    default_tsp_time_limit_ =
+      node->get_parameter("default_tsp_time_limit").as_int();
+
+    nav2::declare_parameter_if_not_declared(
+      node, "default_tsp_search_for_optimum", rclcpp::ParameterValue(false));
+    default_tsp_search_for_optimum_ =
+      node->get_parameter("default_tsp_search_for_optimum").as_bool();
+
+    nav2::declare_parameter_if_not_declared(
+      node, "default_tsp_d_tol", rclcpp::ParameterValue(1e-4));
+    default_tsp_d_tol_ = node->get_parameter("default_tsp_d_tol").as_double();
   }
 
   /**
@@ -75,6 +94,28 @@ public:
    */
   Swaths generateRoute(
     const Swaths & swaths, const opennav_coverage_msgs::msg::RouteMode & settings);
+
+  /**
+   * @brief TSP-based multi-cell route planner using OR-Tools.
+   *        Requires generate_path=true; throws if called without it.
+   * @param cells Field cells (headland-removed) for connection routing
+   * @param swaths_by_cells Per-cell swaths from generateSwathsByCells
+   * @param settings RouteMode containing tsp_* knobs
+   * @return F2CRoute with ordered swath groups and headland connections
+   */
+  F2CRoute generateRouteTSP(
+    const F2CCells & cells,
+    const F2CSwathsByCells & swaths_by_cells,
+    const opennav_coverage_msgs::msg::RouteMode & settings);
+
+  /**
+   * @brief Resolve mode string to RouteType (public wrapper for server branching)
+   */
+  RouteType resolveType(const opennav_coverage_msgs::msg::RouteMode & settings)
+  {
+    RouteType t = toType(settings.mode);
+    return (t == RouteType::UNKNOWN) ? default_type_ : t;
+  }
 
   /**
    * @brief Sets the mode manually of the Route for dynamic parameters
@@ -96,6 +137,11 @@ public:
   {
     default_custom_order_ = std::vector<size_t>(order.begin(), order.end());
   }
+
+  void setTspRedirectSwaths(const bool v) {default_tsp_redirect_swaths_ = v;}
+  void setTspTimeLimit(const int v) {default_tsp_time_limit_ = v;}
+  void setTspSearchForOptimum(const bool v) {default_tsp_search_for_optimum_ = v;}
+  void setTspDTol(const double v) {default_tsp_d_tol_ = v;}
 
 protected:
   /**
@@ -123,6 +169,10 @@ protected:
   std::vector<size_t> default_custom_order_;
   size_t default_spiral_n_;
   RouteGeneratorPtr default_generator_{nullptr};
+  bool default_tsp_redirect_swaths_{true};
+  int default_tsp_time_limit_{1};
+  bool default_tsp_search_for_optimum_{false};
+  double default_tsp_d_tol_{1e-4};
   rclcpp::Logger logger_{rclcpp::get_logger("RouteGenerator")};
 };
 

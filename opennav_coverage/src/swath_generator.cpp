@@ -93,6 +93,26 @@ Swaths SwathGenerator::generateSwaths(
   }
 }
 
+F2CSwathsByCells SwathGenerator::generateSwathsByCells(
+  const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings)
+{
+  ResolvedSwathParams p = resolveSwathParams(settings);
+  const double op_width = robot_params_->getOperationWidth();
+  generator_->setAllowOverlap(default_allow_overlap_);
+  switch (p.angle_type) {
+    case SwathAngleType::BRUTE_FORCE:
+      if (!p.objective) {
+        throw CoverageException("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
+      }
+      generator_->setStepAngle(p.step_angle);
+      return generator_->generateBestSwaths(*p.objective, op_width, cells);
+    case SwathAngleType::SET_ANGLE:
+      return generator_->generateSwaths(p.swath_angle, op_width, cells);
+    default:
+      throw CoverageException("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
+  }
+}
+
 void SwathGenerator::setSwathMode(const std::string & new_mode)
 {
   default_type_ = toType(new_mode);

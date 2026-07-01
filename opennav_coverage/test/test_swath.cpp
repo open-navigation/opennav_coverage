@@ -157,4 +157,30 @@ TEST(SwathTests, TestswathGenerationMultiCell)
   EXPECT_GT(swaths_multi.size(), swaths_one.size());
 }
 
+TEST(SwathTests, TestgenerateSwathsByCells)
+{
+  // B1-T5: generateSwathsByCells returns per-cell structure, flatten() matches generateSwaths
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot(node);
+  auto generator = SwathShim(node, &robot);
+
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  Field cell = field.getField().getGeometry(0);
+  F2CCells cells;
+  cells.addGeometry(cell);
+  cells.addGeometry(cell);
+
+  opennav_coverage_msgs::msg::SwathMode settings;
+
+  // Per-cell structure has one entry per cell
+  F2CSwathsByCells sbc = generator.generateSwathsByCells(cells, settings);
+  EXPECT_EQ(sbc.size(), cells.size());
+
+  // flatten() is equivalent to generateSwaths(F2CCells)
+  Swaths flat_from_sbc = sbc.flatten();
+  Swaths flat_from_gen = generator.generateSwaths(cells, settings);
+  EXPECT_EQ(flat_from_sbc.size(), flat_from_gen.size());
+}
+
 }  // namespace opennav_coverage

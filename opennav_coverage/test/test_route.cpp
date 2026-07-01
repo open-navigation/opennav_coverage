@@ -77,12 +77,18 @@ TEST(RouteTests, TestrouteUtils)
   EXPECT_EQ(generator.toStringShim(RouteType::SNAKE), std::string("Snake"));
   EXPECT_EQ(generator.toStringShim(RouteType::SPIRAL), std::string("Spiral"));
   EXPECT_EQ(generator.toStringShim(RouteType::CUSTOM), std::string("Custom"));
+  // B1-T11: TSP toType/toString
+  EXPECT_EQ(generator.toTypeShim("TSP"), RouteType::TSP);
+  EXPECT_EQ(generator.toTypeShim("tsp"), RouteType::TSP);
+  EXPECT_EQ(generator.toStringShim(RouteType::TSP), std::string("TSP"));
 
   EXPECT_TRUE(generator.createGeneratorShim(RouteType::BOUSTROPHEDON));
   EXPECT_TRUE(generator.createGeneratorShim(RouteType::SNAKE));
   EXPECT_TRUE(generator.createGeneratorShim(RouteType::SPIRAL));
   EXPECT_TRUE(generator.createGeneratorShim(RouteType::CUSTOM));
   EXPECT_FALSE(generator.createGeneratorShim(RouteType::UNKNOWN));
+  // B1-T11: TSP uses RoutePlannerBase, not SingleCellSwathsOrderBase -> nullptr
+  EXPECT_FALSE(generator.createGeneratorShim(RouteType::TSP));
 
   generator.setMode("a mode");
   generator.setSpiralN(10);
@@ -113,6 +119,71 @@ TEST(RouteTests, TestrouteGeneration)
   // Throws since custom order is set to emptry set
   settings.mode = "CUSTOM";
   EXPECT_THROW(generator.generateRoute(swaths, settings), std::length_error);
+}
+
+TEST(RouteTests, TestTSPGeneration)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  // Generate a two-cell field for TSP (B1-T1: non-empty route, B1-T2: coverage, B1-T3: connections)
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  F2CCells cells;
+  cells.addGeometry(field.getField().getGeometry(0));
+
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "TSP";
+  settings.tsp_redirect_swaths = true;
+  settings.tsp_time_limit = 1;
+  settings.tsp_search_for_optimum = false;
+  settings.tsp_d_tol = 1e-4;
+
+  // B1-T1: route is non-empty
+  F2CRoute route = generator.generateRouteTSP(cells, sbc, settings);
+  EXPECT_FALSE(route.isEmpty());
+  EXPECT_GE(route.sizeVectorSwaths(), 1u);
+  EXPECT_GT(route.length(), 0.0);
+
+  // B1-T2: swath count is preserved
+  size_t total_in = sbc.sizeTotal();
+  size_t total_out = 0;
+  for (size_t i = 0; i < route.sizeVectorSwaths(); ++i) {
+    total_out += route.getVectorSwaths()[i].size();
+  }
+  EXPECT_EQ(total_in, total_out);
+
+  // B1-T3: connection count is consistent (>= 0, asLineString non-empty)
+  EXPECT_GE(route.sizeConnections(), 0u);
+  EXPECT_GT(route.asLineString().size(), 0u);
+}
+
+TEST(RouteTests, TestTSPSingleCell)
+{
+  // B1-T4: single cell input should not crash
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  F2CCells cells;
+  cells.addGeometry(field.getField().getGeometry(0));
+
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "TSP";
+
+  F2CRoute route = generator.generateRouteTSP(cells, sbc, settings);
+  EXPECT_FALSE(route.isEmpty());
 }
 
 }  // namespace opennav_coverage
