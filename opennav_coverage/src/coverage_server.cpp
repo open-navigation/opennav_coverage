@@ -235,28 +235,33 @@ void CoverageServer::computeCoveragePath()
             "headland connections are only meaningful in the full path output.");
         }
 
-        // (a) Wrap field into F2CCells for RoutePlannerBase.
+        // (a) Single cell set feeds BOTH swath generation and TSP routing.
+        //   F2C's RoutePlannerBase::genRoute requires cells and swaths_by_cells to come
+        //   from the SAME F2CCells: the connection graph is built over these cells'
+        //   borders, so swath endpoints must lie on them. Multi-cell (decomposed) input
+        //   is not passed to genRoute in one call: RouteGenerator::generateRouteTSP
+        //   solves each cell separately and stitches the routes (see rationale there).
         // NOTE: swaths generated twice when TSP is used — accepted tradeoff (K2/plan Adım 6).
-        F2CCells field_cells;
+        F2CCells tsp_cells;
         if (do_decomp) {
           F2CCells raw_cells;
           raw_cells.addGeometry(field);
           F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
-          field_cells = goal->generate_headland ?
+          tsp_cells = goal->generate_headland ?
             headland_gen_->generateHeadlands(decomposed, goal->headland_mode) : decomposed;
         } else {
           Field tsp_field = goal->generate_headland ?
             headland_gen_->generateHeadlands(field, goal->headland_mode) : field;
-          field_cells.addGeometry(tsp_field);
+          tsp_cells.addGeometry(tsp_field);
         }
 
         // (b) Per-cell swaths without flattening (second generation, TSP branch only)
         F2CSwathsByCells sbc =
-          swath_gen_->generateSwathsByCells(field_cells, goal->swath_mode);
+          swath_gen_->generateSwathsByCells(tsp_cells, goal->swath_mode);
 
         // (c) TSP route + path (K4: F2CRoute → planPath → Path)
         F2CRoute tsp_route =
-          route_gen_->generateRouteTSP(field_cells, sbc, goal->route_mode);
+          route_gen_->generateRouteTSP(tsp_cells, sbc, goal->route_mode);
         if (tsp_route.isEmpty()) {
           throw CoverageException("TSP route planner returned an empty route.");
         }

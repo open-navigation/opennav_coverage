@@ -82,14 +82,47 @@ F2CRoute RouteGenerator::generateRouteTSP(
     redirect_swaths ? "true" : "false", time_limit,
     search_for_optimum ? "true" : "false", d_tol);
 
-  f2c::rp::RoutePlannerBase rp;
-  return rp.genRoute(
-    cells, swaths_by_cells,
-    /*show_log=*/false,
-    d_tol,
-    redirect_swaths,
-    time_limit,
-    search_for_optimum);
+  // Per-cell TSP instead of one multi-cell genRoute call. F2C v2.0.0's
+  // RoutePlannerBase materializes the all-pairs shortest-path matrix with
+  // explicit point paths (N^2 vectors, N ~ 4 * total swaths): on decomposed
+  // multi-cell input this exhausts memory (std::bad_alloc). Cells are also
+  // disconnected after per-cell headland shrink, so inter-cell costs are INF
+  // and the global TSP degenerates to per-cell TSP + a cell visit order
+  // anyway. Solve each cell alone (small N) and stitch the routes with
+  // straight-line bridges in decomposition (sweep) order.
+  F2CRoute merged;
+  for (size_t i = 0; i < cells.size(); ++i) {
+    if (i >= swaths_by_cells.size() || swaths_by_cells.at(i).size() == 0) {
+      continue;
+    }
+    F2CCells cell(cells.getGeometry(i));
+    F2CSwathsByCells cell_swaths;
+    cell_swaths.emplace_back(swaths_by_cells.at(i));
+
+    f2c::rp::RoutePlannerBase rp;
+    F2CRoute cell_route = rp.genRoute(
+      cell, cell_swaths,
+      /*show_log=*/false,
+      d_tol,
+      redirect_swaths,
+      time_limit,
+      search_for_optimum);
+    if (cell_route.isEmpty()) {
+      continue;
+    }
+
+    if (!merged.isEmpty()) {
+      merged.addConnection(
+        std::vector<F2CPoint>{merged.endPoint(), cell_route.startPoint()});
+    }
+    const auto & vec_swaths = cell_route.getVectorSwaths();
+    const auto & connections = cell_route.getConnections();
+    for (size_t k = 0; k < vec_swaths.size(); ++k) {
+      merged.addConnectedSwaths(
+        k < connections.size() ? connections[k] : F2CMultiPoint(), vec_swaths[k]);
+    }
+  }
+  return merged;
 }
 
 void RouteGenerator::setMode(const std::string & new_mode)
