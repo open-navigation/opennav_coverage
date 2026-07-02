@@ -211,7 +211,6 @@ inline nav_msgs::msg::Path toNavPathMsg(
   const std_msgs::msg::Header & header, const bool is_cartesian,
   const float & pt_dist)
 {
-  using f2c::types::PathSectionType;
   nav_msgs::msg::Path msg;
   msg.header = header;
 
@@ -226,38 +225,50 @@ inline nav_msgs::msg::Path toNavPathMsg(
     path.moveTo(field.getRefPoint());
   }
 
-  for (unsigned int i = 0; i != path.size(); i++) {
-    // Swaths come in pairs of start-end sequentially
-    if (i > 0 && path[i].type == PathSectionType::SWATH &&
-      path[i - 1].type == PathSectionType::SWATH)
-    {
-      const float & x0 = path[i - 1].point.getX();
-      const float & y0 = path[i - 1].point.getY();
-      const float & x1 = path[i].point.getX();
-      const float & y1 = path[i].point.getY();
+  // discretizeSwath splits only SWATH states at step_size intervals; TURN states pass through
+  // unchanged. Do NOT use discretize() — that calls populate()+reduce(), which modifies TURNs.
+  path = path.discretizeSwath(static_cast<double>(pt_dist));
 
-      const float dist = hypotf(x1 - x0, y1 - y0);
-      const float ux = (x1 - x0) / dist;
-      const float uy = (y1 - y0) / dist;
-      float curr_dist = pt_dist;
+  for (const auto & state : path) {
+    msg.poses.push_back(toMsg(state));
+  }
 
-      geometry_msgs::msg::PoseStamped pose;
-      pose.pose.orientation =
-        nav2_util::geometry_utils::orientationAroundZAxis(path[i].angle);
-      pose.pose.position.x = x0;
-      pose.pose.position.y = y0;
-      pose.pose.position.z = path[i].point.getZ();
+  return msg;
+}
 
-      while (curr_dist < dist) {
-        pose.pose.position.x += pt_dist * ux;
-        pose.pose.position.y += pt_dist * uy;
-        msg.poses.push_back(pose);
-        curr_dist += pt_dist;
-      }
-    } else {
-      // Turns are already dense paths
-      msg.poses.push_back(toMsg(path[i]));
-    }
+/**
+ * @brief Overload of toNavPathMsg that also populates per-pose velocity and direction vectors,
+ * parallel to the returned nav_path.poses. Vectors are cleared before filling.
+ */
+inline nav_msgs::msg::Path toNavPathMsg(
+  const Path & raw_path, const F2CField & field,
+  const std_msgs::msg::Header & header, const bool is_cartesian,
+  const float & pt_dist,
+  std::vector<double> & out_velocities,
+  std::vector<bool> & out_is_backward)
+{
+  nav_msgs::msg::Path msg;
+  msg.header = header;
+  out_velocities.clear();
+  out_is_backward.clear();
+
+  if (raw_path.size() == 0) {
+    return msg;
+  }
+
+  Path path = raw_path;
+  if (!is_cartesian) {
+    path = f2c::Transform::transformToPrevCRS(raw_path, field);
+  } else {
+    path.moveTo(field.getRefPoint());
+  }
+
+  path = path.discretizeSwath(static_cast<double>(pt_dist));
+
+  for (const auto & state : path) {
+    msg.poses.push_back(toMsg(state));
+    out_velocities.push_back(state.velocity);
+    out_is_backward.push_back(state.dir == f2c::types::PathDirection::BACKWARD);
   }
 
   return msg;

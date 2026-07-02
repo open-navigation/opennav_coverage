@@ -1,4 +1,4 @@
-string objective "UNKNOWN"  # LENGTH, NUMBER, or COVERAGE
+string objective "UNKNOWN"  # LENGTH, NUMBER, NUMBER_MODIFIED, or COVERAGE
 string mode "UNKNOWN"  # BRUTE_FORCE, SET_ANGLE
 
 # Specific mode settings

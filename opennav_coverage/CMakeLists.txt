@@ -22,7 +22,9 @@ find_package(GDAL REQUIRED)
 
 # potentially replace with nav2_common, nav2_package()
 set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wdeprecated -fPIC -Wshadow -Wnull-dereference)
+# -Wno-error=null-dereference: GCC false-positives on inlined ROS2 message
+# operator==/!= (e.g. coordinate__struct.hpp) when included via getFieldFromGoal().
+add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wdeprecated -fPIC -Wshadow -Wnull-dereference -Wno-error=null-dereference)
 
 include_directories(
   include

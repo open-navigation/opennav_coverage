@@ -81,16 +81,23 @@ TEST(SwathTests, TestswathUtils)
   EXPECT_EQ(generator.toTypeShim("number"), SwathType::NUMBER);
   EXPECT_EQ(generator.toTypeShim("COVERAGE"), SwathType::COVERAGE);
   EXPECT_EQ(generator.toTypeShim("coverage"), SwathType::COVERAGE);
-
+  EXPECT_EQ(generator.toTypeShim("NUMBER_MODIFIED"), SwathType::NUMBER_MODIFIED);
+  EXPECT_EQ(generator.toTypeShim("number_modified"), SwathType::NUMBER_MODIFIED);
 
   EXPECT_EQ(generator.toStringShim(SwathType::NUMBER, SwathAngleType::SET_ANGLE).size(), 37u);
   EXPECT_EQ(generator.toStringShim(SwathType::COVERAGE, SwathAngleType::BRUTE_FORCE).size(), 41u);
   EXPECT_GT(generator.toStringShim(SwathType::UNKNOWN, SwathAngleType::UNKNOWN).size(), 20u);
   EXPECT_GT(generator.toStringShim(SwathType::UNKNOWN, SwathAngleType::BRUTE_FORCE).size(), 20u);
 
+  EXPECT_EQ(
+    generator.toStringShim(SwathType::NUMBER_MODIFIED, SwathAngleType::BRUTE_FORCE).size(), 48u);
+  EXPECT_EQ(
+    generator.toStringShim(SwathType::NUMBER_MODIFIED, SwathAngleType::SET_ANGLE).size(), 46u);
+
   EXPECT_TRUE(generator.createObjectiveShim(SwathType::LENGTH));
   EXPECT_TRUE(generator.createObjectiveShim(SwathType::NUMBER));
   EXPECT_TRUE(generator.createObjectiveShim(SwathType::COVERAGE));
+  EXPECT_TRUE(generator.createObjectiveShim(SwathType::NUMBER_MODIFIED));
   EXPECT_FALSE(generator.createObjectiveShim(SwathType::UNKNOWN));
 
   generator.setSwathAngleMode("NUMBER");
@@ -119,6 +126,9 @@ TEST(SwathTests, TestswathGeneration)
   settings.mode = "SET_ANGLE";
   settings.objective = "NUMBER";
   auto swaths3 = generator.generateSwaths(field.getField().getGeometry(0), settings);
+  settings.mode = "BRUTE_FORCE";
+  settings.objective = "NUMBER_MODIFIED";
+  auto swaths4 = generator.generateSwaths(field.getField().getGeometry(0), settings);
 }
 
 }  // namespace opennav_coverage

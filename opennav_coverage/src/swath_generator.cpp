@@ -80,6 +80,8 @@ SwathObjectivePtr SwathGenerator::createObjective(const SwathType & type)
       return std::move(std::make_shared<f2c::obj::NSwath>());
     case SwathType::COVERAGE:
       return std::move(std::make_shared<f2c::obj::FieldCoverage>());
+    case SwathType::NUMBER_MODIFIED:
+      return std::move(std::make_shared<f2c::obj::NSwathModified>());
     default:
       RCLCPP_WARN(logger_, "Unknown swath type set!");
       return SwathObjectivePtr{nullptr};
@@ -98,6 +100,9 @@ std::string SwathGenerator::toString(const SwathType & type, const SwathAngleTyp
       break;
     case SwathType::COVERAGE:
       str = "Coverage";
+      break;
+    case SwathType::NUMBER_MODIFIED:
+      str = "Number Modified";
       break;
     default:
       str = "Unknown";
@@ -132,6 +137,8 @@ SwathType SwathGenerator::toType(const std::string & str)
     return SwathType::NUMBER;
   } else if (mode_str == "COVERAGE") {
     return SwathType::COVERAGE;
+  } else if (mode_str == "NUMBER_MODIFIED") {
+    return SwathType::NUMBER_MODIFIED;
   } else {
     return SwathType::UNKNOWN;
   }

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
 #include <utility>
 
 #include "gtest/gtest.h"
@@ -203,6 +204,71 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   EXPECT_EQ(field2.getField().getGeometry(0).getGeometry(1).size(), 3u);
 }
 
+TEST(UtilsTests, TesttoNavPathMsgDiscreteSwathPointCount)
+{
+  // A single SWATH state with len=1.0 at step=0.1 → n_steps = round(1.0/0.1) = 10
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+  PathState s;
+  s.type = f2c::types::PathSectionType::SWATH;
+  s.point = Point(0.0, 0.0);
+  s.len = 1.0;
+  s.angle = 0.0;
+  path_in.addState(s);
+  F2CField field;
+
+  auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1f);
+  EXPECT_EQ(msg.poses.size(), 10u);
+}
+
+TEST(UtilsTests, TesttoNavPathMsgTurnUnchanged)
+{
+  // TURN states must pass through discretizeSwath unmodified (regression guard)
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+  path_in.getStates().resize(10);
+  for (auto & state : path_in.getStates()) {
+    state.type = f2c::types::PathSectionType::TURN;
+  }
+  F2CField field;
+
+  auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1f);
+  EXPECT_EQ(msg.poses.size(), 10u);
+}
+
+TEST(UtilsTests, TestGetTaskTime)
+{
+  Path path;
+  PathState s;
+  s.len = 5.0;
+  s.velocity = 2.0;
+  path.addState(s);
+
+  EXPECT_NEAR(path.getTaskTime(), 2.5, 0.01);
+}
+
+TEST(UtilsTests, TestGetTaskTimeZeroVelocity)
+{
+  // velocity=0 → getTaskTime() returns inf; caller must guard with std::isfinite
+  Path path;
+  PathState s;
+  s.len = 1.0;
+  s.velocity = 0.0;
+  path.addState(s);
+
+  EXPECT_FALSE(std::isfinite(path.getTaskTime()));
+  const double guarded = std::isfinite(path.getTaskTime()) ? path.getTaskTime() : 0.0;
+  EXPECT_NEAR(guarded, 0.0, 1e-9);
+}
+
+TEST(UtilsTests, TestGetTaskTimeEmptyPath)
+{
+  Path empty;
+  EXPECT_NEAR(empty.getTaskTime(), 0.0, 1e-9);
+}
+
 TEST(UtilsTests, TestPathComponentsIterator)
 {
   opennav_coverage_msgs::msg::PathComponents msg;
@@ -243,6 +309,121 @@ TEST(UtilsTests, TestPathComponentsIterator)
 
   auto last_row_info = it.getNext();
   EXPECT_EQ(std::get<1>(last_row_info), nullptr);
+}
+
+// B.6-T2: empty path → velocity and is_backward vectors are empty
+TEST(UtilsTests, TesttoNavPathMsgEmptyVelocity)
+{
+  std_msgs::msg::Header header_in;
+  Path empty_path;
+  F2CField field;
+  std::vector<double> vels;
+  std::vector<bool> dirs;
+
+  auto nav_path = util::toNavPathMsg(empty_path, field, header_in, true, 0.1f, vels, dirs);
+  EXPECT_TRUE(nav_path.poses.empty());
+  EXPECT_TRUE(vels.empty());
+  EXPECT_TRUE(dirs.empty());
+}
+
+// B.6-T3: forward-only path → all is_backward entries are false
+TEST(UtilsTests, TesttoNavPathMsgForwardOnly)
+{
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+  PathState s;
+  s.type = f2c::types::PathSectionType::SWATH;
+  s.point = Point(0.0, 0.0);
+  s.len = 1.0;
+  s.angle = 0.0;
+  s.velocity = 1.5;
+  s.dir = f2c::types::PathDirection::FORWARD;
+  path_in.addState(s);
+  F2CField field;
+
+  std::vector<double> vels;
+  std::vector<bool> dirs;
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, vels, dirs);
+
+  EXPECT_EQ(nav_path.poses.size(), vels.size());
+  EXPECT_EQ(nav_path.poses.size(), dirs.size());
+  for (const auto & d : dirs) {
+    EXPECT_FALSE(d);
+  }
+  for (const auto & v : vels) {
+    EXPECT_NEAR(v, 1.5, 1e-6);
+  }
+}
+
+// B.6-T1: velocity and is_backward values match PathState fields after discretizeSwath
+TEST(UtilsTests, TesttoNavPathMsgWithVelocity)
+{
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+
+  PathState swath;
+  swath.type = f2c::types::PathSectionType::SWATH;
+  swath.point = Point(0.0, 0.0);
+  swath.len = 1.0;
+  swath.angle = 0.0;
+  swath.velocity = 2.0;
+  swath.dir = f2c::types::PathDirection::BACKWARD;
+  path_in.addState(swath);
+
+  PathState turn;
+  turn.type = f2c::types::PathSectionType::TURN;
+  turn.velocity = 0.5;
+  turn.dir = f2c::types::PathDirection::FORWARD;
+  path_in.addState(turn);
+
+  F2CField field;
+  std::vector<double> vels;
+  std::vector<bool> dirs;
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, vels, dirs);
+
+  EXPECT_EQ(nav_path.poses.size(), vels.size());
+  EXPECT_EQ(nav_path.poses.size(), dirs.size());
+  // SWATH states: velocity=2.0, direction=BACKWARD
+  EXPECT_NEAR(vels[0], 2.0, 1e-6);
+  EXPECT_TRUE(dirs[0]);
+  // TURN state: velocity=0.5, direction=FORWARD
+  EXPECT_NEAR(vels.back(), 0.5, 1e-6);
+  EXPECT_FALSE(dirs.back());
+}
+
+// B.6+B.7 integration: poses, velocities, is_backward sizes must match after discretizeSwath
+TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch)
+{
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+
+  PathState swath;
+  swath.type = f2c::types::PathSectionType::SWATH;
+  swath.len = 1.0;
+  swath.velocity = 1.5;
+  swath.dir = f2c::types::PathDirection::FORWARD;
+  path_in.addState(swath);
+
+  PathState turn;
+  turn.type = f2c::types::PathSectionType::TURN;
+  turn.velocity = 0.5;
+  turn.dir = f2c::types::PathDirection::BACKWARD;
+  path_in.addState(turn);
+  path_in.addState(turn);
+
+  F2CField field;
+  std::vector<double> vels;
+  std::vector<bool> dirs;
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, vels, dirs);
+
+  EXPECT_EQ(nav_path.poses.size(), vels.size());
+  EXPECT_EQ(nav_path.poses.size(), dirs.size());
+  // SWATH poses are forward; TURN poses are backward
+  EXPECT_FALSE(dirs[0]);
+  EXPECT_TRUE(dirs.back());
 }
 
 }  // namespace opennav_coverage
