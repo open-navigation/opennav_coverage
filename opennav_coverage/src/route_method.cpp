@@ -19,11 +19,23 @@
 namespace opennav_coverage
 {
 
+// Above this many total swaths, TspRouteMethod falls back to per-cell TSP to avoid
+// F2C's O(N^2) all-pairs path matrix that OOMs on large decompositions.
+static constexpr size_t kMaxSwathsForGlobalRoute = 300;
+
 F2CRoute SwathOrderMethod::plan(
-  const F2CCells & /*cells*/,
+  const F2CCells & cells,
   const F2CSwathsByCells & swaths_by_cells,
   const opennav_coverage_msgs::msg::RouteMode & settings)
 {
+  // The orderers assume a single cell; multi-cell (decomposed) input breaks their
+  // ordering, so only TSP handles it. Reject rather than produce a bad route.
+  if (cells.size() > 1) {
+    throw CoverageException(
+            "Non-TSP route modes are not supported with field decomposition; "
+            "use route_mode TSP or disable decomposition.");
+  }
+
   // The F2C orderers operate on a single flat swath list.
   if (type_ == RouteType::SPIRAL) {
     dynamic_cast<f2c::rp::SpiralOrder *>(orderer_.get())->setSpiralSize(settings.spiral_n);
@@ -56,10 +68,23 @@ F2CRoute TspRouteMethod::plan(
     redirect_swaths ? "true" : "false", time_limit,
     search_for_optimum ? "true" : "false", d_tol);
 
-  // Per-cell TSP instead of one multi-cell genRoute call: F2C v2.0.0's
-  // RoutePlannerBase builds the full all-pairs path matrix, which exhausts
-  // memory (bad_alloc) on decomposed input. The cells are disconnected anyway,
-  // so solve each one alone and stitch the routes with straight-line bridges.
+  // Preferred: a single global genRoute over the headland travel cells, so inter-cell
+  // connections follow the shared borders / headland. Guarded by a swath-count cap
+  // because F2C v2.0.0's RoutePlannerBase materializes the all-pairs shortest-path
+  // matrix (~N^2 vectors, N ~ 4 * total swaths), which OOMs on large decompositions.
+  size_t total_swaths = 0;
+  for (size_t i = 0; i < swaths_by_cells.size(); ++i) {
+    total_swaths += swaths_by_cells.at(i).size();
+  }
+  if (total_swaths <= kMaxSwathsForGlobalRoute) {
+    f2c::rp::RoutePlannerBase rp;
+    return rp.genRoute(
+      cells, swaths_by_cells,
+      /*show_log=*/false, d_tol, redirect_swaths, time_limit, search_for_optimum);
+  }
+
+  // Large-decomposition fallback: solve each cell alone and stitch in sweep order,
+  // avoiding the all-pairs matrix. The inter-cell bridge is a straight line (follow-up).
   F2CRoute merged;
   for (size_t i = 0; i < cells.size(); ++i) {
     if (i >= swaths_by_cells.size() || swaths_by_cells.at(i).size() == 0) {

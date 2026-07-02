@@ -196,25 +196,36 @@ void CoverageServer::computeCoveragePath()
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
     Field field_no_headland = field;
-    F2CCells cells;
+    // route_cells feed the route planner's travel graph; swath_cells are the cells
+    // the swaths are generated from. They differ only for headland-first decomposition.
+    F2CCells route_cells;
+    F2CCells swath_cells;
     if (do_decomp) {
-      F2CCells raw_cells;
-      raw_cells.addGeometry(field);
-      F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
-
-      // Apply a separate headland to each sub-cell
-      cells = goal->generate_headland ?
-        headland_gen_->generateHeadlands(decomposed, goal->headland_mode) : decomposed;
+      // Headland-first (F2C tutorial 7.2): shrink the whole field by one headland width
+      // for the travel ring, decompose it into border-sharing cells (the travel graph),
+      // then shrink each cell again for the swath area. Inter-region connections then
+      // follow the shared borders / headland instead of cutting across the field.
+      Field travel_ring = field;
+      if (goal->generate_headland) {
+        travel_ring = headland_gen_->generateHeadlands(field, goal->headland_mode);
+        field_no_headland = travel_ring;
+      }
+      F2CCells travel_ring_cells;
+      travel_ring_cells.addGeometry(travel_ring);
+      route_cells = decomp_gen_->decompose(travel_ring_cells, goal->decomp_mode);
+      swath_cells = goal->generate_headland ?
+        headland_gen_->generateHeadlands(route_cells, goal->headland_mode) : route_cells;
     } else {
-      // (1) Optional: Remove headland from polygon field
       if (goal->generate_headland) {
         field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
       }
-      cells.addGeometry(field_no_headland);
+      route_cells.addGeometry(field_no_headland);
+      swath_cells = route_cells;
     }
 
     // (2) Generate swaths to cover polygon field, including internal voids
-    F2CSwathsByCells swaths_by_cells = swath_gen_->generateSwathsByCells(cells, goal->swath_mode);
+    F2CSwathsByCells swaths_by_cells =
+      swath_gen_->generateSwathsByCells(swath_cells, goal->swath_mode);
     Swaths swaths = swaths_by_cells.flatten();
 
     // (3) Optional: Generate an ordered route through the unordered swaths
@@ -223,7 +234,7 @@ void CoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      F2CRoute route = route_gen_->generateRoute(cells, swaths_by_cells, goal->route_mode);
+      F2CRoute route = route_gen_->generateRoute(route_cells, swaths_by_cells, goal->route_mode);
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
       }
