@@ -211,7 +211,7 @@ void CoverageServer::computeCoveragePath()
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
         result->nav_path = util::toNavPathMsg(
           path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance(),
-          result->coverage_path.velocities, result->coverage_path.is_backward);
+          &result->coverage_path.velocities, &result->coverage_path.is_backward);
         const double task_time = path.getTaskTime();
         result->task_time = std::isfinite(task_time) ? task_time : 0.0;
       } else {

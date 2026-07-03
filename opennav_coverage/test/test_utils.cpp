@@ -320,7 +320,7 @@ TEST(UtilsTests, TesttoNavPathMsgEmptyVelocity)
   std::vector<double> vels;
   std::vector<bool> dirs;
 
-  auto nav_path = util::toNavPathMsg(empty_path, field, header_in, true, 0.1f, vels, dirs);
+  auto nav_path = util::toNavPathMsg(empty_path, field, header_in, true, 0.1f, &vels, &dirs);
   EXPECT_TRUE(nav_path.poses.empty());
   EXPECT_TRUE(vels.empty());
   EXPECT_TRUE(dirs.empty());
@@ -344,7 +344,7 @@ TEST(UtilsTests, TesttoNavPathMsgForwardOnly)
 
   std::vector<double> vels;
   std::vector<bool> dirs;
-  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, vels, dirs);
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
@@ -381,7 +381,7 @@ TEST(UtilsTests, TesttoNavPathMsgWithVelocity)
   F2CField field;
   std::vector<double> vels;
   std::vector<bool> dirs;
-  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, vels, dirs);
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
@@ -417,7 +417,7 @@ TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch)
   F2CField field;
   std::vector<double> vels;
   std::vector<bool> dirs;
-  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, vels, dirs);
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
