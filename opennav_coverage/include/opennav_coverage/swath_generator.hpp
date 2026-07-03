@@ -118,10 +118,10 @@ public:
   void setOVerlap(const bool & setting) {default_allow_overlap_ = setting;}
 
   /**
-   * @brief Sets default search step for brute force for dynamic parameters
-   * @param mode String for mode to use
+   * @brief Sets default search step angle for brute force for dynamic parameters
+   * @param setting Step angle in radians
    */
-  void setStepAngle(const bool & setting) {default_step_angle_ = setting;}
+  void setStepAngle(const double & setting) {default_step_angle_ = setting;}
 
 protected:
   /**

@@ -55,7 +55,8 @@ Swaths SwathGenerator::generateSwaths(
   switch (p.angle_type) {
     case SwathAngleType::BRUTE_FORCE:
       if (!p.objective) {
-        throw CoverageException("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
+        throw CoverageException(
+                "No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE, NUMBER_MODIFIED.");
       }
       generator_->setStepAngle(p.step_angle);
       return generator_->generateBestSwaths(*p.objective, op_width, field);
@@ -80,7 +81,8 @@ Swaths SwathGenerator::generateSwaths(
   switch (p.angle_type) {
     case SwathAngleType::BRUTE_FORCE:
       if (!p.objective) {
-        throw CoverageException("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
+        throw CoverageException(
+                "No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE, NUMBER_MODIFIED.");
       }
       generator_->setStepAngle(p.step_angle);
       return generator_->generateBestSwaths(*p.objective, op_width, cells).flatten();

@@ -104,7 +104,7 @@ TEST(SwathTests, TestswathUtils)
   generator.setSwathMode("SET_ANGLE");
   generator.setSwathAngle(0.0);
   generator.setOVerlap(false);
-  generator.setStepAngle(false);
+  generator.setStepAngle(0.0);
 }
 
 TEST(SwathTests, TestswathGeneration)
