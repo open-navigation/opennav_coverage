@@ -231,8 +231,7 @@ inline nav_msgs::msg::Path toNavPathMsg(
     path.moveTo(field.getRefPoint());
   }
 
-  // discretizeSwath splits only SWATH states at step_size intervals; TURN states pass through
-  // unchanged. Do NOT use discretize() — that calls populate()+reduce(), which modifies TURNs.
+  // discretizeSwath splits only SWATH states at step_size intervals
   path = path.discretizeSwath(static_cast<double>(pt_dist));
 
   // Reserve up front so the population loop below doesn't reallocate.
