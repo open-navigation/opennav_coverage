@@ -64,31 +64,23 @@ jobs:
           libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev \
           libopenblas-dev
 
-    - name: Restore colcon cache
-      id: colcon_cache
+    - name: Restore source dependencies cache
+      id: src_cache
       uses: actions/cache/restore@v4
       with:
         # The vcs-imported third-party sources (nav2, Fields2Cover,
-        # ortools_vendor, behaviortree_cpp) plus the colcon build/
-        # and install/ trees. These take ~1h to build from source; caching them
-        # means they build exactly once and are reused, so the ortools_vendor
-        # parallel-build race cannot recur and CI drops from ~60 min to minutes.
-        # Keyed on deps.repos, so any change to the third-party pins rebuilds all
-        # of them. Our own opennav_coverage lives outside src/deps (checked out
-        # separately) and is therefore always rebuilt against the cached deps.
-        # The container workspace path is stable across runs, so the absolute
-        # paths baked into install/ stay valid.
-        path: |
-          ros_ws/src/deps
-          ros_ws/build
-          ros_ws/install
-        key: colcon-${{ matrix.ros_distro }}-${{ hashFiles('ros_ws/src/opennav_coverage/.github/deps.repos') }}
+        # ortools_vendor, behaviortree_cpp). Keyed on deps.repos, so the
+        # sources are frozen until the pins change; branch pins (nav2 main,
+        # BT.CPP master) do not drift underneath an existing cache. Restored
+        # with original mtimes so colcon can skip unchanged packages.
+        path: ros_ws/src/deps
+        key: srcdeps-${{ hashFiles('ros_ws/src/opennav_coverage/.github/deps.repos') }}
 
     - name: Import source dependencies
       # Only on a cache miss. On a hit, src/deps is restored with its original
       # mtimes so colcon skips the unchanged third-party packages; re-importing
       # would reset those mtimes and force a full rebuild.
-      if: steps.colcon_cache.outputs.cache-hit != 'true'
+      if: steps.src_cache.outputs.cache-hit != 'true'
       run: |
         cd ros_ws
         mkdir -p src/deps
@@ -101,7 +93,7 @@ jobs:
       # centrally. Our own opennav packages keep their own -Werror.
       # Skipped on a cache hit: the cached sources are already patched, and
       # sed -i would rewrite the file (new mtime) and trigger a nav2 rebuild.
-      if: steps.colcon_cache.outputs.cache-hit != 'true'
+      if: steps.src_cache.outputs.cache-hit != 'true'
       run: sed -i 's/ -Werror//' ros_ws/src/deps/navigation2/nav2_common/cmake/nav2_package.cmake
 
     - name: Install ROS dependencies (rosdep)
@@ -127,6 +119,42 @@ jobs:
         sudo apt-get remove -y ros-${{ matrix.ros_distro }}-behaviortree-cpp || true
         sudo apt-get remove -y ros-${{ matrix.ros_distro }}-ompl || true
 
+    - name: Compute environment fingerprint
+      # Hash of every installed package version, taken after ALL apt/rosdep
+      # steps. It keys the colcon build cache to the exact environment the
+      # tree was built in. The container image tag (:master) is rebuilt
+      # nightly and rosdep installs from the live rolling repo, so /opt/ros
+      # changes underneath a cached build tree; reusing that tree in a
+      # different environment breaks incremental make in arbitrary ways
+      # (e.g. behaviortree_cpp recompiling xml_parsing.cpp with stale
+      # ament_index_cpp include paths). A changed fingerprint forces one
+      # clean rebuild instead.
+      id: env_fp
+      run: |
+        fp=$(dpkg-query -W -f '${Package} ${Version}\n' | sha256sum | cut -c1-16)
+        echo "fp=${fp}" >> "$GITHUB_OUTPUT"
+
+    - name: Restore colcon cache
+      id: colcon_cache
+      # The colcon build/ and install/ trees for the third-party sources;
+      # they take ~1h to build, caching makes repeat runs minutes. Keyed on
+      # deps.repos AND the environment fingerprint: a build tree is only ever
+      # reused in the environment it was configured in. No restore-keys on
+      # purpose -- a near-miss stale tree is worse than a clean rebuild.
+      # Skipped entirely if the source cache missed (e.g. evicted): an old
+      # build tree must never be combined with freshly imported sources.
+      # Our own opennav_coverage lives outside src/deps (checked out
+      # separately) and is always rebuilt against the cached deps. The
+      # container workspace path is stable across runs, so the absolute
+      # paths baked into install/ stay valid.
+      if: steps.src_cache.outputs.cache-hit == 'true'
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ros_ws/build
+          ros_ws/install
+        key: colcon-${{ matrix.ros_distro }}-${{ hashFiles('ros_ws/src/opennav_coverage/.github/deps.repos') }}-${{ steps.env_fp.outputs.fp }}
+
     - name: Build
       # slam_toolbox is only pulled in transitively as a runtime dep of
       # nav2_bringup (via opennav_coverage_demo); nothing here builds against it,
@@ -140,19 +168,29 @@ jobs:
           opennav_coverage_msgs opennav_coverage_navigator opennav_row_coverage \
           --packages-skip slam_toolbox
 
+    - name: Save source dependencies cache
+      # Only after a successful build: if upstream (nav2 main / BT.CPP master)
+      # is broken at import time, the bad snapshot is not pinned and the next
+      # run imports fresh.
+      if: success() && steps.src_cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ros_ws/src/deps
+        key: ${{ steps.src_cache.outputs.cache-primary-key }}
+
     - name: Save colcon cache
       # Save only after a successful build, and only when we didn't already have
       # a hit -- so a broken or partial build (e.g. a raced ortools_vendor) is
       # never cached. Runs before Test so a good build is preserved even if a
-      # test later fails.
+      # test later fails. The key is spelled out (not cache-primary-key)
+      # because the restore step may have been skipped on a source-cache miss.
       if: success() && steps.colcon_cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: |
-          ros_ws/src/deps
           ros_ws/build
           ros_ws/install
-        key: ${{ steps.colcon_cache.outputs.cache-primary-key }}
+        key: colcon-${{ matrix.ros_distro }}-${{ hashFiles('ros_ws/src/opennav_coverage/.github/deps.repos') }}-${{ steps.env_fp.outputs.fp }}
 
     - name: Test
       run: |
