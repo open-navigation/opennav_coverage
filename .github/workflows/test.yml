@@ -38,6 +38,14 @@ jobs:
       #   key resolves to a ROS ompl whose API nav2 main doesn't match (see below).
       # backward-ros: nav2 build dependency; install explicitly so a transient
       #   rosdep gap can't fail the nav2 configure (seen in the rolling dev container).
+      # ament-cmake-vendor-package: build helper the *_vendor packages need on
+      #   rolling; a rosdep gap can leave it missing and fail their configure.
+      # libopenblas-dev: Fields2Cover builds matplot from source, which links
+      #   against OpenBLAS (-lopenblas). The resolute image no longer ships the
+      #   dev symlink, so provide /usr/lib/.../libopenblas.so or the link fails.
+      # message-filters: the resolute image's older message_filters lacks
+      #   systemClockNow(), which the newer point_cloud_transport it also ships
+      #   needs -- nav2_costmap_2d fails to link. Pull the current one to match.
       # The rest: Fields2Cover (gdal/eigen/geos/tinyxml2), tinyxml2-vendor for
       #   opennav_row_coverage, Cyclone DDS, and vcstool/colcon.
       run: |
@@ -47,7 +55,10 @@ jobs:
           ros-${{ matrix.ros_distro }}-rmw-cyclonedds-cpp \
           ros-${{ matrix.ros_distro }}-tinyxml2-vendor \
           ros-${{ matrix.ros_distro }}-backward-ros \
-          libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev
+          ros-${{ matrix.ros_distro }}-ament-cmake-vendor-package \
+          ros-${{ matrix.ros_distro }}-message-filters \
+          libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev \
+          libopenblas-dev
 
     - name: Restore colcon cache
       id: colcon_cache
