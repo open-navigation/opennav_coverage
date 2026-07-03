@@ -119,6 +119,44 @@ jobs:
         sudo apt-get remove -y ros-${{ matrix.ros_distro }}-behaviortree-cpp || true
         sudo apt-get remove -y ros-${{ matrix.ros_distro }}-ompl || true
 
+    - name: Shim removed ament_index_cpp header
+      # ament_index_cpp 1.14 (rolling, 2026-06-30) removed
+      # get_package_share_directory() -- header and library symbol -- in favour
+      # of get_package_share_path(). Sources built from live branches still
+      # include it: BehaviorTree.CPP master (xml_parsing.cpp) and nav2 main
+      # (nav2_ros_common/node_utils.hpp includes it unconditionally; only the
+      # replacement include is version-guarded), plus several nav2 tests and
+      # opennav files. Restore the header as an inline forwarder until they
+      # migrate; skipped when the real header exists (older image, or upstream
+      # brings it back). The fixed mtime keeps cached objects that depend on
+      # it from being recompiled on every run.
+      run: |
+        hdr=/opt/ros/${{ matrix.ros_distro }}/include/ament_index_cpp/ament_index_cpp/get_package_share_directory.hpp
+        if [ ! -f "$hdr" ]; then
+          sudo tee "$hdr" > /dev/null <<'EOF'
+        // CI compat shim for ament_index_cpp >= 1.14, which removed this header.
+        #ifndef AMENT_INDEX_CPP__GET_PACKAGE_SHARE_DIRECTORY_HPP_
+        #define AMENT_INDEX_CPP__GET_PACKAGE_SHARE_DIRECTORY_HPP_
+
+        #include <string>
+
+        #include "ament_index_cpp/get_package_share_path.hpp"
+
+        namespace ament_index_cpp
+        {
+
+        inline std::string get_package_share_directory(const std::string & package_name)
+        {
+          return get_package_share_path(package_name).string();
+        }
+
+        }  // namespace ament_index_cpp
+
+        #endif  // AMENT_INDEX_CPP__GET_PACKAGE_SHARE_DIRECTORY_HPP_
+        EOF
+          sudo touch -d '2026-01-01 00:00:00 UTC' "$hdr"
+        fi
+
     - name: Compute environment fingerprint
       # Hash of every installed package version, taken after ALL apt/rosdep
       # steps. It keys the colcon build cache to the exact environment the
