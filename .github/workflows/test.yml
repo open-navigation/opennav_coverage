@@ -96,6 +96,19 @@ jobs:
       if: steps.src_cache.outputs.cache-hit != 'true'
       run: sed -i 's/ -Werror//' ros_ws/src/deps/navigation2/nav2_common/cmake/nav2_package.cmake
 
+    - name: Patch nav2_map_server (missing rclcpp includes)
+      # nav2 main's map_io.cpp uses rclcpp::get_logger, RCLCPP_*_STREAM and
+      # rclcpp::Clock but includes no rclcpp header; the transitive includes
+      # it relied on are gone from current rolling's headers, so it fails to
+      # compile. Add the includes it actually uses. Skipped on a cache hit
+      # (cached sources are already patched; a new mtime would force a
+      # rebuild). Verified against the CI image locally: with this patch the
+      # full 54-package build succeeds.
+      if: steps.src_cache.outputs.cache-hit != 'true'
+      run: |
+        sed -i 's|#include "nav2_map_server/map_io.hpp"|#include "rclcpp/clock.hpp"\n#include "rclcpp/logger.hpp"\n#include "rclcpp/logging.hpp"\n#include "nav2_map_server/map_io.hpp"|' \
+          ros_ws/src/deps/navigation2/nav2_map_server/src/map_io.cpp
+
     - name: Install ROS dependencies (rosdep)
       run: |
         rosdep update --rosdistro ${{ matrix.ros_distro }}
