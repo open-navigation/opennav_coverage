@@ -46,6 +46,9 @@ jobs:
       # message-filters: the resolute image's older message_filters lacks
       #   systemClockNow(), which the newer point_cloud_transport it also ships
       #   needs -- nav2_costmap_2d fails to link. Pull the current one to match.
+      # ament-index-cpp: behaviortree_cpp (built from master source) includes
+      #   ament_index_cpp/get_package_share_directory.hpp; a rosdep gap leaves the
+      #   header missing on the source build. Install it explicitly.
       # The rest: Fields2Cover (gdal/eigen/geos/tinyxml2), tinyxml2-vendor for
       #   opennav_row_coverage, Cyclone DDS, and vcstool/colcon.
       run: |
@@ -57,6 +60,7 @@ jobs:
           ros-${{ matrix.ros_distro }}-backward-ros \
           ros-${{ matrix.ros_distro }}-ament-cmake-vendor-package \
           ros-${{ matrix.ros_distro }}-message-filters \
+          ros-${{ matrix.ros_distro }}-ament-index-cpp \
           libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev \
           libopenblas-dev
 
