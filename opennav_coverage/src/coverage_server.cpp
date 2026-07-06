@@ -195,7 +195,7 @@ void CoverageServer::computeCoveragePath()
     // (1) Optional: decompose non-convex field, then remove headland, then generate swaths
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
-    Field field_no_headland = field;  // kept for the non-decomp path + visualization
+    Field field_no_headland = field;
     Swaths swaths;
     if (do_decomp) {
       F2CCells raw_cells;
