@@ -87,8 +87,8 @@ TEST(RouteTests, TestrouteUtils)
   EXPECT_TRUE(generator.createGeneratorShim(RouteType::SPIRAL));
   EXPECT_TRUE(generator.createGeneratorShim(RouteType::CUSTOM));
   EXPECT_FALSE(generator.createGeneratorShim(RouteType::UNKNOWN));
-  // B1-T11: TSP uses RoutePlannerBase, not SingleCellSwathsOrderBase -> nullptr
-  EXPECT_FALSE(generator.createGeneratorShim(RouteType::TSP));
+  // TSP is now a valid RouteMethod (TspRouteMethod adapting RoutePlannerBase)
+  EXPECT_TRUE(generator.createGeneratorShim(RouteType::TSP));
 
   generator.setMode("a mode");
   generator.setSpiralN(10);
@@ -106,19 +106,21 @@ TEST(RouteTests, TestrouteGeneration)
   // Generate some toy field
   f2c::Random rand;
   auto field = rand.generateRandField(1e5, 5);
-  auto swaths = swath_gen.generateSwaths(field.getField().getGeometry(0), sw_settings);
+  F2CCells cells;
+  cells.addGeometry(field.getField().getGeometry(0));
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
 
   // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::RouteMode settings;
-  auto route1 = generator.generateRoute(swaths, settings);
+  auto route1 = generator.generateRoute(cells, sbc, settings);
   settings.mode = "BOUSTROPHEDON";
-  auto route2 = generator.generateRoute(swaths, settings);
+  auto route2 = generator.generateRoute(cells, sbc, settings);
   settings.mode = "SPIRAL";
-  auto route3 = generator.generateRoute(swaths, settings);
+  auto route3 = generator.generateRoute(cells, sbc, settings);
 
   // Throws since custom order is set to emptry set
   settings.mode = "CUSTOM";
-  EXPECT_THROW(generator.generateRoute(swaths, settings), std::length_error);
+  EXPECT_THROW(generator.generateRoute(cells, sbc, settings), std::length_error);
 }
 
 TEST(RouteTests, TestTSPGeneration)
@@ -145,7 +147,7 @@ TEST(RouteTests, TestTSPGeneration)
   settings.tsp_d_tol = 1e-4;
 
   // B1-T1: route is non-empty
-  F2CRoute route = generator.generateRouteTSP(cells, sbc, settings);
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
   EXPECT_FALSE(route.isEmpty());
   EXPECT_GE(route.sizeVectorSwaths(), 1u);
   EXPECT_GT(route.length(), 0.0);
@@ -182,8 +184,39 @@ TEST(RouteTests, TestTSPSingleCell)
   opennav_coverage_msgs::msg::RouteMode settings;
   settings.mode = "TSP";
 
-  F2CRoute route = generator.generateRouteTSP(cells, sbc, settings);
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
   EXPECT_FALSE(route.isEmpty());
+}
+
+TEST(RouteTests, TestSwathOrderWrappedAsRoute)
+{
+  // Orderer modes return their sorted swaths wrapped in a single-group F2CRoute;
+  // check the wrap keeps one group and preserves the swath count.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  F2CCells cells;
+  cells.addGeometry(field.getField().getGeometry(0));
+
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "BOUSTROPHEDON";
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+
+  EXPECT_FALSE(route.isEmpty());
+  EXPECT_EQ(route.sizeVectorSwaths(), 1u);
+
+  size_t total_out = 0;
+  for (size_t i = 0; i < route.sizeVectorSwaths(); ++i) {
+    total_out += route.getVectorSwaths()[i].size();
+  }
+  EXPECT_EQ(sbc.sizeTotal(), total_out);
 }
 
 }  // namespace opennav_coverage

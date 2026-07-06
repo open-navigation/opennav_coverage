@@ -214,6 +214,51 @@ TEST(ServerTest, testDecompPathNoHeadland)
   EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
 }
 
+TEST(ServerTest, testTSPRouteNoPath)
+{
+  // TSP with generate_path=false now succeeds (returns ordered swaths) instead of
+  // being rejected — the unified route path removed the old guard.
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_tsp_nopath");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_route = true;
+  goal_msg.generate_path = false;
+  goal_msg.route_mode.mode = "TSP";
+  goal_msg.route_mode.tsp_time_limit = 1;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+  EXPECT_FALSE(result.result->coverage_path.swaths.empty());
+}
+
 TEST(ServerTest, testTSPDecompHeadlandPath)
 {
   // Exercises the TSP branch end-to-end with decomp+headland enabled together:
