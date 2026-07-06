@@ -208,7 +208,6 @@ void CoverageServer::computeCoveragePath()
         cells_no_headland = headland_gen_->generateHeadlands(decomposed, goal->headland_mode);
       }
       swaths = swath_gen_->generateSwaths(cells_no_headland, goal->swath_mode);
-      // field_no_headland stays the outer boundary; decomposed cells aren't visualized separately.
     } else {
       // (1) Optional: Remove headland from polygon field
       if (goal->generate_headland) {
