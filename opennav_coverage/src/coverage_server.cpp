@@ -228,20 +228,16 @@ void CoverageServer::computeCoveragePath()
         (route_gen_->resolveType(goal->route_mode) == RouteType::TSP);
 
       if (is_tsp) {
-        // K5: TSP requires generate_path=true (connections only useful with full path)
+        // TSP requires generate_path=true (connections only useful with the full path)
         if (!goal->generate_path) {
           throw CoverageException(
             "TSP route mode requires generate_path=true; "
             "headland connections are only meaningful in the full path output.");
         }
 
-        // (a) Single cell set feeds BOTH swath generation and TSP routing.
-        //   F2C's RoutePlannerBase::genRoute requires cells and swaths_by_cells to come
-        //   from the SAME F2CCells: the connection graph is built over these cells'
-        //   borders, so swath endpoints must lie on them. Multi-cell (decomposed) input
-        //   is not passed to genRoute in one call: RouteGenerator::generateRouteTSP
-        //   solves each cell separately and stitches the routes (see rationale there).
-        // NOTE: swaths generated twice when TSP is used — accepted tradeoff (K2/plan Adım 6).
+        // (a) genRoute needs cells and swaths_by_cells from the SAME F2CCells (its
+        //   connection graph is built over their borders). Multi-cell input is handled
+        //   per-cell inside generateRouteTSP. Swaths are generated a second time here.
         F2CCells tsp_cells;
         if (do_decomp) {
           F2CCells raw_cells;
@@ -259,7 +255,7 @@ void CoverageServer::computeCoveragePath()
         F2CSwathsByCells sbc =
           swath_gen_->generateSwathsByCells(tsp_cells, goal->swath_mode);
 
-        // (c) TSP route + path (K4: F2CRoute → planPath → Path)
+        // (c) TSP route, then plan the connecting path
         F2CRoute tsp_route =
           route_gen_->generateRouteTSP(tsp_cells, sbc, goal->route_mode);
         if (tsp_route.isEmpty()) {

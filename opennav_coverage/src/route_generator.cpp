@@ -82,14 +82,10 @@ F2CRoute RouteGenerator::generateRouteTSP(
     redirect_swaths ? "true" : "false", time_limit,
     search_for_optimum ? "true" : "false", d_tol);
 
-  // Per-cell TSP instead of one multi-cell genRoute call. F2C v2.0.0's
-  // RoutePlannerBase materializes the all-pairs shortest-path matrix with
-  // explicit point paths (N^2 vectors, N ~ 4 * total swaths): on decomposed
-  // multi-cell input this exhausts memory (std::bad_alloc). Cells are also
-  // disconnected after per-cell headland shrink, so inter-cell costs are INF
-  // and the global TSP degenerates to per-cell TSP + a cell visit order
-  // anyway. Solve each cell alone (small N) and stitch the routes with
-  // straight-line bridges in decomposition (sweep) order.
+  // Per-cell TSP instead of one multi-cell genRoute call: F2C v2.0.0's
+  // RoutePlannerBase builds the full all-pairs path matrix, which exhausts
+  // memory (bad_alloc) on decomposed input. The cells are disconnected anyway,
+  // so solve each one alone and stitch the routes with straight-line bridges.
   F2CRoute merged;
   for (size_t i = 0; i < cells.size(); ++i) {
     if (i >= swaths_by_cells.size() || swaths_by_cells.at(i).size() == 0) {
