@@ -202,7 +202,7 @@ void CoverageServer::computeCoveragePath()
       raw_cells.addGeometry(field);
       F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
 
-      // Apply a separate headland to each sub-cell (F2C tutorial order: decompose then headland)
+      // Apply a separate headland to each sub-cell
       F2CCells cells_no_headland = decomposed;
       if (goal->generate_headland) {
         cells_no_headland = headland_gen_->generateHeadlands(decomposed, goal->headland_mode);
