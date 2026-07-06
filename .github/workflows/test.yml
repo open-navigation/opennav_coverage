@@ -81,10 +81,12 @@ jobs:
       # OR-Tools v9.9: ortools_gurobi includes the generated math_opt
       # gurobi.pb.h without depending on the target that generates it, racing
       # the codegen under parallel make. Backport the one-line v9.10 fix via
-      # the vendor's patches/ dir.
-      if: steps.src_cache.outputs.cache-hit != 'true'
+      # the vendor's patches/ dir. Runs even on a source-cache hit (older
+      # caches predate this patch file); idempotent, fixed mtime.
       run: |
-        cat > ros_ws/src/deps/ortools_vendor/patches/0002-gurobi-mathopt-proto-dep.patch <<'EOF'
+        p=ros_ws/src/deps/ortools_vendor/patches/0002-gurobi-mathopt-proto-dep.patch
+        [ -f "$p" ] && exit 0
+        cat > "$p" <<'EOF'
         diff --git a/ortools/gurobi/CMakeLists.txt b/ortools/gurobi/CMakeLists.txt
         --- a/ortools/gurobi/CMakeLists.txt
         +++ b/ortools/gurobi/CMakeLists.txt
@@ -96,6 +98,7 @@ jobs:
            $<$<BOOL:${USE_COINOR}>:Coin::Cbc>)
          #add_library(${PROJECT_NAMESPACE}::gurobi ALIAS ${NAME})
         EOF
+        touch -d '2026-01-01 00:00:00 UTC' "$p"
 
     - name: Install ROS dependencies (rosdep)
       run: |
