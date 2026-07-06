@@ -87,29 +87,19 @@ public:
   }
 
   /**
-   * @brief Main method to generate route
-   * @param Swaths swaths to generate route from
-   * @param request Action request information
-   * @return Swaths ordered swaths
-   */
-  Swaths generateRoute(
-    const Swaths & swaths, const opennav_coverage_msgs::msg::RouteMode & settings);
-
-  /**
-   * @brief TSP-based multi-cell route planner using OR-Tools.
-   *        Requires generate_path=true; throws if called without it.
-   * @param cells Field cells (headland-removed) for connection routing
+   * @brief Generate an ordered route for any mode (orderers or TSP).
+   * @param cells Travel cells whose borders route connections may follow
    * @param swaths_by_cells Per-cell swaths from generateSwathsByCells
-   * @param settings RouteMode containing tsp_* knobs
-   * @return F2CRoute with ordered swath groups and headland connections
+   * @param settings Action request information
+   * @return F2CRoute (ordered swath groups plus any connections)
    */
-  F2CRoute generateRouteTSP(
+  F2CRoute generateRoute(
     const F2CCells & cells,
     const F2CSwathsByCells & swaths_by_cells,
     const opennav_coverage_msgs::msg::RouteMode & settings);
 
   /**
-   * @brief Resolve mode string to RouteType (public wrapper for server branching)
+   * @brief Resolve mode string to RouteType, applying the default when unset
    */
   RouteType resolveType(const opennav_coverage_msgs::msg::RouteMode & settings)
   {

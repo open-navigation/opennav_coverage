@@ -16,109 +16,39 @@
 #include <string>
 
 #include "opennav_coverage/route_generator.hpp"
+#include "opennav_coverage/route_method.hpp"
 
 namespace opennav_coverage
 {
 
-Swaths RouteGenerator::generateRoute(
-  const Swaths & swaths, const opennav_coverage_msgs::msg::RouteMode & settings)
-{
-  RouteType action_type = toType(settings.mode);
-  std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> generator{nullptr};
-  size_t spiral_n;
-  std::vector<size_t> custom_order;
-
-  // If not set by action, use default mode
-  if (action_type == RouteType::UNKNOWN) {
-    action_type = default_type_;
-    generator = default_generator_;
-    spiral_n = default_spiral_n_;
-    custom_order = default_custom_order_;
-  } else {
-    generator = createGenerator(action_type);
-    spiral_n = settings.spiral_n;
-    custom_order = std::vector<size_t>(settings.custom_order.begin(), settings.custom_order.end());
-  }
-
-  if (!generator) {
-    throw CoverageException(
-            "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM.");
-  } else if (action_type == RouteType::SPIRAL) {
-    dynamic_cast<f2c::rp::SpiralOrder *>(generator.get())->setSpiralSize(spiral_n);
-  } else if (action_type == RouteType::CUSTOM) {
-    dynamic_cast<f2c::rp::CustomOrder *>(generator.get())->setCustomOrder(custom_order);
-  }
-
-  RCLCPP_DEBUG(logger_, "Generating route with generator: %s", toString(action_type).c_str());
-  return generator->genSortedSwaths(swaths);
-}
-
-F2CRoute RouteGenerator::generateRouteTSP(
-  const F2CCells & cells,
-  const F2CSwathsByCells & swaths_by_cells,
+F2CRoute RouteGenerator::generateRoute(
+  const F2CCells & cells, const F2CSwathsByCells & swaths_by_cells,
   const opennav_coverage_msgs::msg::RouteMode & settings)
 {
   RouteType action_type = toType(settings.mode);
-  bool redirect_swaths;
-  long int time_limit;   // NOLINT
-  bool search_for_optimum;
-  double d_tol;
 
+  // Resolve the method and fill in defaults for any knobs the request left unset.
+  RouteGeneratorPtr method;
+  opennav_coverage_msgs::msg::RouteMode eff = settings;
   if (action_type == RouteType::UNKNOWN) {
-    redirect_swaths = default_tsp_redirect_swaths_;
-    time_limit = default_tsp_time_limit_;
-    search_for_optimum = default_tsp_search_for_optimum_;
-    d_tol = default_tsp_d_tol_;
+    method = default_generator_;
+    eff.spiral_n = default_spiral_n_;
+    eff.custom_order.assign(default_custom_order_.begin(), default_custom_order_.end());
+    eff.tsp_redirect_swaths = default_tsp_redirect_swaths_;
+    eff.tsp_time_limit = default_tsp_time_limit_;
+    eff.tsp_search_for_optimum = default_tsp_search_for_optimum_;
+    eff.tsp_d_tol = default_tsp_d_tol_;
   } else {
-    redirect_swaths = settings.tsp_redirect_swaths;
-    time_limit = settings.tsp_time_limit;
-    search_for_optimum = settings.tsp_search_for_optimum;
-    d_tol = settings.tsp_d_tol;
+    method = createGenerator(action_type);
   }
 
-  RCLCPP_DEBUG(
-    logger_,
-    "Generating TSP route: redirect=%s time_limit=%ld optimum=%s d_tol=%f",
-    redirect_swaths ? "true" : "false", time_limit,
-    search_for_optimum ? "true" : "false", d_tol);
-
-  // Per-cell TSP instead of one multi-cell genRoute call: F2C v2.0.0's
-  // RoutePlannerBase builds the full all-pairs path matrix, which exhausts
-  // memory (bad_alloc) on decomposed input. The cells are disconnected anyway,
-  // so solve each one alone and stitch the routes with straight-line bridges.
-  F2CRoute merged;
-  for (size_t i = 0; i < cells.size(); ++i) {
-    if (i >= swaths_by_cells.size() || swaths_by_cells.at(i).size() == 0) {
-      continue;
-    }
-    F2CCells cell(cells.getGeometry(i));
-    F2CSwathsByCells cell_swaths;
-    cell_swaths.emplace_back(swaths_by_cells.at(i));
-
-    f2c::rp::RoutePlannerBase rp;
-    F2CRoute cell_route = rp.genRoute(
-      cell, cell_swaths,
-      /*show_log=*/false,
-      d_tol,
-      redirect_swaths,
-      time_limit,
-      search_for_optimum);
-    if (cell_route.isEmpty()) {
-      continue;
-    }
-
-    if (!merged.isEmpty()) {
-      merged.addConnection(
-        std::vector<F2CPoint>{merged.endPoint(), cell_route.startPoint()});
-    }
-    const auto & vec_swaths = cell_route.getVectorSwaths();
-    const auto & connections = cell_route.getConnections();
-    for (size_t k = 0; k < vec_swaths.size(); ++k) {
-      merged.addConnectedSwaths(
-        k < connections.size() ? connections[k] : F2CMultiPoint(), vec_swaths[k]);
-    }
+  if (!method) {
+    throw CoverageException(
+            "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM, TSP.");
   }
-  return merged;
+
+  RCLCPP_DEBUG(logger_, "Generating route: %s", toString(resolveType(settings)).c_str());
+  return method->plan(cells, swaths_by_cells, eff);
 }
 
 void RouteGenerator::setMode(const std::string & new_mode)
@@ -131,16 +61,19 @@ RouteGeneratorPtr RouteGenerator::createGenerator(const RouteType & type)
 {
   switch (type) {
     case RouteType::BOUSTROPHEDON:
-      return std::move(std::make_shared<f2c::rp::BoustrophedonOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::BoustrophedonOrder>());
     case RouteType::SNAKE:
-      return std::move(std::make_shared<f2c::rp::SnakeOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::SnakeOrder>());
     case RouteType::SPIRAL:
-      return std::move(std::make_shared<f2c::rp::SpiralOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::SpiralOrder>());
     case RouteType::CUSTOM:
-      return std::move(std::make_shared<f2c::rp::CustomOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::CustomOrder>());
     case RouteType::TSP:
-      // TSP uses RoutePlannerBase via generateRouteTSP, not SingleCellSwathsOrderBase
-      return RouteGeneratorPtr{nullptr};
+      return std::make_shared<TspRouteMethod>(logger_);
     default:
       RCLCPP_WARN(logger_, "Unknown route type set!");
       return RouteGeneratorPtr{nullptr};

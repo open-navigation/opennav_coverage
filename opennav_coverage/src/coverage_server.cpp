@@ -196,27 +196,22 @@ void CoverageServer::computeCoveragePath()
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
     Field field_no_headland = field;
-    Swaths swaths;
+    // Cells + per-cell swaths, generated once and reused by the route planner.
+    F2CCells cells;
     if (do_decomp) {
       F2CCells raw_cells;
       raw_cells.addGeometry(field);
       F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
-
-      // Apply a separate headland to each sub-cell
-      F2CCells cells_no_headland = decomposed;
-      if (goal->generate_headland) {
-        cells_no_headland = headland_gen_->generateHeadlands(decomposed, goal->headland_mode);
-      }
-      swaths = swath_gen_->generateSwaths(cells_no_headland, goal->swath_mode);
+      cells = goal->generate_headland ?
+        headland_gen_->generateHeadlands(decomposed, goal->headland_mode) : decomposed;
     } else {
-      // (1) Optional: Remove headland from polygon field
       if (goal->generate_headland) {
         field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
       }
-
-      // (2) Generate swaths to cover polygon field, including internal voids
-      swaths = swath_gen_->generateSwaths(field_no_headland, goal->swath_mode);
+      cells.addGeometry(field_no_headland);
     }
+    F2CSwathsByCells swaths_by_cells = swath_gen_->generateSwathsByCells(cells, goal->swath_mode);
+    Swaths swaths = swaths_by_cells.flatten();
 
     // (3) Optional: Generate an ordered route through the unordered swaths
     std_msgs::msg::Header header;
@@ -224,45 +219,15 @@ void CoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      const bool is_tsp =
-        (route_gen_->resolveType(goal->route_mode) == RouteType::TSP);
+      // (3) One call for every mode: orderers and TSP both return an F2CRoute.
+      F2CRoute route = route_gen_->generateRoute(cells, swaths_by_cells, goal->route_mode);
+      if (route.isEmpty()) {
+        throw CoverageException("Route planner returned an empty route.");
+      }
 
-      if (is_tsp) {
-        // TSP requires generate_path=true (connections only useful with the full path)
-        if (!goal->generate_path) {
-          throw CoverageException(
-            "TSP route mode requires generate_path=true; "
-            "headland connections are only meaningful in the full path output.");
-        }
-
-        // (a) genRoute needs cells and swaths_by_cells from the SAME F2CCells (its
-        //   connection graph is built over their borders). Multi-cell input is handled
-        //   per-cell inside generateRouteTSP. Swaths are generated a second time here.
-        F2CCells tsp_cells;
-        if (do_decomp) {
-          F2CCells raw_cells;
-          raw_cells.addGeometry(field);
-          F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
-          tsp_cells = goal->generate_headland ?
-            headland_gen_->generateHeadlands(decomposed, goal->headland_mode) : decomposed;
-        } else {
-          Field tsp_field = goal->generate_headland ?
-            headland_gen_->generateHeadlands(field, goal->headland_mode) : field;
-          tsp_cells.addGeometry(tsp_field);
-        }
-
-        // (b) Per-cell swaths without flattening (second generation, TSP branch only)
-        F2CSwathsByCells sbc =
-          swath_gen_->generateSwathsByCells(tsp_cells, goal->swath_mode);
-
-        // (c) TSP route, then plan the connecting path
-        F2CRoute tsp_route =
-          route_gen_->generateRouteTSP(tsp_cells, sbc, goal->route_mode);
-        if (tsp_route.isEmpty()) {
-          throw CoverageException("TSP route planner returned an empty route.");
-        }
-        path = path_gen_->generatePath(tsp_route, goal->path_mode);
-
+      if (goal->generate_path) {
+        // (4) Plan connecting turns / headland connections between ordered swaths
+        path = path_gen_->generatePath(route, goal->path_mode);
         result->coverage_path =
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
         result->nav_path = util::toNavPathMsg(
@@ -271,24 +236,15 @@ void CoverageServer::computeCoveragePath()
         const double task_time = path.getTaskTime();
         result->task_time = std::isfinite(task_time) ? task_time : 0.0;
       } else {
-        // Non-TSP pattern-order route
-        Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
-
-        // (4) Optional: Generate connection turns between ordered swaths
-        // Converts UTM back to GPS, if necessary, for action returns
-        if (goal->generate_path) {
-          path = path_gen_->generatePath(route, goal->path_mode);
-          result->coverage_path =
-            util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
-          result->nav_path = util::toNavPathMsg(
-            path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance(),
-            &result->coverage_path.velocities, &result->coverage_path.is_backward);
-          const double task_time = path.getTaskTime();
-          result->task_time = std::isfinite(task_time) ? task_time : 0.0;
-        } else {
-          result->coverage_path =
-            util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);
+        // Ordered swaths only (no connecting turns)
+        Swaths ordered;
+        for (const auto & group : route.getVectorSwaths()) {
+          for (const auto & s : group) {
+            ordered.emplace_back(s);
+          }
         }
+        result->coverage_path =
+          util::toCoveragePathMsg(ordered, master_field, true, header, cartesian_frame_);
       }
     } else {
       result->coverage_path =

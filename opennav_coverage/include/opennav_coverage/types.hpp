@@ -40,7 +40,10 @@ typedef F2CLineString LineString;
 typedef std::shared_ptr<f2c::hg::HeadlandGeneratorBase> HeadlandGeneratorPtr;
 typedef std::shared_ptr<f2c::obj::SGObjective> SwathObjectivePtr;
 typedef std::shared_ptr<f2c::pp::TurningBase> TurningBasePtr;
-typedef std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> RouteGeneratorPtr;
+
+// Polymorphic route abstraction unifying F2C's orderers + TSP planner; see route_method.hpp
+class RouteMethod;
+typedef std::shared_ptr<RouteMethod> RouteGeneratorPtr;
 
 typedef opennav_coverage_msgs::action::ComputeCoveragePath ComputeCoveragePath;
 

@@ -78,8 +78,8 @@ public:
     const Swaths & swaths, const opennav_coverage_msgs::msg::PathMode & settings);
 
   /**
-   * @brief Generate path from a TSP F2CRoute (headland connections included).
-   * @param route Route produced by generateRouteTSP
+   * @brief Generate path from an F2CRoute (headland connections included).
+   * @param route Route produced by RouteGenerator::generateRoute
    * @param settings PathMode for curve selection
    * @return Path complete path including headland connections
    */

@@ -198,7 +198,15 @@ void RowCoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
+      // Single-cell group; the field polygon provides travel borders for TSP
+      F2CCells cells;
+      cells.addGeometry(field);
+      F2CSwathsByCells swaths_by_cells;
+      swaths_by_cells.emplace_back(swaths);
+      F2CRoute route = route_gen_->generateRoute(cells, swaths_by_cells, goal->route_mode);
+      if (route.isEmpty()) {
+        throw opennav_coverage::CoverageException("Route planner returned an empty route.");
+      }
 
       // (3) Optional: Generate connection turns between ordered swaths
       // Converts UTM back to GPS, if necessary, for action returns
@@ -213,9 +221,16 @@ void RowCoverageServer::computeCoveragePath()
         const double task_time = path.getTaskTime();
         result->task_time = std::isfinite(task_time) ? task_time : 0.0;
       } else {
+        // Ordered swaths only (no connecting turns)
+        Swaths ordered;
+        for (const auto & group : route.getVectorSwaths()) {
+          for (const auto & s : group) {
+            ordered.emplace_back(s);
+          }
+        }
         result->coverage_path =
           opennav_coverage::util::toCoveragePathMsg(
-          route, master_field, true, header, cartesian_frame_);
+          ordered, master_field, true, header, cartesian_frame_);
       }
     } else {
       result->coverage_path =
