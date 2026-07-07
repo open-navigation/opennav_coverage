@@ -46,53 +46,6 @@ SwathGenerator::ResolvedSwathParams SwathGenerator::resolveSwathParams(
   return p;
 }
 
-Swaths SwathGenerator::generateSwaths(
-  const Field & field, const opennav_coverage_msgs::msg::SwathMode & settings)
-{
-  ResolvedSwathParams p = resolveSwathParams(settings);
-  const double op_width = robot_params_->getOperationWidth();
-  generator_->setAllowOverlap(default_allow_overlap_);
-  switch (p.angle_type) {
-    case SwathAngleType::BRUTE_FORCE:
-      if (!p.objective) {
-        throw CoverageException(
-                "No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE, NUMBER_MODIFIED.");
-      }
-      generator_->setStepAngle(p.step_angle);
-      return generator_->generateBestSwaths(*p.objective, op_width, field);
-    case SwathAngleType::SET_ANGLE:
-      return generator_->generateSwaths(p.swath_angle, op_width, field);
-    default:
-      throw CoverageException("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
-  }
-}
-
-Swaths SwathGenerator::generateSwaths(
-  const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings)
-{
-  // Single cell -> use the existing Field path (no flatten needed)
-  if (cells.size() == 1) {
-    return generateSwaths(cells.getGeometry(0), settings);
-  }
-
-  ResolvedSwathParams p = resolveSwathParams(settings);
-  const double op_width = robot_params_->getOperationWidth();
-  generator_->setAllowOverlap(default_allow_overlap_);
-  switch (p.angle_type) {
-    case SwathAngleType::BRUTE_FORCE:
-      if (!p.objective) {
-        throw CoverageException(
-                "No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE, NUMBER_MODIFIED.");
-      }
-      generator_->setStepAngle(p.step_angle);
-      return generator_->generateBestSwaths(*p.objective, op_width, cells).flatten();
-    case SwathAngleType::SET_ANGLE:
-      return generator_->generateSwaths(p.swath_angle, op_width, cells).flatten();
-    default:
-      throw CoverageException("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
-  }
-}
-
 F2CSwathsByCells SwathGenerator::generateSwathsByCells(
   const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings)
 {
