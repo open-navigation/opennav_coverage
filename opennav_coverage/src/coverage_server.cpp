@@ -237,14 +237,8 @@ void CoverageServer::computeCoveragePath()
         result->task_time = std::isfinite(task_time) ? task_time : 0.0;
       } else {
         // Ordered swaths only (no connecting turns)
-        Swaths ordered;
-        for (const auto & group : route.getVectorSwaths()) {
-          for (const auto & s : group) {
-            ordered.emplace_back(s);
-          }
-        }
         result->coverage_path =
-          util::toCoveragePathMsg(ordered, master_field, true, header, cartesian_frame_);
+          util::toCoveragePathMsg(route, master_field, header, cartesian_frame_);
       }
     } else {
       result->coverage_path =
