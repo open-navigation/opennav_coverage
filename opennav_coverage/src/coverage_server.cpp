@@ -213,20 +213,20 @@ void CoverageServer::computeCoveragePath()
     F2CSwathsByCells swaths_by_cells = swath_gen_->generateSwathsByCells(cells, goal->swath_mode);
     Swaths swaths = swaths_by_cells.flatten();
 
-    // (3) Optional: Generate an ordered route through the unordered swaths
+    // (2) Optional: Generate an ordered route through the unordered swaths
     std_msgs::msg::Header header;
     header.stamp = now();
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      // (3) One call for every mode: orderers and TSP both return an F2CRoute.
+      // (2) One call for every mode: orderers and TSP both return an F2CRoute.
       F2CRoute route = route_gen_->generateRoute(cells, swaths_by_cells, goal->route_mode);
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
       }
 
       if (goal->generate_path) {
-        // (4) Plan connecting turns / headland connections between ordered swaths
+        // (3) Plan connecting turns / headland connections between ordered swaths
         path = path_gen_->generatePath(route, goal->path_mode);
         result->coverage_path =
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);

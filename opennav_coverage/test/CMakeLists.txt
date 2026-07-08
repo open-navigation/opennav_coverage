@@ -62,10 +62,7 @@ target_link_libraries(test_path
   ${library_name}
 )
 
-# Test server
-# TIMEOUT raised from the 60s default: test_server runs 7 tests in one binary;
-# testDecompPath (~27s) + testTSPDecompHeadlandPath (per-cell genRoute ~18s +
-# generatePath) together exceed 60s, so ctest killed the binary mid-test.
+
 ament_add_gtest(test_server
   test_server.cpp
   TIMEOUT 300
