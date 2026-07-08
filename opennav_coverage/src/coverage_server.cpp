@@ -196,24 +196,28 @@ void CoverageServer::computeCoveragePath()
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
     Field field_no_headland = field;
-    // Cells + per-cell swaths, generated once and reused by the route planner.
     F2CCells cells;
     if (do_decomp) {
       F2CCells raw_cells;
       raw_cells.addGeometry(field);
       F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
+
+      // Apply a separate headland to each sub-cell
       cells = goal->generate_headland ?
         headland_gen_->generateHeadlands(decomposed, goal->headland_mode) : decomposed;
     } else {
+      // (1) Optional: Remove headland from polygon field
       if (goal->generate_headland) {
         field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
       }
       cells.addGeometry(field_no_headland);
     }
+
+    // (2) Generate swaths to cover polygon field, including internal voids
     F2CSwathsByCells swaths_by_cells = swath_gen_->generateSwathsByCells(cells, goal->swath_mode);
     Swaths swaths = swaths_by_cells.flatten();
 
-    // (2) Optional: Generate an ordered route through the unordered swaths
+    // (3) Optional: Generate an ordered route through the unordered swaths
     std_msgs::msg::Header header;
     header.stamp = now();
     header.frame_id = frame_id;
@@ -224,7 +228,7 @@ void CoverageServer::computeCoveragePath()
         throw CoverageException("Route planner returned an empty route.");
       }
 
-      // (3) Optional: Generate connection turns between ordered swaths
+      // (4) Optional: Generate connection turns between ordered swaths
       // Converts UTM back to GPS, if necessary, for action returns
       if (goal->generate_path) {
         path = path_gen_->generatePath(route, goal->path_mode);

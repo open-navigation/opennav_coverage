@@ -27,9 +27,10 @@ F2CRoute RouteGenerator::generateRoute(
 {
   RouteType action_type = toType(settings.mode);
 
-  // Resolve the method and fill in defaults for any knobs the request left unset.
   RouteGeneratorPtr method;
   opennav_coverage_msgs::msg::RouteMode eff = settings;
+
+  // If not set by action, use default mode
   if (action_type == RouteType::UNKNOWN) {
     action_type = default_type_;
     method = default_generator_;

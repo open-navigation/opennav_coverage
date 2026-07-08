@@ -122,7 +122,7 @@ TEST(PathTests, TestpathGeneration)
   opennav_coverage_msgs::msg::RouteMode rt_settings;
   auto route = route_gen.generateRoute(cells, sbc, rt_settings);
 
-  // A wrapped orderer route plans a valid path through generatePath(F2CRoute)
+  // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::PathMode settings;
   auto path1 = generator.generatePath(route, settings);
   EXPECT_GT(path1.size(), 0u);
