@@ -20,15 +20,18 @@
 namespace opennav_coverage
 {
 
-std::pair<TurningBasePtr, float> PathGenerator::resolveCurve(
-  const opennav_coverage_msgs::msg::PathMode & settings)
+Path PathGenerator::generatePath(
+  const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings)
 {
   PathType action_type = toType(settings.mode);
   PathContinuityType action_continuity_type = toContinuityType(settings.continuity_mode);
-
-  TurningBasePtr curve;
+  std::shared_ptr<f2c::pp::TurningBase> curve{nullptr};
   float turn_point_distance;
+
+  // If not set by action, use default mode
   if (action_type == PathType::UNKNOWN || action_continuity_type == PathContinuityType::UNKNOWN) {
+    action_type = default_type_;
+    action_continuity_type = default_continuity_type_;
     curve = default_curve_;
     turn_point_distance = default_turn_point_distance_;
   } else {
@@ -39,16 +42,10 @@ std::pair<TurningBasePtr, float> PathGenerator::resolveCurve(
   if (!curve) {
     throw CoverageException("No valid path mode set!");
   }
-  return {curve, turn_point_distance};
-}
 
-Path PathGenerator::generatePath(
-  const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings)
-{
-  auto [curve, turn_point_distance] = resolveCurve(settings);
   RCLCPP_DEBUG(
-    logger_, "Generating path from F2CRoute with curve: %s",
-    toString(default_type_, default_continuity_type_).c_str());
+    logger_,
+    "Generating path with curve: %s", toString(action_type, action_continuity_type).c_str());
   curve->setDiscretization(turn_point_distance);
   return generator_->planPath(robot_params_->getRobot(), route, *curve);
 }

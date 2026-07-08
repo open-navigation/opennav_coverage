@@ -15,7 +15,6 @@
 #ifndef OPENNAV_COVERAGE__PATH_GENERATOR_HPP_
 #define OPENNAV_COVERAGE__PATH_GENERATOR_HPP_
 
-#include <utility>
 #include <vector>
 #include <string>
 #include <memory>
@@ -104,12 +103,6 @@ protected:
    * @return Generator to use
    */
   TurningBasePtr createCurve(const PathType & type, const PathContinuityType & c_type);
-
-  /**
-   * @brief Resolve curve and turn_point_distance from PathMode (shared by both overloads)
-   */
-  std::pair<TurningBasePtr, float> resolveCurve(
-    const opennav_coverage_msgs::msg::PathMode & settings);
 
   /**
    * @brief Converts the path mode into a string for publication
