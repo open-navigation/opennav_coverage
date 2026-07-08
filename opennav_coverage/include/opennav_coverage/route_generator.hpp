@@ -99,15 +99,6 @@ public:
     const opennav_coverage_msgs::msg::RouteMode & settings);
 
   /**
-   * @brief Resolve mode string to RouteType, applying the default when unset
-   */
-  RouteType resolveType(const opennav_coverage_msgs::msg::RouteMode & settings)
-  {
-    RouteType t = toType(settings.mode);
-    return (t == RouteType::UNKNOWN) ? default_type_ : t;
-  }
-
-  /**
    * @brief Sets the mode manually of the Route for dynamic parameters
    * @param mode String for mode to use
    */

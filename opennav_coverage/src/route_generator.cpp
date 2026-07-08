@@ -31,6 +31,7 @@ F2CRoute RouteGenerator::generateRoute(
   RouteGeneratorPtr method;
   opennav_coverage_msgs::msg::RouteMode eff = settings;
   if (action_type == RouteType::UNKNOWN) {
+    action_type = default_type_;
     method = default_generator_;
     eff.spiral_n = default_spiral_n_;
     eff.custom_order.assign(default_custom_order_.begin(), default_custom_order_.end());
@@ -47,7 +48,7 @@ F2CRoute RouteGenerator::generateRoute(
             "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM, TSP.");
   }
 
-  RCLCPP_DEBUG(logger_, "Generating route: %s", toString(resolveType(settings)).c_str());
+  RCLCPP_DEBUG(logger_, "Generating route: %s", toString(action_type).c_str());
   return method->plan(cells, swaths_by_cells, eff);
 }
 
