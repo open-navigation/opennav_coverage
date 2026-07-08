@@ -219,14 +219,14 @@ void CoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      // (2) One call for every mode: orderers and TSP both return an F2CRoute.
       F2CRoute route = route_gen_->generateRoute(cells, swaths_by_cells, goal->route_mode);
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
       }
 
+      // (3) Optional: Generate connection turns between ordered swaths
+      // Converts UTM back to GPS, if necessary, for action returns
       if (goal->generate_path) {
-        // (3) Plan connecting turns / headland connections between ordered swaths
         path = path_gen_->generatePath(route, goal->path_mode);
         result->coverage_path =
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
