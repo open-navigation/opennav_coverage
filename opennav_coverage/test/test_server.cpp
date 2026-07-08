@@ -214,6 +214,101 @@ TEST(ServerTest, testDecompPathNoHeadland)
   EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
 }
 
+TEST(ServerTest, testTSPRouteNoPath)
+{
+  // TSP with generate_path=false now succeeds (returns ordered swaths) instead of
+  // being rejected — the unified route path removed the old guard.
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_tsp_nopath");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_route = true;
+  goal_msg.generate_path = false;
+  goal_msg.route_mode.mode = "TSP";
+  goal_msg.route_mode.tsp_time_limit = 1;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+  EXPECT_FALSE(result.result->coverage_path.swaths.empty());
+}
+
+TEST(ServerTest, testTSPDecompHeadlandPath)
+{
+  // Exercises the TSP branch end-to-end with decomp+headland enabled together:
+  // trapezoidal decomposition yields ~11 disconnected (headland-shrunk) cells,
+  // which RouteGenerator solves as per-cell TSP stitched in sweep order.
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_tsp_decomp_hl");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_decomp = true;
+  goal_msg.decomp_mode.mode = "TRAPEZOIDAL";
+  goal_msg.generate_headland = true;
+  goal_msg.generate_route = true;
+  goal_msg.generate_path = true;
+  goal_msg.route_mode.mode = "TSP";
+  // Per-cell OR-Tools limit; keeps the 11-cell total bounded in CI.
+  goal_msg.route_mode.tsp_time_limit = 1;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+  EXPECT_FALSE(result.result->nav_path.poses.empty());
+}
+
 TEST(ServerTest, testDynamicParams)
 {
   auto node = std::make_shared<ServerShim>();
@@ -242,7 +337,12 @@ TEST(ServerTest, testDynamicParams)
       rclcpp::Parameter("default_allow_overlap", true),
       rclcpp::Parameter("default_spiral_n", 41),
       rclcpp::Parameter("coordinates_in_cartesian_frame", false),
-      rclcpp::Parameter("default_custom_order", std::vector<int>{1, 2, 3})});
+      rclcpp::Parameter("default_custom_order", std::vector<int>{1, 2, 3}),
+      // B1-T13: TSP dynamic params
+      rclcpp::Parameter("default_tsp_redirect_swaths", false),
+      rclcpp::Parameter("default_tsp_time_limit", 5),
+      rclcpp::Parameter("default_tsp_search_for_optimum", true),
+      rclcpp::Parameter("default_tsp_d_tol", 1e-3)});
 
   rclcpp::spin_until_future_complete(
     node->get_node_base_interface(),
@@ -253,6 +353,11 @@ TEST(ServerTest, testDynamicParams)
   EXPECT_EQ(node->get_parameter("default_allow_overlap").as_bool(), true);
   EXPECT_EQ(node->get_parameter("default_spiral_n").as_int(), 41);
   EXPECT_EQ(node->get_parameter("coordinates_in_cartesian_frame").as_bool(), false);
+  // B1-T13: verify TSP params are declared and callback-connected
+  EXPECT_EQ(node->get_parameter("default_tsp_redirect_swaths").as_bool(), false);
+  EXPECT_EQ(node->get_parameter("default_tsp_time_limit").as_int(), 5);
+  EXPECT_EQ(node->get_parameter("default_tsp_search_for_optimum").as_bool(), true);
+  EXPECT_NEAR(node->get_parameter("default_tsp_d_tol").as_double(), 1e-3, 1e-9);
 }
 
 }  // namespace opennav_coverage

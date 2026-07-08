@@ -116,19 +116,21 @@ TEST(SwathTests, TestswathGeneration)
   // Generate some toy field
   f2c::Random rand;
   auto field = rand.generateRandField(1e5, 5);
+  F2CCells cells;
+  cells.addGeometry(field.getField().getGeometry(0));
 
   // Shouldn't throw, results in valid output
   opennav_coverage_msgs::msg::SwathMode settings;
-  auto swaths1 = generator.generateSwaths(field.getField().getGeometry(0), settings);
+  auto swaths1 = generator.generateSwathsByCells(cells, settings);
   settings.mode = "BRUTE_FORCE";
   settings.objective = "LENGTH";
-  auto swaths2 = generator.generateSwaths(field.getField().getGeometry(0), settings);
+  auto swaths2 = generator.generateSwathsByCells(cells, settings);
   settings.mode = "SET_ANGLE";
   settings.objective = "NUMBER";
-  auto swaths3 = generator.generateSwaths(field.getField().getGeometry(0), settings);
+  auto swaths3 = generator.generateSwathsByCells(cells, settings);
   settings.mode = "BRUTE_FORCE";
   settings.objective = "NUMBER_MODIFIED";
-  auto swaths4 = generator.generateSwaths(field.getField().getGeometry(0), settings);
+  auto swaths4 = generator.generateSwathsByCells(cells, settings);
 }
 
 TEST(SwathTests, TestswathGenerationMultiCell)
@@ -143,18 +145,38 @@ TEST(SwathTests, TestswathGenerationMultiCell)
 
   opennav_coverage_msgs::msg::SwathMode settings;
 
-  // Single-cell F2CCells routes through the Field path
   F2CCells one_cell;
   one_cell.addGeometry(cell);
-  auto swaths_one = generator.generateSwaths(one_cell, settings);
-  EXPECT_GT(swaths_one.size(), 0u);
+  auto swaths_one = generator.generateSwathsByCells(one_cell, settings);
+  EXPECT_GT(swaths_one.sizeTotal(), 0u);
 
-  // Multi-cell F2CCells flattens swaths across cells
+  // Multi-cell input yields swaths per cell
   F2CCells cells;
   cells.addGeometry(cell);
   cells.addGeometry(cell);
-  auto swaths_multi = generator.generateSwaths(cells, settings);
-  EXPECT_GT(swaths_multi.size(), swaths_one.size());
+  auto swaths_multi = generator.generateSwathsByCells(cells, settings);
+  EXPECT_GT(swaths_multi.sizeTotal(), swaths_one.sizeTotal());
+}
+
+TEST(SwathTests, TestgenerateSwathsByCells)
+{
+  // Per-cell structure has one entry per cell; flatten() keeps every swath
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot(node);
+  auto generator = SwathShim(node, &robot);
+
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  Field cell = field.getField().getGeometry(0);
+  F2CCells cells;
+  cells.addGeometry(cell);
+  cells.addGeometry(cell);
+
+  opennav_coverage_msgs::msg::SwathMode settings;
+
+  F2CSwathsByCells sbc = generator.generateSwathsByCells(cells, settings);
+  EXPECT_EQ(sbc.size(), cells.size());
+  EXPECT_EQ(sbc.flatten().size(), sbc.sizeTotal());
 }
 
 }  // namespace opennav_coverage

@@ -62,9 +62,10 @@ target_link_libraries(test_path
   ${library_name}
 )
 
-# Test server
+
 ament_add_gtest(test_server
   test_server.cpp
+  TIMEOUT 300
 )
 target_link_libraries(test_server
   ${library_name}

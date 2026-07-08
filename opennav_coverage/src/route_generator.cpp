@@ -16,41 +16,41 @@
 #include <string>
 
 #include "opennav_coverage/route_generator.hpp"
+#include "opennav_coverage/route_method.hpp"
 
 namespace opennav_coverage
 {
 
-Swaths RouteGenerator::generateRoute(
-  const Swaths & swaths, const opennav_coverage_msgs::msg::RouteMode & settings)
+F2CRoute RouteGenerator::generateRoute(
+  const F2CCells & cells, const F2CSwathsByCells & swaths_by_cells,
+  const opennav_coverage_msgs::msg::RouteMode & settings)
 {
   RouteType action_type = toType(settings.mode);
-  std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> generator{nullptr};
-  size_t spiral_n;
-  std::vector<size_t> custom_order;
+
+  RouteGeneratorPtr method;
+  opennav_coverage_msgs::msg::RouteMode eff = settings;
 
   // If not set by action, use default mode
   if (action_type == RouteType::UNKNOWN) {
     action_type = default_type_;
-    generator = default_generator_;
-    spiral_n = default_spiral_n_;
-    custom_order = default_custom_order_;
+    method = default_generator_;
+    eff.spiral_n = default_spiral_n_;
+    eff.custom_order.assign(default_custom_order_.begin(), default_custom_order_.end());
+    eff.tsp_redirect_swaths = default_tsp_redirect_swaths_;
+    eff.tsp_time_limit = default_tsp_time_limit_;
+    eff.tsp_search_for_optimum = default_tsp_search_for_optimum_;
+    eff.tsp_d_tol = default_tsp_d_tol_;
   } else {
-    generator = createGenerator(action_type);
-    spiral_n = settings.spiral_n;
-    custom_order = std::vector<size_t>(settings.custom_order.begin(), settings.custom_order.end());
+    method = createGenerator(action_type);
   }
 
-  if (!generator) {
+  if (!method) {
     throw CoverageException(
-            "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM.");
-  } else if (action_type == RouteType::SPIRAL) {
-    dynamic_cast<f2c::rp::SpiralOrder *>(generator.get())->setSpiralSize(spiral_n);
-  } else if (action_type == RouteType::CUSTOM) {
-    dynamic_cast<f2c::rp::CustomOrder *>(generator.get())->setCustomOrder(custom_order);
+            "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM, TSP.");
   }
 
-  RCLCPP_DEBUG(logger_, "Generating route with generator: %s", toString(action_type).c_str());
-  return generator->genSortedSwaths(swaths);
+  RCLCPP_DEBUG(logger_, "Generating route: %s", toString(action_type).c_str());
+  return method->plan(cells, swaths_by_cells, eff);
 }
 
 void RouteGenerator::setMode(const std::string & new_mode)
@@ -63,13 +63,19 @@ RouteGeneratorPtr RouteGenerator::createGenerator(const RouteType & type)
 {
   switch (type) {
     case RouteType::BOUSTROPHEDON:
-      return std::move(std::make_shared<f2c::rp::BoustrophedonOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::BoustrophedonOrder>());
     case RouteType::SNAKE:
-      return std::move(std::make_shared<f2c::rp::SnakeOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::SnakeOrder>());
     case RouteType::SPIRAL:
-      return std::move(std::make_shared<f2c::rp::SpiralOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::SpiralOrder>());
     case RouteType::CUSTOM:
-      return std::move(std::make_shared<f2c::rp::CustomOrder>());
+      return std::make_shared<SwathOrderMethod>(
+        type, std::make_shared<f2c::rp::CustomOrder>());
+    case RouteType::TSP:
+      return std::make_shared<TspRouteMethod>(logger_);
     default:
       RCLCPP_WARN(logger_, "Unknown route type set!");
       return RouteGeneratorPtr{nullptr};
@@ -87,6 +93,8 @@ std::string RouteGenerator::toString(const RouteType & type)
       return "Spiral";
     case RouteType::CUSTOM:
       return "Custom";
+    case RouteType::TSP:
+      return "TSP";
     default:
       return "Unknown";
   }
@@ -104,6 +112,8 @@ RouteType RouteGenerator::toType(const std::string & str)
     return RouteType::SPIRAL;
   } else if (mode_str == "CUSTOM") {
     return RouteType::CUSTOM;
+  } else if (mode_str == "TSP") {
+    return RouteType::TSP;
   } else {
     return RouteType::UNKNOWN;
   }

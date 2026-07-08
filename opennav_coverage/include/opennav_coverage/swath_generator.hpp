@@ -77,20 +77,12 @@ public:
   }
 
   /**
-   * @brief Main method to generate swaths in field for cell
-   * @param field Field to generate swaths from
-   * @param request Action request information
-   */
-  Swaths generateSwaths(
-    const Field & field, const opennav_coverage_msgs::msg::SwathMode & settings);
-
-  /**
-   * @brief Multi-cell overload: generate swaths across decomposed cells
+   * @brief Main method to generate swaths, per cell without flattening
    * @param cells Cells to generate swaths from
    * @param settings Action request information
-   * @return Flattened swaths across all cells
+   * @return Per-cell swaths (F2CSwathsByCells) — caller calls .flatten() if needed
    */
-  Swaths generateSwaths(
+  F2CSwathsByCells generateSwathsByCells(
     const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings);
 
   /**
