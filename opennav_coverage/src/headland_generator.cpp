@@ -64,10 +64,8 @@ F2CCells HeadlandGenerator::generateHeadlands(
   // boundary and drop the inter-cell headlands.
   F2CCells result;
   for (size_t i = 0; i < cells.size(); ++i) {
-    // A sub-cell narrower than ~2*width collapses to an empty geometry under the
-    // inward buffer; F2C then returns zero cells and getGeometry(0) would throw
-    // "Geometry does not contain point 0". Skip such cells. The buffer can also
-    // split one cell into several polygons, so add every resulting geometry.
+    // Skip sub-cells that the inward buffer collapses to empty; keep every polygon
+    // a buffer may split one cell into.
     F2CCells cell_headland = generator->generateHeadlands(Fields(cells.getGeometry(i)), width);
     for (size_t j = 0; j < cell_headland.size(); ++j) {
       result.addGeometry(cell_headland.getGeometry(j));
