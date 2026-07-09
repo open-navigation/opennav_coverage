@@ -192,7 +192,7 @@ void CoverageServer::computeCoveragePath()
       "Generating coverage path in %s frame for zone with %zu outer nodes and %zu inner polygons.",
       frame_id.c_str(), field.getGeometry(0).size(), field.size() - 1);
 
-    // (1) Optional: decompose non-convex field, then remove headland, then generate swaths
+    // (1) Build the cells to cover: remove the headland, optionally decomposing first
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
     Field field_no_headland = field;
@@ -201,8 +201,9 @@ void CoverageServer::computeCoveragePath()
     F2CCells route_cells;
     F2CCells swath_cells;
     if (do_decomp) {
-      // Shrink for the travel ring first, decompose it, then shrink each sub-cell
-      // again for its swath area, so connections follow the shared headland.
+      // Headland-first: remove the headland from the whole field, decompose that into
+      // border-sharing cells (the travel graph), then remove the headland again per
+      // cell for the swaths, so connections run along the shared headland.
       Field travel_ring = field;
       if (goal->generate_headland) {
         travel_ring = headland_gen_->generateHeadlands(field, goal->headland_mode);
@@ -214,6 +215,7 @@ void CoverageServer::computeCoveragePath()
       swath_cells = goal->generate_headland ?
         headland_gen_->generateHeadlands(route_cells, goal->headland_mode) : route_cells;
     } else {
+      // No decomposition: remove the headland from the single field cell
       if (goal->generate_headland) {
         field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
       }
