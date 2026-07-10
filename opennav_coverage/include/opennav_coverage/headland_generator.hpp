@@ -75,6 +75,16 @@ public:
     const F2CCells & cells, const opennav_coverage_msgs::msg::HeadlandMode & settings);
 
   /**
+   * @brief Carve a route corridor only on the borders cells actually share,
+   *        leaving edges facing the outer boundary or a void untouched.
+   * @param cells Decomposed sub-cells (share internal borders)
+   * @param route_width Corridor width carved along each shared border
+   * @return Swath cells carved only on their internal borders
+   */
+  F2CCells generateHeadlandsBetweenCells(
+    const F2CCells & cells, double route_width);
+
+  /**
    * @brief Generate concentric rings that fully sweep the headland band.
    *        Pass count is derived from the headland width and the operation
    *        width (round(width / operation_width), min 1).
