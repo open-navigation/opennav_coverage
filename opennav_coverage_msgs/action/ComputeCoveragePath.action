@@ -27,6 +27,14 @@ opennav_coverage_msgs/PathMode path_mode
 bool use_start_pose False
 opennav_coverage_msgs/Coordinate start_pose
 
+# Optional: also cover the headland ring area ("drive the headland").
+bool generate_headland_swaths False
+# True: drive the headland before the inner coverage; False: after it
+bool headland_first False
+# False: a single perimeter pass. True: concentric passes spaced by the
+# operation width to fully sweep the headland band (count = width / operation_width)
+bool headland_full_coverage False
+
 ---
 #result definition
 

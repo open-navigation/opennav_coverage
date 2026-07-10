@@ -80,6 +80,27 @@ F2CCells HeadlandGenerator::generateHeadlands(
   return result;
 }
 
+std::vector<F2CCells> HeadlandGenerator::generateHeadlandSwaths(
+  const Field & field, double operation_width,
+  const opennav_coverage_msgs::msg::HeadlandMode & settings)
+{
+  if (operation_width <= 0.0) {
+    throw CoverageException(
+      "Operation width must be > 0 to sweep the headland band (set operation_width).");
+  }
+
+  double width = 0.0;
+  HeadlandGeneratorPtr generator = resolveGenerator(settings, width);
+
+  // Number of passes needed to sweep the band at operation-width spacing
+  int n_swaths = static_cast<int>(std::round(width / operation_width));
+  if (n_swaths < 1) {
+    n_swaths = 1;
+  }
+
+  return generator->generateHeadlandSwaths(Fields(field), operation_width, n_swaths, true);
+}
+
 void HeadlandGenerator::setMode(const std::string & new_mode)
 {
   default_type_ = toType(new_mode);

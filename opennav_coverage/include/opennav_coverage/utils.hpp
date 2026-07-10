@@ -15,6 +15,7 @@
 #ifndef OPENNAV_COVERAGE__UTILS_HPP_
 #define OPENNAV_COVERAGE__UTILS_HPP_
 
+#include <cmath>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -229,6 +230,86 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
 }
 
 /**
+ * @brief Build a drivable HL_SWATH loop around a field boundary, rotated to start
+ * at the vertex closest to `anchor` (the route's first point) to minimize the
+ * jump when spliced onto the coverage path. Density added later by discretizeSwathLike.
+ * @param area Field/cell whose exterior boundary is driven (e.g. field_no_headland)
+ * @param velocity Cruise velocity to tag each state with
+ * @param anchor Point the loop's start/end should be nearest to
+ * @return Path of HL_SWATH states (empty if the boundary has < 2 points)
+ */
+inline Path toHeadlandPerimeterPath(
+  const Field & area, double velocity, const Point & anchor)
+{
+  Path path;
+  const Polygon ring = area.getExteriorRing();  // closed boundary loop (first == last point)
+  const size_t n = ring.size();
+  if (n < 2) {
+    return path;
+  }
+  const size_t n_unique = n - 1;  // exclude the duplicated closing point
+
+  size_t start_idx = 0;
+  double best_dist2 = 0.0;
+  for (size_t i = 0; i < n_unique; ++i) {
+    const Point p = ring.getGeometry(i);
+    const double dx = p.getX() - anchor.getX();
+    const double dy = p.getY() - anchor.getY();
+    const double d2 = dx * dx + dy * dy;
+    if (i == 0 || d2 < best_dist2) {
+      best_dist2 = d2;
+      start_idx = i;
+    }
+  }
+
+  for (size_t k = 0; k < n_unique; ++k) {
+    const Point p0 = ring.getGeometry((start_idx + k) % n_unique);
+    const Point p1 = ring.getGeometry((start_idx + k + 1) % n_unique);
+    const double dx = p1.getX() - p0.getX();
+    const double dy = p1.getY() - p0.getY();
+    PathState s;
+    s.point = p0;
+    s.angle = std::atan2(dy, dx);
+    s.len = std::hypot(dx, dy);
+    s.dir = f2c::types::PathDirection::FORWARD;
+    s.type = f2c::types::PathSectionType::HL_SWATH;
+    s.velocity = velocity;
+    path.addState(s);
+  }
+  return path;
+}
+
+/**
+ * @brief Like F2C Path::discretizeSwath but also splits HL_SWATH states, so
+ * headland passes become dense followable segments. F2C's discretizeSwath only
+ * subdivides SWATH; HL_SWATH would otherwise pass through as a single waypoint.
+ * @param path Path to densify
+ * @param step_size Max spacing between emitted points
+ * @return Densified path
+ */
+inline Path discretizeSwathLike(const Path & path, double step_size)
+{
+  using f2c::types::PathSectionType;
+  Path out;
+  const double step = step_size > 0.0 ? step_size : 0.1;
+  for (const auto & s : path.getStates()) {
+    if (s.type == PathSectionType::SWATH || s.type == PathSectionType::HL_SWATH) {
+      double n_steps = std::max(1.0, std::round(std::fabs(s.len / step)));
+      Point start2end = s.atEnd() - s.point;
+      for (double j = 0.0; j < n_steps; j += 1.0) {
+        PathState state = s;
+        state.point = s.point + start2end * (j / n_steps);
+        state.len /= n_steps;
+        out.addState(state);
+      }
+    } else {
+      out.addState(s);
+    }
+  }
+  return out;
+}
+
+/**
  * @brief Converts full path to nav_msgs/path message for action client, visualization
  * and use in direct-sending to a controller to replace the planner server. Interpolates
  * the F2C path to make it dense for following semantics.
@@ -263,8 +344,9 @@ inline nav_msgs::msg::Path toNavPathMsg(
     path.moveTo(field.getRefPoint());
   }
 
-  // discretizeSwath splits only SWATH states at step_size intervals
-  path = path.discretizeSwath(static_cast<double>(pt_dist));
+  // Split SWATH and HL_SWATH states at step_size intervals (F2C's discretizeSwath
+  // splits only SWATH, leaving headland passes as single waypoints).
+  path = discretizeSwathLike(path, static_cast<double>(pt_dist));
 
   // Reserve up front so the population loop below doesn't reallocate.
   const auto n = path.size();
