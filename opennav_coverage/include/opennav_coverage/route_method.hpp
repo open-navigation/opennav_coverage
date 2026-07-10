@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <utility>
+#include <optional>
 
 #include "fields2cover.h" // NOLINT
 
@@ -43,12 +44,14 @@ public:
    * @param cells Travel cells whose borders the route connections may follow
    * @param swaths_by_cells Per-cell swaths to be covered
    * @param settings Fully-resolved RouteMode (server has already applied defaults)
+   * @param start_end Optional start/end point for the route (used by TSP only)
    * @return Ordered route: swath groups plus any headland connections
    */
   virtual F2CRoute plan(
     const F2CCells & cells,
     const F2CSwathsByCells & swaths_by_cells,
-    const opennav_coverage_msgs::msg::RouteMode & settings) = 0;
+    const opennav_coverage_msgs::msg::RouteMode & settings,
+    const std::optional<F2CPoint> & start_end = std::nullopt) = 0;
 };
 
 /**
@@ -68,7 +71,8 @@ public:
   F2CRoute plan(
     const F2CCells & cells,
     const F2CSwathsByCells & swaths_by_cells,
-    const opennav_coverage_msgs::msg::RouteMode & settings) override;
+    const opennav_coverage_msgs::msg::RouteMode & settings,
+    const std::optional<F2CPoint> & start_end = std::nullopt) override;
 
 private:
   RouteType type_;
@@ -90,7 +94,8 @@ public:
   F2CRoute plan(
     const F2CCells & cells,
     const F2CSwathsByCells & swaths_by_cells,
-    const opennav_coverage_msgs::msg::RouteMode & settings) override;
+    const opennav_coverage_msgs::msg::RouteMode & settings,
+    const std::optional<F2CPoint> & start_end = std::nullopt) override;
 
 private:
   rclcpp::Logger logger_;

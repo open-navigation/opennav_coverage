@@ -23,7 +23,8 @@ namespace opennav_coverage
 
 F2CRoute RouteGenerator::generateRoute(
   const F2CCells & cells, const F2CSwathsByCells & swaths_by_cells,
-  const opennav_coverage_msgs::msg::RouteMode & settings)
+  const opennav_coverage_msgs::msg::RouteMode & settings,
+  const std::optional<F2CPoint> & start_end)
 {
   RouteType action_type = toType(settings.mode);
 
@@ -49,8 +50,12 @@ F2CRoute RouteGenerator::generateRoute(
             "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM, TSP.");
   }
 
+  if (start_end && action_type != RouteType::TSP) {
+    RCLCPP_WARN(logger_, "start_pose ignored: only used in TSP route mode.");
+  }
+
   RCLCPP_DEBUG(logger_, "Generating route: %s", toString(action_type).c_str());
-  return method->plan(cells, swaths_by_cells, eff);
+  return method->plan(cells, swaths_by_cells, eff, start_end);
 }
 
 void RouteGenerator::setMode(const std::string & new_mode)
