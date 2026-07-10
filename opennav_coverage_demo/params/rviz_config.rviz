@@ -616,6 +616,32 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /coverage_server/swaths
       Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: HeadlandSwaths
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /coverage_server/headland_swaths
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: SwathCells
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /coverage_server/swath_cells
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

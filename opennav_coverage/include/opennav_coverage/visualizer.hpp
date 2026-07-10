@@ -59,6 +59,9 @@ public:
     headland_swaths_pub_ = rclcpp::create_publisher<visualization_msgs::msg::Marker>(
       node->get_node_topics_interface(),
       "coverage_server/headland_swaths", rclcpp::QoS(1));
+    swath_cells_pub_ = rclcpp::create_publisher<visualization_msgs::msg::Marker>(
+      node->get_node_topics_interface(),
+      "coverage_server/swath_cells", rclcpp::QoS(1));
   }
 
   void deactivate();
@@ -67,13 +70,15 @@ public:
     const Field & total_field, const Field & no_headland_field,
     const Point & ref_pt, const nav_msgs::msg::Path & path,
     const Swaths swaths, const std_msgs::msg::Header & header,
-    const Path & headland_path = Path());
+    const Path & headland_path = Path(),
+    const F2CCells & swath_cells = F2CCells());
 
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr nav_plan_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr headlands_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr planning_field_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr swaths_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr headland_swaths_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr swath_cells_pub_;
 };
 
 }  // namespace opennav_coverage
