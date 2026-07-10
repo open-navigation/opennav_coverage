@@ -630,7 +630,7 @@ Visualization Manager:
         Value: /coverage_server/headland_swaths
       Value: true
     - Class: rviz_default_plugins/Marker
-      Enabled: true
+      Enabled: false
       Name: SwathCells
       Namespaces:
         "": true
@@ -641,7 +641,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /coverage_server/swath_cells
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
