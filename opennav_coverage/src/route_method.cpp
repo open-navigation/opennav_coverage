@@ -22,8 +22,11 @@ namespace opennav_coverage
 F2CRoute SwathOrderMethod::plan(
   const F2CCells & cells,
   const F2CSwathsByCells & swaths_by_cells,
-  const opennav_coverage_msgs::msg::RouteMode & settings)
+  const opennav_coverage_msgs::msg::RouteMode & settings,
+  const std::optional<F2CPoint> & start_end)
 {
+  (void)start_end;  // start/end is a TSP-only concept; the generator warns the user
+
   // The orderers assume a single cell; multi-cell (decomposed) input breaks their
   // ordering, so only TSP handles it. Reject rather than produce a bad route.
   if (cells.size() > 1) {
@@ -51,7 +54,8 @@ F2CRoute SwathOrderMethod::plan(
 F2CRoute TspRouteMethod::plan(
   const F2CCells & cells,
   const F2CSwathsByCells & swaths_by_cells,
-  const opennav_coverage_msgs::msg::RouteMode & settings)
+  const opennav_coverage_msgs::msg::RouteMode & settings,
+  const std::optional<F2CPoint> & start_end)
 {
   const bool redirect_swaths = settings.tsp_redirect_swaths;
   const long int time_limit = settings.tsp_time_limit;  // NOLINT
@@ -73,8 +77,19 @@ F2CRoute TspRouteMethod::plan(
   }
   if (total_swaths <= max_swaths_for_global_route_) {
     f2c::rp::RoutePlannerBase rp;
+    if (start_end) {
+      rp.setStartAndEndPoint(*start_end);
+    }
     return rp.genRoute(
       cells, swaths_by_cells, false, d_tol, redirect_swaths, time_limit, search_for_optimum);
+  }
+
+  // start_end can't be honored per-cell, so warn and drop it in the stitched fallback
+  if (start_end) {
+    RCLCPP_WARN(
+      logger_,
+      "start_pose ignored: swath count exceeds max_swaths_for_global_route; route is stitched "
+      "per-cell.");
   }
 
   // Fallback for large decompositions: solve each cell alone and stitch the
