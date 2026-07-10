@@ -47,7 +47,13 @@ Path PathGenerator::generatePath(
     logger_,
     "Generating path with curve: %s", toString(action_type, action_continuity_type).c_str());
   curve->setDiscretization(turn_point_distance);
-  return generator_->planPath(robot_params_->getRobot(), route, *curve);
+  Path path = generator_->planPath(robot_params_->getRobot(), route, *curve);
+
+  // Optionally thin out near-duplicate points (e.g. in turns)
+  if (reduce_path_) {
+    path.reduce(reduce_min_dist_);
+  }
+  return path;
 }
 
 void PathGenerator::setPathMode(const std::string & new_mode)

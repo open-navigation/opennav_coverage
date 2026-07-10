@@ -308,6 +308,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         swath_gen_->setStepAngle(parameter.as_double());
       } else if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
+      } else if (name == "default_reduce_min_dist") {
+        path_gen_->setReduceMinDist(parameter.as_double());
       } else if (name == "default_tsp_d_tol") {
         route_gen_->setTspDTol(parameter.as_double());
       } else if (name == "robot_width") {
@@ -340,6 +342,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         route_gen_->setTspRedirectSwaths(parameter.as_bool());
       } else if (name == "default_tsp_search_for_optimum") {
         route_gen_->setTspSearchForOptimum(parameter.as_bool());
+      } else if (name == "default_reduce_path") {
+        path_gen_->setReducePath(parameter.as_bool());
       }
     } else if (type == ParameterType::PARAMETER_INTEGER) {
       if (name == "default_spiral_n") {
