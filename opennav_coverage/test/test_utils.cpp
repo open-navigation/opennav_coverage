@@ -46,6 +46,50 @@ TEST(UtilsTests, TestpointToPoint32)
   EXPECT_NEAR(pt_out.z, 1.2, 1e-6);
 }
 
+TEST(UtilsTests, TestToFieldFrameCartesian)
+{
+  // Cartesian start point is moved into the field's ref-subtracted local frame
+  F2CLinearRing ring;
+  ring.addPoint(5.0, 5.0);
+  ring.addPoint(15.0, 5.0);
+  ring.addPoint(15.0, 15.0);
+  ring.addPoint(5.0, 5.0);
+  F2CCells cells;
+  cells.addGeometry(F2CCell(ring));
+  F2CField field(cells);
+  ASSERT_DOUBLE_EQ(field.getRefPoint().getX(), 5.0);  // F2CField subtracts the first vertex
+  ASSERT_DOUBLE_EQ(field.getRefPoint().getY(), 5.0);
+
+  // The field corner (5,5) maps to the local origin; (10,8) maps to (5,3)
+  F2CPoint corner = util::toFieldFrame(F2CPoint(5.0, 5.0), field, true);
+  EXPECT_DOUBLE_EQ(corner.getX(), 0.0);
+  EXPECT_DOUBLE_EQ(corner.getY(), 0.0);
+  F2CPoint inside = util::toFieldFrame(F2CPoint(10.0, 8.0), field, true);
+  EXPECT_DOUBLE_EQ(inside.getX(), 5.0);
+  EXPECT_DOUBLE_EQ(inside.getY(), 3.0);
+}
+
+TEST(UtilsTests, TestToFieldFrameGPS)
+{
+  // GPS start point lands in the field's local frame
+  F2CLinearRing ring;
+  ring.addPoint(-1.0, 40.0);
+  ring.addPoint(-1.0, 40.001);
+  ring.addPoint(-0.999, 40.001);
+  ring.addPoint(-0.999, 40.0);
+  ring.addPoint(-1.0, 40.0);
+  F2CCells cells;
+  cells.addGeometry(F2CCell(ring));
+  F2CField field(cells);
+  field.setCRS("EPSG:4326");
+  f2c::Transform::transformToUTM(field);
+
+  // The first ring vertex is the field's reference, so it maps to the local origin
+  F2CPoint local = util::toFieldFrame(F2CPoint(-1.0, 40.0), field, false);
+  EXPECT_NEAR(local.getX(), 0.0, 1e-3);
+  EXPECT_NEAR(local.getY(), 0.0, 1e-3);
+}
+
 TEST(UtilsTests, TestpointToMsg)
 {
   Point pt_in{1.0, 2.0, 3.0};
