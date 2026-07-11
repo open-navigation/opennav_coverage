@@ -61,7 +61,8 @@ enum class SwathType
   UNKNOWN = 0,
   LENGTH = 1,
   NUMBER = 2,
-  COVERAGE = 3
+  COVERAGE = 3,
+  NUMBER_MODIFIED = 4
 };
 
 /**
