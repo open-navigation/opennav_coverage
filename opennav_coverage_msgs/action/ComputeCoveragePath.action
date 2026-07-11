@@ -35,6 +35,7 @@ uint16 INVALID_COORDS=803
 nav_msgs/Path nav_path
 opennav_coverage_msgs/PathComponents coverage_path
 builtin_interfaces/Duration planning_time
+float64 task_time
 uint16 error_code
 
 ---
