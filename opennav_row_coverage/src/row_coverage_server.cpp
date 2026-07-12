@@ -206,7 +206,8 @@ void RowCoverageServer::computeCoveragePath()
         result->coverage_path =
           opennav_coverage::util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
         result->nav_path = opennav_coverage::util::toNavPathMsg(
-          path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance());
+          path, master_field, header, cartesian_frame_, path_gen_->getTurnPointDistance(),
+          &result->coverage_path.velocities, &result->coverage_path.is_backward);
       } else {
         result->coverage_path =
           opennav_coverage::util::toCoveragePathMsg(
