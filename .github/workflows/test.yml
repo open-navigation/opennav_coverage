@@ -147,6 +147,21 @@ jobs:
           sudo touch -d '2026-01-01 00:00:00 UTC' "$hdr"
         fi
 
+    - name: Shim launch_testing pytest hookspec (module_path)
+      # ros2-testing ships launch_testing_ros 0.29.9 (hookimpl renamed path
+      # -> module_path, ros2/launch#972) but launch_testing 3.9.7 predates
+      # the matching hookspec change, so pytest aborts at plugin registration
+      # and every python test errors. Align hookspec + call site with current
+      # rolling (accepts both names); no-op once a fixed launch_testing ships.
+      run: |
+        sp=$(ls -d /opt/ros/${{ matrix.ros_distro }}/lib/python3*/site-packages)
+        hs=$sp/launch_testing/pytest/hookspecs.py
+        if [ -f "$hs" ] && ! grep -q module_path "$hs"; then
+          sudo sed -i 's/^def pytest_launch_collect_makemodule(path, parent, entrypoint):/def pytest_launch_collect_makemodule(module_path, path, parent, entrypoint):/' "$hs"
+          sudo sed -i 's/path=path, parent=parent, entrypoint=entrypoint/module_path=path, path=path, parent=parent, entrypoint=entrypoint/' \
+            "$sp/launch_testing/pytest/hooks.py"
+        fi
+
     - name: Compute environment fingerprint
       # dpkg hash after all apt/rosdep steps. The :master image is rebuilt
       # nightly; a build tree must only be reused in the environment it was
