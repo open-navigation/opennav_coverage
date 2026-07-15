@@ -89,6 +89,12 @@ public:
         BT::InputPort<bool>("generate_headland", true, "Whether to generate headland"),
         BT::InputPort<bool>("generate_route", true, "Whether to ordered route of swaths"),
         BT::InputPort<bool>("generate_path", true, "Whether to generate connected path of routes"),
+        BT::InputPort<std::string>(
+          "route_mode_type", "UNKNOWN", "BOUSTROPHEDON/SNAKE/SPIRAL/CUSTOM/TSP"),
+        BT::InputPort<bool>("tsp_redirect_swaths", true, "TSP: allow swath direction reversal"),
+        BT::InputPort<int>("tsp_time_limit", 1, "TSP: OR-Tools time limit in seconds"),
+        BT::InputPort<bool>("tsp_search_for_optimum", false, "TSP: guided local search"),
+        BT::InputPort<double>("tsp_d_tol", 0.0001, "TSP: distance tolerance for OR-Tools"),
 
         BT::InputPort<std::string>("file_field", "Filepath to field GML file"),
         BT::InputPort<int>("file_field_id", 0, "Ordered ID of which field to use in GML File"),
