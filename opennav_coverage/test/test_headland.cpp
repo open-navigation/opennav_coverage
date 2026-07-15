@@ -89,4 +89,28 @@ TEST(HeadlandTests, TestheadlandGeneration)
   auto field_out2 = generator.generateHeadlands(field.getField().getGeometry(0), settings);
 }
 
+TEST(HeadlandTests, TestheadlandGenerationMultiCell)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  auto generator = HeadlandShim(node);
+
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  Field cell = field.getField().getGeometry(0);
+  double area_in = cell.area();
+
+  // 2-cell F2CCells
+  F2CCells cells;
+  cells.addGeometry(cell);
+  cells.addGeometry(cell);
+
+  opennav_coverage_msgs::msg::HeadlandMode settings;
+  F2CCells result = generator.generateHeadlands(cells, settings);
+
+  EXPECT_EQ(result.size(), 2u);
+  // Each cell should have shrunk (headland removed)
+  EXPECT_LT(result.getGeometry(0).area(), area_in);
+  EXPECT_LT(result.getGeometry(1).area(), area_in);
+}
+
 }  // namespace opennav_coverage

@@ -1,6 +1,8 @@
 #goal definition
 
 # Whether to perform all 4 stages: Headlands, Swath (Required), Route, Path
+bool generate_decomp False
+opennav_coverage_msgs/DecompMode decomp_mode
 bool generate_headland True
 bool generate_route True
 bool generate_path True
