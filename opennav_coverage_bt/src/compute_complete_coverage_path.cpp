@@ -31,6 +31,11 @@ ComputeCoveragePathAction::ComputeCoveragePathAction(
 void ComputeCoveragePathAction::on_tick()
 {
   // Get core inputs about what to perform
+  getInput("generate_decomp", goal_.generate_decomp);
+  std::string decomp_type;
+  getInput("decomp_mode_type", decomp_type);
+  goal_.decomp_mode.mode = decomp_type;
+  getInput("decomp_split_angle", goal_.decomp_mode.split_angle);
   getInput("generate_headland", goal_.generate_headland);
   getInput("generate_route", goal_.generate_route);
   getInput("generate_path", goal_.generate_path);

@@ -126,6 +126,94 @@ TEST(ServerTest, testServerTransactions)
   EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
 }
 
+TEST(ServerTest, testDecompPath)
+{
+  // Create server
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_decomp");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_decomp = true;
+  goal_msg.decomp_mode.mode = "TRAPEZOIDAL";
+  goal_msg.generate_headland = true;
+  goal_msg.generate_route = true;
+  goal_msg.generate_path = true;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+}
+
+TEST(ServerTest, testDecompPathNoHeadland)
+{
+  // generate_headland=false exercises the cells_no_headland = decomposed branch
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_decomp_nohl");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_decomp = true;
+  goal_msg.decomp_mode.mode = "BOUSTROPHEDON";
+  goal_msg.generate_headland = false;
+  goal_msg.generate_route = false;
+  goal_msg.generate_path = false;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+}
+
 TEST(ServerTest, testDynamicParams)
 {
   auto node = std::make_shared<ServerShim>();

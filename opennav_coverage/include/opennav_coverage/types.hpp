@@ -107,6 +107,17 @@ enum class PathContinuityType
   DISCONTINUOUS = 2
 };
 
+/**
+ * @enum Decomposition types
+ */
+enum class DecompType
+{
+  UNKNOWN = 0,
+  NONE = 1,
+  TRAPEZOIDAL = 2,
+  BOUSTROPHEDON = 3
+};
+
 class CoverageException : public std::runtime_error
 {
 public:

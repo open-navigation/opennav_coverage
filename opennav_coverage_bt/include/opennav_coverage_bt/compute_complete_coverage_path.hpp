@@ -89,6 +89,10 @@ public:
   {
     return providedBasicPorts(
       {
+        BT::InputPort<bool>("generate_decomp", false, "Whether to decompose non-convex field"),
+        BT::InputPort<std::string>(
+          "decomp_mode_type", "UNKNOWN", "NONE/TRAPEZOIDAL/BOUSTROPHEDON"),
+        BT::InputPort<double>("decomp_split_angle", 0.0, "Split angle in radians"),
         BT::InputPort<bool>("generate_headland", true, "Whether to generate headland"),
         BT::InputPort<bool>("generate_route", true, "Whether to ordered route of swaths"),
         BT::InputPort<bool>("generate_path", true, "Whether to generate connected path of routes"),
