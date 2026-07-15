@@ -140,10 +140,10 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   EXPECT_EQ(msg.contains_turns, true);
   EXPECT_EQ(msg.swaths_ordered, true);
 
-  // states are not valid (e.g. non-marked as turn or swath). v2 defaults type to
-  // SWATH, so explicitly set an unhandled type (HL_SWATH) to trigger the error.
+  // states are not valid (e.g. non-marked as turn or swath). SWATH/TURN/HL_SWATH
+  // are all handled now, so cast an out-of-range value to trigger the error.
   path_in.getStates().resize(10);
-  path_in.getStates()[0].type = f2c::types::PathSectionType::HL_SWATH;
+  path_in.getStates()[0].type = static_cast<f2c::types::PathSectionType>(99);
   EXPECT_THROW(util::toCoveragePathMsg(path_in, field, header_in, true), std::runtime_error);
 
   // Now lets make it valid
@@ -179,6 +179,78 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   EXPECT_EQ(msg.swaths.size(), 2u);
   EXPECT_EQ(msg.turns.size(), 3u);
   EXPECT_EQ(msg.turns[0].poses.size(), 2u);
+}
+
+// HL_SWATH states (produced by decomposition) must be handled like SWATH.
+TEST(UtilsTests, TesttoCoveragePathMsgHLSwath)
+{
+  using f2c::types::PathSectionType;
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  F2CField field;
+
+  // Scenario 1: only HL_SWATH -> one swath, no turns
+  {
+    Path path_in;
+    path_in.getStates().resize(3);
+    path_in.getStates()[0].type = PathSectionType::HL_SWATH;
+    path_in.getStates()[1].type = PathSectionType::HL_SWATH;
+    path_in.getStates()[2].type = PathSectionType::HL_SWATH;
+
+    auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+    EXPECT_EQ(msg.swaths.size(), 1u);
+    EXPECT_EQ(msg.turns.size(), 0u);
+    EXPECT_EQ(msg.contains_turns, true);
+    EXPECT_EQ(msg.swaths_ordered, true);
+  }
+
+  // Scenario 2: HL_SWATH -> TURN -> SWATH (realistic decomposition output)
+  {
+    Path path_in;
+    path_in.getStates().resize(6);
+    path_in.getStates()[0].type = PathSectionType::HL_SWATH;
+    path_in.getStates()[1].type = PathSectionType::HL_SWATH;
+    path_in.getStates()[2].type = PathSectionType::TURN;
+    path_in.getStates()[3].type = PathSectionType::TURN;
+    path_in.getStates()[4].type = PathSectionType::SWATH;
+    path_in.getStates()[5].type = PathSectionType::SWATH;
+
+    auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+    EXPECT_EQ(msg.swaths.size(), 2u);
+    EXPECT_EQ(msg.turns.size(), 1u);
+    EXPECT_EQ(msg.turns[0].poses.size(), 2u);
+  }
+
+  // Scenario 3: SWATH + HL_SWATH mixed (both in the swath-like group)
+  {
+    Path path_in;
+    path_in.getStates().resize(7);
+    path_in.getStates()[0].type = PathSectionType::SWATH;
+    path_in.getStates()[1].type = PathSectionType::SWATH;
+    path_in.getStates()[2].type = PathSectionType::HL_SWATH;
+    path_in.getStates()[3].type = PathSectionType::HL_SWATH;
+    path_in.getStates()[4].type = PathSectionType::TURN;
+    path_in.getStates()[5].type = PathSectionType::TURN;
+    path_in.getStates()[6].type = PathSectionType::SWATH;
+
+    auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+    EXPECT_EQ(msg.swaths.size(), 2u);  // SWATH->HL_SWATH is a no-op (same swath block)
+    EXPECT_EQ(msg.turns.size(), 1u);
+  }
+
+  // Scenario 4: start with TURN, then transition to HL_SWATH (TURN -> swath-like edge)
+  {
+    Path path_in;
+    path_in.getStates().resize(4);
+    path_in.getStates()[0].type = PathSectionType::TURN;
+    path_in.getStates()[1].type = PathSectionType::TURN;
+    path_in.getStates()[2].type = PathSectionType::HL_SWATH;
+    path_in.getStates()[3].type = PathSectionType::HL_SWATH;
+
+    auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+    EXPECT_EQ(msg.turns.size(), 1u);
+    EXPECT_EQ(msg.swaths.size(), 1u);
+  }
 }
 
 TEST(UtilsTests, TestgetFieldFromGoal)
@@ -396,6 +468,44 @@ TEST(UtilsTests, TesttoNavPathMsgWithVelocity)
   // TURN state: velocity=0.5, direction=FORWARD
   EXPECT_NEAR(vels.back(), 0.5, 1e-6);
   EXPECT_FALSE(dirs.back());
+}
+
+// HL_SWATH states must carry velocity/direction through toNavPathMsg like SWATH does.
+TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity)
+{
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+
+  PathState hl_swath;
+  hl_swath.type = f2c::types::PathSectionType::HL_SWATH;
+  hl_swath.point = Point(0.0, 0.0);
+  hl_swath.len = 1.0;
+  hl_swath.angle = 0.0;
+  hl_swath.velocity = 1.5;
+  hl_swath.dir = f2c::types::PathDirection::FORWARD;
+  path_in.addState(hl_swath);
+
+  PathState turn;
+  turn.type = f2c::types::PathSectionType::TURN;
+  turn.velocity = 0.5;
+  turn.dir = f2c::types::PathDirection::BACKWARD;
+  path_in.addState(turn);
+
+  F2CField field;
+  std::vector<double> vels;
+  std::vector<bool> dirs;
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
+
+  EXPECT_EQ(nav_path.poses.size(), vels.size());
+  EXPECT_EQ(nav_path.poses.size(), dirs.size());
+  // HL_SWATH state: velocity=1.5, direction=FORWARD, passes through as one point
+  // (discretizeSwath does not densify HL_SWATH, only SWATH)
+  EXPECT_NEAR(vels[0], 1.5, 1e-6);
+  EXPECT_FALSE(dirs[0]);
+  // TURN state: velocity=0.5, direction=BACKWARD
+  EXPECT_NEAR(vels.back(), 0.5, 1e-6);
+  EXPECT_TRUE(dirs.back());
 }
 
 // B.6+B.7 integration: poses, velocities, is_backward sizes must match after discretizeSwath

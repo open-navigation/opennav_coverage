@@ -49,6 +49,7 @@ set(dependencies
 
 add_library(${library_name} SHARED
   src/coverage_server.cpp
+  src/decomp_generator.cpp
   src/headland_generator.cpp
   src/swath_generator.cpp
   src/route_generator.cpp
