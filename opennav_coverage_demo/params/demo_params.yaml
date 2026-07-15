@@ -10,6 +10,9 @@ coverage_server:
     default_allow_overlap: false
     default_swath_angle_type: "SET_ANGLE"
     default_swath_angle: 0.0 # We know its aligned for the demo
+    default_generate_decomp: false       # true enables decomposition for all missions
+    default_decomp_type: "NONE"          # NONE / TRAPEZOIDAL / BOUSTROPHEDON
+    default_decomp_split_angle: 0.0      # radians; 0 = split parallel to swath angle
 
 row_coverage_server:
   ros__parameters:
