@@ -56,10 +56,43 @@ F2CRoute TspRouteMethod::plan(
     redirect_swaths ? "true" : "false", time_limit,
     search_for_optimum ? "true" : "false", d_tol);
 
-  f2c::rp::RoutePlannerBase rp;
-  return rp.genRoute(
-    cells, swaths_by_cells,
-    /*show_log=*/false, d_tol, redirect_swaths, time_limit, search_for_optimum);
+  // Per-cell TSP instead of one multi-cell genRoute call: F2C v2.0.0's
+  // RoutePlannerBase builds the full all-pairs path matrix, which exhausts
+  // memory (bad_alloc) on decomposed input. The cells are disconnected anyway,
+  // so solve each one alone and stitch the routes with straight-line bridges.
+  F2CRoute merged;
+  for (size_t i = 0; i < cells.size(); ++i) {
+    if (i >= swaths_by_cells.size() || swaths_by_cells.at(i).size() == 0) {
+      continue;
+    }
+    F2CCells cell(cells.getGeometry(i));
+    F2CSwathsByCells cell_swaths;
+    cell_swaths.emplace_back(swaths_by_cells.at(i));
+
+    f2c::rp::RoutePlannerBase rp;
+    F2CRoute cell_route = rp.genRoute(
+      cell, cell_swaths,
+      /*show_log=*/ false,
+      d_tol,
+      redirect_swaths,
+      time_limit,
+      search_for_optimum);
+    if (cell_route.isEmpty()) {
+      continue;
+    }
+
+    if (!merged.isEmpty()) {
+      merged.addConnection(
+        std::vector<F2CPoint>{merged.endPoint(), cell_route.startPoint()});
+    }
+    const auto & vec_swaths = cell_route.getVectorSwaths();
+    const auto & connections = cell_route.getConnections();
+    for (size_t k = 0; k < vec_swaths.size(); ++k) {
+      merged.addConnectedSwaths(
+        k < connections.size() ? connections[k] : F2CMultiPoint(), vec_swaths[k]);
+    }
+  }
+  return merged;
 }
 
 }  // namespace opennav_coverage
