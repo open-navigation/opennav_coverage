@@ -46,6 +46,16 @@ Field HeadlandGenerator::generateHeadlands(
   return generator->generateHeadlands(Fields(field), width).getGeometry(0);
 }
 
+F2CCells HeadlandGenerator::generateHeadlands(
+  const F2CCells & cells, const opennav_coverage_msgs::msg::HeadlandMode & settings)
+{
+  F2CCells result;
+  for (size_t i = 0; i < cells.size(); ++i) {
+    result.addGeometry(generateHeadlands(cells.getGeometry(i), settings));
+  }
+  return result;
+}
+
 void HeadlandGenerator::setMode(const std::string & new_mode)
 {
   default_type_ = toType(new_mode);

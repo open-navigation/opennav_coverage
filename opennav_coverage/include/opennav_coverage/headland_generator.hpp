@@ -65,6 +65,15 @@ public:
     const Field & field, const opennav_coverage_msgs::msg::HeadlandMode & settings);
 
   /**
+   * @brief Multi-cell overload: apply a separate headland to each sub-cell
+   * @param cells Cells to generate headlands from
+   * @param settings Action request information
+   * @return Cells with headlands applied per sub-cell
+   */
+  F2CCells generateHeadlands(
+    const F2CCells & cells, const opennav_coverage_msgs::msg::HeadlandMode & settings);
+
+  /**
    * @brief Sets the mode manually of the Headland for dynamic parameters
    * @param mode String for mode to use
    */
