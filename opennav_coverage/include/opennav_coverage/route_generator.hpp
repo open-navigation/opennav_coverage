@@ -100,14 +100,14 @@ public:
    * @param cells Travel cells whose borders route connections may follow
    * @param swaths_by_cells Per-cell swaths from generateSwathsByCells
    * @param settings Action request information
-   * @param start_end Optional start/end point for the route (TSP mode only)
+   * @param start_end_point Optional start/end point for the route (TSP mode only)
    * @return F2CRoute (ordered swath groups plus any connections)
    */
   F2CRoute generateRoute(
     const F2CCells & cells,
     const F2CSwathsByCells & swaths_by_cells,
     const opennav_coverage_msgs::msg::RouteMode & settings,
-    const std::optional<F2CPoint> & start_end = std::nullopt);
+    const std::optional<F2CPoint> & start_end_point = std::nullopt);
 
   /**
    * @brief Sets the mode manually of the Route for dynamic parameters
