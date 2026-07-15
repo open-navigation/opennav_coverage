@@ -118,9 +118,9 @@ public:
     const F2CCells & cells,
     const F2CSwathsByCells & swaths_by_cells,
     const opennav_coverage_msgs::msg::RouteMode & settings,
-    const std::optional<F2CPoint> & start_end = std::nullopt)
+    const std::optional<F2CPoint> & start_end_point = std::nullopt)
   {
-    return generateRoute(cells, cells, swaths_by_cells, settings, start_end);
+    return generateRoute(cells, cells, swaths_by_cells, settings, start_end_point);
   }
 
   /**

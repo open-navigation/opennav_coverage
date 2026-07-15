@@ -60,15 +60,12 @@ F2CRoute reversedRoute(const F2CRoute & route)
 }  // namespace
 
 F2CRoute SwathOrderMethod::plan(
-  const F2CCells & travel_cells,
+  const F2CCells & /*travel_cells*/,
   const F2CCells & swath_cells,
   const F2CSwathsByCells & swaths_by_cells,
   const opennav_coverage_msgs::msg::RouteMode & settings,
-  const std::optional<F2CPoint> & start_end)
+  const std::optional<F2CPoint> & /*start_end_point*/)
 {
-  (void)travel_cells;
-  (void)start_end;  // TSP-only concept; the generator already warns the user
-
   // These orderers assume a single cell; multi-cell input breaks their ordering.
   if (swath_cells.size() > 1) {
     throw CoverageException(
@@ -96,7 +93,7 @@ F2CRoute TspRouteMethod::plan(
   const F2CCells & swath_cells,
   const F2CSwathsByCells & swaths_by_cells,
   const opennav_coverage_msgs::msg::RouteMode & settings,
-  const std::optional<F2CPoint> & start_end)
+  const std::optional<F2CPoint> & start_end_point)
 {
   const bool redirect_swaths = settings.tsp_redirect_swaths;
   const long int time_limit = settings.tsp_time_limit;  // NOLINT
@@ -112,8 +109,8 @@ F2CRoute TspRouteMethod::plan(
   // Single cell: one genRoute call, which honors the start/end point exactly.
   if (swath_cells.size() <= 1) {
     f2c::rp::RoutePlannerBase rp;
-    if (start_end) {
-      rp.setStartAndEndPoint(*start_end);
+    if (start_end_point) {
+      rp.setStartAndEndPoint(*start_end_point);
     }
     return rp.genRoute(
       swath_cells, swaths_by_cells, false, d_tol, redirect_swaths, time_limit,
@@ -180,12 +177,12 @@ F2CRoute TspRouteMethod::plan(
 
   size_t current = remaining[0];
   bool current_reversed = false;
-  if (start_end) {
+  if (start_end_point) {
     RCLCPP_WARN(
       logger_,
       "Multi-cell route: start_pose picks the nearest cell; the route starts at "
       "that cell's own start, not at the exact point.");
-    current = pickNearest(*start_end, std::nullopt, current_reversed);
+    current = pickNearest(*start_end_point, std::nullopt, current_reversed);
   }
 
   // Bridges follow the travel-cell pair's border graph, not a line that could cut a void.

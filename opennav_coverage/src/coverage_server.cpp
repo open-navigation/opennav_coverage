@@ -261,14 +261,14 @@ void CoverageServer::computeCoveragePath()
         "skipping the headland perimeter pass.");
     }
     if (goal->generate_route) {
-      std::optional<F2CPoint> start_end;
+      std::optional<F2CPoint> start_end_point;
       if (goal->use_start_pose) {
-        start_end = util::toFieldFrame(
+        start_end_point = util::toFieldFrame(
           F2CPoint(goal->start_pose.axis1, goal->start_pose.axis2), master_field, cartesian_frame_);
       }
       // Per-cell routes pair with swath_cells; bridges travel route_cells to detour voids.
       F2CRoute route = route_gen_->generateRoute(
-        route_cells, swath_cells, swaths_by_cells, goal->route_mode, start_end);
+        route_cells, swath_cells, swaths_by_cells, goal->route_mode, start_end_point);
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
       }
