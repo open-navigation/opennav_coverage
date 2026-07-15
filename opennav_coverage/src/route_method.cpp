@@ -25,8 +25,6 @@ F2CRoute SwathOrderMethod::plan(
   const opennav_coverage_msgs::msg::RouteMode & settings,
   const std::optional<F2CPoint> & /*start_end_point*/)
 {
-  // start_end_point is a TSP-only concept; the generator warns the user
-
   // The orderers assume a single cell; multi-cell (decomposed) input breaks their
   // ordering, so only TSP handles it. Reject rather than produce a bad route.
   if (cells.size() > 1) {
