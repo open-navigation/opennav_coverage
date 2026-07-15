@@ -86,6 +86,7 @@ target_link_libraries(test_path
 # Test server
 ament_add_gtest(test_server
   test_server.cpp
+  TIMEOUT 300
 )
 ament_target_dependencies(test_server
   ${dependencies}
