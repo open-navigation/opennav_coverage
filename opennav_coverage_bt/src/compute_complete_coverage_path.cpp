@@ -40,6 +40,19 @@ void ComputeCoveragePathAction::on_tick()
   getInput("generate_route", goal_.generate_route);
   getInput("generate_path", goal_.generate_path);
 
+  // Route mode (pattern-order or TSP)
+  std::string route_mode_type;
+  getInput("route_mode_type", route_mode_type);
+  goal_.route_mode.mode = route_mode_type;
+
+  // TSP knobs
+  getInput("tsp_redirect_swaths", goal_.route_mode.tsp_redirect_swaths);
+  int tsp_time_limit;
+  getInput("tsp_time_limit", tsp_time_limit);
+  goal_.route_mode.tsp_time_limit = static_cast<uint16_t>(tsp_time_limit);
+  getInput("tsp_search_for_optimum", goal_.route_mode.tsp_search_for_optimum);
+  getInput("tsp_d_tol", goal_.route_mode.tsp_d_tol);
+
   // Get the field to get coverage for
   std::string gml_filename;
   if (getInput("file_field", gml_filename)) {
