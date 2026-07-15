@@ -104,7 +104,7 @@ TEST(SwathTests, TestswathUtils)
   generator.setSwathMode("SET_ANGLE");
   generator.setSwathAngle(0.0);
   generator.setOVerlap(false);
-  generator.setStepAngle(false);
+  generator.setStepAngle(0.0);
 }
 
 TEST(SwathTests, TestswathGeneration)
@@ -129,6 +129,32 @@ TEST(SwathTests, TestswathGeneration)
   settings.mode = "BRUTE_FORCE";
   settings.objective = "NUMBER_MODIFIED";
   auto swaths4 = generator.generateSwaths(field.getField().getGeometry(0), settings);
+}
+
+TEST(SwathTests, TestswathGenerationMultiCell)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot(node);
+  auto generator = SwathShim(node, &robot);
+
+  f2c::Random rand;
+  auto field = rand.generateRandField(1e5, 5);
+  Field cell = field.getField().getGeometry(0);
+
+  opennav_coverage_msgs::msg::SwathMode settings;
+
+  // Single-cell F2CCells routes through the Field path
+  F2CCells one_cell;
+  one_cell.addGeometry(cell);
+  auto swaths_one = generator.generateSwaths(one_cell, settings);
+  EXPECT_GT(swaths_one.size(), 0u);
+
+  // Multi-cell F2CCells flattens swaths across cells
+  F2CCells cells;
+  cells.addGeometry(cell);
+  cells.addGeometry(cell);
+  auto swaths_multi = generator.generateSwaths(cells, settings);
+  EXPECT_GT(swaths_multi.size(), swaths_one.size());
 }
 
 }  // namespace opennav_coverage
