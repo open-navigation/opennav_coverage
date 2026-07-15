@@ -68,13 +68,13 @@ public:
   }
 
   /**
-   * @brief Main method to generate path
-   * @param Swaths swaths to generate path from
-   * @param request Action request information
-   * @return Path complete path
+   * @brief Generate path from an F2CRoute (headland connections included).
+   * @param route Route produced by RouteGenerator::generateRoute
+   * @param settings PathMode for curve selection
+   * @return Path complete path including headland connections
    */
   Path generatePath(
-    const Swaths & swaths, const opennav_coverage_msgs::msg::PathMode & settings);
+    const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings);
 
   /**
    * @brief Sets the mode manually of the paths for dynamic parameters

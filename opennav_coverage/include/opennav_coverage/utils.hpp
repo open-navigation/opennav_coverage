@@ -111,6 +111,27 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
 }
 
 /**
+ * @brief Converts an ordered route to coverage path message (ordered swaths only)
+ * @param route Route whose swath groups to convert
+ * @param Field Field to use for conversion from UTM if necessary
+ * @param header header
+ * @param bool if the origional CRS is cartesian or not requiring conversion
+ * @return PathComponents Info for action server to utilize
+ */
+inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
+  const F2CRoute & route, const F2CField & field,
+  const std_msgs::msg::Header & header, const bool is_cartesian)
+{
+  Swaths ordered;
+  for (const auto & group : route.getVectorSwaths()) {
+    for (const auto & s : group) {
+      ordered.emplace_back(s);
+    }
+  }
+  return toCoveragePathMsg(ordered, field, true, header, is_cartesian);
+}
+
+/**
  * @brief Converts full path to coverage path message for action client
  * @param path Full path to convert
  * @param Field Field to use for conversion from UTM if necessary
