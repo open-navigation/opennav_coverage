@@ -21,7 +21,7 @@ namespace opennav_coverage
 {
 
 Path PathGenerator::generatePath(
-  const Swaths & swaths, const opennav_coverage_msgs::msg::PathMode & settings)
+  const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings)
 {
   PathType action_type = toType(settings.mode);
   PathContinuityType action_continuity_type = toContinuityType(settings.continuity_mode);
@@ -47,7 +47,7 @@ Path PathGenerator::generatePath(
     logger_,
     "Generating path with curve: %s", toString(action_type, action_continuity_type).c_str());
   curve->setDiscretization(turn_point_distance);
-  return generator_->planPath(robot_params_->getRobot(), swaths, *curve);
+  return generator_->planPath(robot_params_->getRobot(), route, *curve);
 }
 
 void PathGenerator::setPathMode(const std::string & new_mode)
