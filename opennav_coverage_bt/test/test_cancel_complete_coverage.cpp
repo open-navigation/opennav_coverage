@@ -68,7 +68,7 @@ public:
       std::chrono::milliseconds(10));
     config_->blackboard->set<std::chrono::milliseconds>(
       "wait_for_service_timeout",
-      std::chrono::milliseconds(1000));
+      std::chrono::milliseconds(3000));
     client_ =
       rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
       node_, "compute_coverage_path");
