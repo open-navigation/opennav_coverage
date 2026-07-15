@@ -20,41 +20,74 @@
 namespace opennav_coverage
 {
 
-Swaths SwathGenerator::generateSwaths(
-  const Field & field, const opennav_coverage_msgs::msg::SwathMode & settings)
+SwathGenerator::ResolvedSwathParams SwathGenerator::resolveSwathParams(
+  const opennav_coverage_msgs::msg::SwathMode & settings)
 {
   SwathType action_type = toType(settings.objective);
   SwathAngleType action_angle_type = toAngleType(settings.mode);
-  SwathObjectivePtr objective{nullptr};
-  float swath_angle = 0.0f;
-  float step_angle = 0.0f;
+  ResolvedSwathParams p;
 
   // If not set by action, use default mode
   if (action_type == SwathType::UNKNOWN && action_angle_type == SwathAngleType::UNKNOWN) {
     action_type = default_type_;
-    action_angle_type = default_angle_type_;
-    objective = default_objective_;
-    swath_angle = default_swath_angle_;
-    step_angle = default_step_angle_;
+    p.angle_type = default_angle_type_;
+    p.objective = default_objective_;
+    p.swath_angle = default_swath_angle_;
+    p.step_angle = default_step_angle_;
   } else {
-    objective = createObjective(action_type);
-    swath_angle = settings.best_angle;
-    step_angle = settings.step_angle;
+    p.angle_type = action_angle_type;
+    p.objective = createObjective(action_type);
+    p.swath_angle = settings.best_angle;
+    p.step_angle = settings.step_angle;
   }
 
   RCLCPP_DEBUG(
-    logger_, "Generating Swaths with: %s", toString(action_type, action_angle_type).c_str());
+    logger_, "Generating Swaths with: %s", toString(action_type, p.angle_type).c_str());
+  return p;
+}
 
+Swaths SwathGenerator::generateSwaths(
+  const Field & field, const opennav_coverage_msgs::msg::SwathMode & settings)
+{
+  ResolvedSwathParams p = resolveSwathParams(settings);
+  const double op_width = robot_params_->getOperationWidth();
   generator_->setAllowOverlap(default_allow_overlap_);
-  switch (action_angle_type) {
+  switch (p.angle_type) {
     case SwathAngleType::BRUTE_FORCE:
-      if (!objective) {
-        throw CoverageException("No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE.");
+      if (!p.objective) {
+        throw CoverageException(
+                "No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE, NUMBER_MODIFIED.");
       }
-      generator_->setStepAngle(step_angle);
-      return generator_->generateBestSwaths(*objective, robot_params_->getOperationWidth(), field);
+      generator_->setStepAngle(p.step_angle);
+      return generator_->generateBestSwaths(*p.objective, op_width, field);
     case SwathAngleType::SET_ANGLE:
-      return generator_->generateSwaths(swath_angle, robot_params_->getOperationWidth(), field);
+      return generator_->generateSwaths(p.swath_angle, op_width, field);
+    default:
+      throw CoverageException("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
+  }
+}
+
+Swaths SwathGenerator::generateSwaths(
+  const F2CCells & cells, const opennav_coverage_msgs::msg::SwathMode & settings)
+{
+  // Single cell -> use the existing Field path (no flatten needed)
+  if (cells.size() == 1) {
+    return generateSwaths(cells.getGeometry(0), settings);
+  }
+
+  ResolvedSwathParams p = resolveSwathParams(settings);
+  const double op_width = robot_params_->getOperationWidth();
+  generator_->setAllowOverlap(default_allow_overlap_);
+  switch (p.angle_type) {
+    case SwathAngleType::BRUTE_FORCE:
+      if (!p.objective) {
+        throw CoverageException(
+                "No valid swath mode set! Options: LENGTH, NUMBER, COVERAGE, NUMBER_MODIFIED.");
+      }
+      generator_->setStepAngle(p.step_angle);
+      return generator_->generateBestSwaths(*p.objective, op_width, cells).flatten();
+    case SwathAngleType::SET_ANGLE:
+      return generator_->generateSwaths(p.swath_angle, op_width, cells).flatten();
     default:
       throw CoverageException("No valid swath angle mode set! Options: BRUTE_FORCE, SET_ANGLE.");
   }
