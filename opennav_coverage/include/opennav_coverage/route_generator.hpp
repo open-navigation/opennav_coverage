@@ -65,16 +65,38 @@ public:
         "default_custom_order was not set! "
         "If using Custom Route mode, the custom order must be set per-request!");
     }
+
+    nav2_util::declare_parameter_if_not_declared(
+      node, "default_tsp_redirect_swaths", rclcpp::ParameterValue(true));
+    default_tsp_redirect_swaths_ =
+      node->get_parameter("default_tsp_redirect_swaths").as_bool();
+
+    nav2_util::declare_parameter_if_not_declared(
+      node, "default_tsp_time_limit", rclcpp::ParameterValue(1));
+    default_tsp_time_limit_ =
+      node->get_parameter("default_tsp_time_limit").as_int();
+
+    nav2_util::declare_parameter_if_not_declared(
+      node, "default_tsp_search_for_optimum", rclcpp::ParameterValue(false));
+    default_tsp_search_for_optimum_ =
+      node->get_parameter("default_tsp_search_for_optimum").as_bool();
+
+    nav2_util::declare_parameter_if_not_declared(
+      node, "default_tsp_d_tol", rclcpp::ParameterValue(1e-4));
+    default_tsp_d_tol_ = node->get_parameter("default_tsp_d_tol").as_double();
   }
 
   /**
-   * @brief Main method to generate route
-   * @param Swaths swaths to generate route from
-   * @param request Action request information
-   * @return Swaths ordered swaths
+   * @brief Generate an ordered route for any mode (orderers or TSP).
+   * @param cells Travel cells whose borders route connections may follow
+   * @param swaths_by_cells Per-cell swaths from generateSwathsByCells
+   * @param settings Action request information
+   * @return F2CRoute (ordered swath groups plus any connections)
    */
-  Swaths generateRoute(
-    const Swaths & swaths, const opennav_coverage_msgs::msg::RouteMode & settings);
+  F2CRoute generateRoute(
+    const F2CCells & cells,
+    const F2CSwathsByCells & swaths_by_cells,
+    const opennav_coverage_msgs::msg::RouteMode & settings);
 
   /**
    * @brief Sets the mode manually of the Route for dynamic parameters
@@ -96,6 +118,11 @@ public:
   {
     default_custom_order_ = std::vector<size_t>(order.begin(), order.end());
   }
+
+  void setTspRedirectSwaths(const bool v) {default_tsp_redirect_swaths_ = v;}
+  void setTspTimeLimit(const int v) {default_tsp_time_limit_ = v;}
+  void setTspSearchForOptimum(const bool v) {default_tsp_search_for_optimum_ = v;}
+  void setTspDTol(const double v) {default_tsp_d_tol_ = v;}
 
 protected:
   /**
@@ -123,6 +150,10 @@ protected:
   std::vector<size_t> default_custom_order_;
   size_t default_spiral_n_;
   RouteGeneratorPtr default_generator_{nullptr};
+  bool default_tsp_redirect_swaths_{true};
+  int default_tsp_time_limit_{1};
+  bool default_tsp_search_for_optimum_{false};
+  double default_tsp_d_tol_{1e-4};
   rclcpp::Logger logger_{rclcpp::get_logger("RouteGenerator")};
 };
 

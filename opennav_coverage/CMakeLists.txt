@@ -51,6 +51,7 @@ add_library(${library_name} SHARED
   src/headland_generator.cpp
   src/swath_generator.cpp
   src/route_generator.cpp
+  src/route_method.cpp
   src/path_generator.cpp
   src/visualizer.cpp
 )
