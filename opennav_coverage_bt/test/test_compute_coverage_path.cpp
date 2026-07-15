@@ -33,6 +33,11 @@ public:
   : TestActionServer("compute_coverage_path")
   {}
 
+  const opennav_coverage_msgs::action::ComputeCoveragePath::Goal & getReceivedGoal() const
+  {
+    return last_goal_;
+  }
+
 protected:
   void execute(
     const typename std::shared_ptr<
@@ -41,6 +46,7 @@ protected:
   override
   {
     const auto goal = goal_handle->get_goal();
+    last_goal_ = *goal;
     auto result =
       std::make_shared<opennav_coverage_msgs::action::ComputeCoveragePath::Result>();
     result->nav_path.poses.resize(2);
@@ -48,6 +54,9 @@ protected:
     result->nav_path.poses[0].pose.position.x = 0.0;
     goal_handle->succeed(result);
   }
+
+private:
+  opennav_coverage_msgs::action::ComputeCoveragePath::Goal last_goal_;
 };
 
 class ComputeCoveragePathActionTestFixture : public ::testing::Test
@@ -149,6 +158,37 @@ TEST_F(ComputeCoveragePathActionTestFixture, test_tick)
   // halt node so another goal can be sent
   tree_->haltTree();
   EXPECT_EQ(tree_->rootNode()->status(), BT::NodeStatus::IDLE);
+}
+
+TEST_F(ComputeCoveragePathActionTestFixture, test_decomp_ports)
+{
+  // generate_decomp=true and decomp_mode_type must flow from the BT XML to the goal
+  std::string xml_txt =
+    R"(
+      <root BTCPP_format="4" main_tree_to_execute="MainTree">
+        <BehaviorTree ID="MainTree">
+            <ComputeCoveragePath
+              nav_path="{path}"
+              generate_decomp="true"
+              decomp_mode_type="TRAPEZOIDAL"
+              decomp_split_angle="1.5708"/>
+        </BehaviorTree>
+      </root>)";
+
+  tree_ = std::make_shared<BT::Tree>(factory_->createTreeFromText(xml_txt, config_->blackboard));
+
+  while (tree_->rootNode()->status() != BT::NodeStatus::SUCCESS) {
+    tree_->rootNode()->executeTick();
+  }
+  EXPECT_EQ(tree_->rootNode()->status(), BT::NodeStatus::SUCCESS);
+
+  // Verify the decomp ports reached the server goal
+  const auto & goal = action_server_->getReceivedGoal();
+  EXPECT_TRUE(goal.generate_decomp);
+  EXPECT_EQ(goal.decomp_mode.mode, std::string("TRAPEZOIDAL"));
+  EXPECT_NEAR(goal.decomp_mode.split_angle, 1.5708, 1e-4);
+
+  tree_->haltTree();
 }
 
 int main(int argc, char ** argv)
