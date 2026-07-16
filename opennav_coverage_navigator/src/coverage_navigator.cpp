@@ -16,6 +16,7 @@
 #include <string>
 #include <memory>
 #include <limits>
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "opennav_coverage_navigator/coverage_navigator.hpp"
 
 namespace opennav_coverage_navigator

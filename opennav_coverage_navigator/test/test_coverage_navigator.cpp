@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage_navigator/coverage_navigator.hpp"
 #include "nav2_ros_common/lifecycle_node.hpp"

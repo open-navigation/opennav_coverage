@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(opennav_coverage_navigator)
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -24,6 +25,7 @@ include_directories(
 )
 
 set(dependencies
+  ament_index_cpp
   rclcpp
   rclcpp_action
   std_msgs
@@ -38,6 +40,7 @@ set(dependencies
 )
 
 set(dep_targets
+  ament_index_cpp::ament_index_cpp
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action
   ${std_msgs_TARGETS}
