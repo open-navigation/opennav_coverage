@@ -113,4 +113,48 @@ TEST(HeadlandTests, TestheadlandGenerationMultiCell)
   EXPECT_LT(result.getGeometry(1).area(), area_in);
 }
 
+TEST(HeadlandTests, TestheadlandMultiCellCollapseSkipped)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  auto generator = HeadlandShim(node);
+
+  // Big cell (100x100) survives the default 2 m inward buffer; the 3 m-wide strip
+  // collapses to an empty geometry. The collapsed cell must be skipped rather than
+  // dereferenced (which would throw "Geometry does not contain point 0").
+  F2CCell big(F2CLinearRing({
+      F2CPoint(0, 0), F2CPoint(100, 0), F2CPoint(100, 100),
+      F2CPoint(0, 100), F2CPoint(0, 0)}));
+  F2CCell thin(F2CLinearRing({
+      F2CPoint(200, 0), F2CPoint(203, 0), F2CPoint(203, 100),
+      F2CPoint(200, 100), F2CPoint(200, 0)}));
+  F2CCells cells;
+  cells.addGeometry(big);
+  cells.addGeometry(thin);
+
+  opennav_coverage_msgs::msg::HeadlandMode settings;  // default width 2.0 m
+  F2CCells result = generator.generateHeadlands(cells, settings);
+
+  EXPECT_EQ(result.size(), 1u);
+  EXPECT_GT(result.getGeometry(0).area(), 0.0);
+}
+
+TEST(HeadlandTests, TestheadlandMultiCellAllCollapseThrows)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  auto generator = HeadlandShim(node);
+
+  // Every sub-cell is a 3 m-wide strip that collapses under the 2 m buffer, so the
+  // result is empty and a CoverageException is thrown instead of returning nothing.
+  F2CCell thin_a(F2CLinearRing({
+      F2CPoint(0, 0), F2CPoint(3, 0), F2CPoint(3, 100), F2CPoint(0, 100), F2CPoint(0, 0)}));
+  F2CCell thin_b(F2CLinearRing({
+      F2CPoint(50, 0), F2CPoint(53, 0), F2CPoint(53, 100), F2CPoint(50, 100), F2CPoint(50, 0)}));
+  F2CCells cells;
+  cells.addGeometry(thin_a);
+  cells.addGeometry(thin_b);
+
+  opennav_coverage_msgs::msg::HeadlandMode settings;  // default width 2.0 m
+  EXPECT_THROW(generator.generateHeadlands(cells, settings), CoverageException);
+}
+
 }  // namespace opennav_coverage
