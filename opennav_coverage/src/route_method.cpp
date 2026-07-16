@@ -19,10 +19,6 @@
 namespace opennav_coverage
 {
 
-// Above this many total swaths, TspRouteMethod falls back to per-cell TSP to avoid
-// F2C's O(N^2) all-pairs path matrix that OOMs on large decompositions.
-static constexpr size_t kMaxSwathsForGlobalRoute = 300;
-
 F2CRoute SwathOrderMethod::plan(
   const F2CCells & cells,
   const F2CSwathsByCells & swaths_by_cells,
@@ -75,11 +71,10 @@ F2CRoute TspRouteMethod::plan(
   for (size_t i = 0; i < swaths_by_cells.size(); ++i) {
     total_swaths += swaths_by_cells.at(i).size();
   }
-  if (total_swaths <= kMaxSwathsForGlobalRoute) {
+  if (total_swaths <= max_swaths_for_global_route_) {
     f2c::rp::RoutePlannerBase rp;
     return rp.genRoute(
-      cells, swaths_by_cells,
-      /*show_log=*/false, d_tol, redirect_swaths, time_limit, search_for_optimum);
+      cells, swaths_by_cells, false, d_tol, redirect_swaths, time_limit, search_for_optimum);
   }
 
   // Fallback for large decompositions: solve each cell alone and stitch the
@@ -95,12 +90,7 @@ F2CRoute TspRouteMethod::plan(
 
     f2c::rp::RoutePlannerBase rp;
     F2CRoute cell_route = rp.genRoute(
-      cell, cell_swaths,
-      /*show_log=*/false,
-      d_tol,
-      redirect_swaths,
-      time_limit,
-      search_for_optimum);
+      cell, cell_swaths, false, d_tol, redirect_swaths, time_limit, search_for_optimum);
     if (cell_route.isEmpty()) {
       continue;
     }

@@ -347,6 +347,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         route_gen_->setSpiralN(parameter.as_int());
       } else if (name == "default_tsp_time_limit") {
         route_gen_->setTspTimeLimit(parameter.as_int());
+      } else if (name == "default_max_swaths_for_global_route") {
+        route_gen_->setMaxSwathsForGlobalRoute(parameter.as_int());
       }
     } else if (type == ParameterType::PARAMETER_INTEGER_ARRAY) {
       if (name == "default_custom_order") {

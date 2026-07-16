@@ -75,7 +75,8 @@ RouteGeneratorPtr RouteGenerator::createGenerator(const RouteType & type)
       return std::make_shared<SwathOrderMethod>(
         type, std::make_shared<f2c::rp::CustomOrder>());
     case RouteType::TSP:
-      return std::make_shared<TspRouteMethod>(logger_);
+      return std::make_shared<TspRouteMethod>(
+        logger_, static_cast<size_t>(default_max_swaths_for_global_route_));
     default:
       RCLCPP_WARN(logger_, "Unknown route type set!");
       return RouteGeneratorPtr{nullptr};
