@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
 #include <filesystem>
 
 #include "gtest/gtest.h"
@@ -140,8 +141,9 @@ TEST(ServerTest, testDecompPath)
   goal_msg.generate_decomp = true;
   goal_msg.decomp_mode.mode = "TRAPEZOIDAL";
   goal_msg.generate_headland = true;
-  goal_msg.generate_route = true;
-  goal_msg.generate_path = true;
+  // Covers decompose + headland + swath only; route/path is covered elsewhere.
+  goal_msg.generate_route = false;
+  goal_msg.generate_path = false;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   const std::filesystem::path share_dir =
@@ -164,9 +166,58 @@ TEST(ServerTest, testDecompPath)
   EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
 }
 
+TEST(ServerTest, testDecompNonTSPRouteRejected)
+{
+  // Non-TSP route modes only handle a single cell, so combining one with
+  // decomposition (multi-cell) must be rejected with INVALID_MODE_SET.
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_decomp_nontsp");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_decomp = true;
+  goal_msg.decomp_mode.mode = "TRAPEZOIDAL";
+  goal_msg.generate_headland = true;
+  goal_msg.generate_route = true;
+  goal_msg.route_mode.mode = "BOUSTROPHEDON";  // non-TSP -> rejected with decomposition
+  goal_msg.generate_path = true;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::ABORTED);
+  EXPECT_EQ(
+    result.result->error_code,
+    opennav_coverage_msgs::action::ComputeCoveragePath::Result::INVALID_MODE_SET);
+}
+
 TEST(ServerTest, testDecompPathNoHeadland)
 {
-  // generate_headland=false exercises the cells_no_headland = decomposed branch
+  // generate_headland=false exercises the decompose-without-headland swath branch
   auto node = std::make_shared<ServerShim>();
   rclcpp_lifecycle::State state;
   node->configure(state);
@@ -255,9 +306,8 @@ TEST(ServerTest, testTSPRouteNoPath)
 
 TEST(ServerTest, testTSPDecompHeadlandPath)
 {
-  // Exercises the TSP branch end-to-end with decomp+headland enabled together:
-  // trapezoidal decomposition yields ~11 disconnected (headland-shrunk) cells,
-  // which RouteGenerator solves as per-cell TSP stitched in sweep order.
+  // TSP + decompose + headland end-to-end. test_field.xml has enough swaths to
+  // exceed the global-genRoute cap, so this exercises the per-cell TSP fallback.
   auto node = std::make_shared<ServerShim>();
   rclcpp_lifecycle::State state;
   node->configure(state);
@@ -278,7 +328,7 @@ TEST(ServerTest, testTSPDecompHeadlandPath)
   goal_msg.generate_route = true;
   goal_msg.generate_path = true;
   goal_msg.route_mode.mode = "TSP";
-  // Per-cell OR-Tools limit; keeps the 11-cell total bounded in CI.
+  // Keep the per-cell OR-Tools search short so CI stays fast.
   goal_msg.route_mode.tsp_time_limit = 1;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -301,6 +351,60 @@ TEST(ServerTest, testTSPDecompHeadlandPath)
   auto result = future_result.get();
   EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
   EXPECT_FALSE(result.result->nav_path.poses.empty());
+  // Sanity-check the computed path: swaths, connection turns, and task time.
+  EXPECT_FALSE(result.result->coverage_path.swaths.empty());
+  EXPECT_TRUE(result.result->coverage_path.contains_turns);
+  EXPECT_TRUE(std::isfinite(result.result->task_time));
+}
+
+TEST(ServerTest, testTSPNoDecompPath)
+{
+  // TSP on a single (non-decomposed) field: the common case, single genRoute call.
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_tsp_nodecomp");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_decomp = false;
+  goal_msg.generate_headland = true;
+  goal_msg.generate_route = true;
+  goal_msg.route_mode.mode = "TSP";
+  goal_msg.route_mode.tsp_time_limit = 1;
+  goal_msg.generate_path = true;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+  EXPECT_FALSE(result.result->nav_path.poses.empty());
+  // Sanity-check the computed path: swaths, connection turns, and task time.
+  EXPECT_FALSE(result.result->coverage_path.swaths.empty());
+  EXPECT_TRUE(result.result->coverage_path.contains_turns);
+  EXPECT_TRUE(std::isfinite(result.result->task_time));
 }
 
 TEST(ServerTest, testDynamicParams)
