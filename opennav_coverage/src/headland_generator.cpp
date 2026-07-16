@@ -20,12 +20,11 @@
 namespace opennav_coverage
 {
 
-Field HeadlandGenerator::generateHeadlands(
-  const Field & field, const opennav_coverage_msgs::msg::HeadlandMode & settings)
+HeadlandGeneratorPtr HeadlandGenerator::resolveGenerator(
+  const opennav_coverage_msgs::msg::HeadlandMode & settings, double & width)
 {
   HeadlandType action_type = toType(settings.mode);
   HeadlandGeneratorPtr generator{nullptr};
-  double width = 0.0;
 
   // If not set by action, use default mode
   if (action_type == HeadlandType::UNKNOWN) {
@@ -37,21 +36,46 @@ Field HeadlandGenerator::generateHeadlands(
     width = settings.width;
   }
 
-
   if (!generator) {
     throw CoverageException("No valid headlands mode set! Options: CONSTANT.");
   }
 
-  RCLCPP_DEBUG(logger_, "Generating Headland with generator: %s", toString(action_type).c_str());
+  RCLCPP_DEBUG(
+    logger_, "Generating Headland with generator: %s", toString(action_type).c_str());
+  return generator;
+}
+
+Field HeadlandGenerator::generateHeadlands(
+  const Field & field, const opennav_coverage_msgs::msg::HeadlandMode & settings)
+{
+  double width = 0.0;
+  HeadlandGeneratorPtr generator = resolveGenerator(settings, width);
   return generator->generateHeadlands(Fields(field), width).getGeometry(0);
 }
 
 F2CCells HeadlandGenerator::generateHeadlands(
   const F2CCells & cells, const opennav_coverage_msgs::msg::HeadlandMode & settings)
 {
+  double width = 0.0;
+  HeadlandGeneratorPtr generator = resolveGenerator(settings, width);
+
+  // Apply the headland to each sub-cell independently: decomposed cells share
+  // borders, so buffering the whole F2CCells at once would only shrink the outer
+  // boundary and drop the inter-cell headlands.
   F2CCells result;
   for (size_t i = 0; i < cells.size(); ++i) {
-    result.addGeometry(generateHeadlands(cells.getGeometry(i), settings));
+    // Skip sub-cells that the inward buffer collapses to empty; keep every polygon
+    // a buffer may split one cell into.
+    F2CCells cell_headland = generator->generateHeadlands(Fields(cells.getGeometry(i)), width);
+    for (size_t j = 0; j < cell_headland.size(); ++j) {
+      result.addGeometry(cell_headland.getGeometry(j));
+    }
+  }
+
+  if (result.size() == 0) {
+    throw CoverageException(
+            "Headland width is too large for the decomposed field: every sub-cell "
+            "collapsed. Reduce the headland width or disable decomposition.");
   }
   return result;
 }
