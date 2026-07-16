@@ -196,27 +196,26 @@ void CoverageServer::computeCoveragePath()
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
     Field field_no_headland = field;
-    Swaths swaths;
+    F2CCells cells;
     if (do_decomp) {
       F2CCells raw_cells;
       raw_cells.addGeometry(field);
       F2CCells decomposed = decomp_gen_->decompose(raw_cells, goal->decomp_mode);
 
       // Apply a separate headland to each sub-cell
-      F2CCells cells_no_headland = decomposed;
-      if (goal->generate_headland) {
-        cells_no_headland = headland_gen_->generateHeadlands(decomposed, goal->headland_mode);
-      }
-      swaths = swath_gen_->generateSwaths(cells_no_headland, goal->swath_mode);
+      cells = goal->generate_headland ?
+        headland_gen_->generateHeadlands(decomposed, goal->headland_mode) : decomposed;
     } else {
       // (1) Optional: Remove headland from polygon field
       if (goal->generate_headland) {
         field_no_headland = headland_gen_->generateHeadlands(field, goal->headland_mode);
       }
-
-      // (2) Generate swaths to cover polygon field, including internal voids
-      swaths = swath_gen_->generateSwaths(field_no_headland, goal->swath_mode);
+      cells.addGeometry(field_no_headland);
     }
+
+    // (2) Generate swaths to cover polygon field, including internal voids
+    F2CSwathsByCells swaths_by_cells = swath_gen_->generateSwathsByCells(cells, goal->swath_mode);
+    Swaths swaths = swaths_by_cells.flatten();
 
     // (3) Optional: Generate an ordered route through the unordered swaths
     std_msgs::msg::Header header;
@@ -224,7 +223,10 @@ void CoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      Swaths route = route_gen_->generateRoute(swaths, goal->route_mode);
+      F2CRoute route = route_gen_->generateRoute(cells, swaths_by_cells, goal->route_mode);
+      if (route.isEmpty()) {
+        throw CoverageException("Route planner returned an empty route.");
+      }
 
       // (4) Optional: Generate connection turns between ordered swaths
       // Converts UTM back to GPS, if necessary, for action returns
@@ -238,8 +240,9 @@ void CoverageServer::computeCoveragePath()
         const double task_time = path.getTaskTime();
         result->task_time = std::isfinite(task_time) ? task_time : 0.0;
       } else {
+        // Ordered swaths only (no connecting turns)
         result->coverage_path =
-          util::toCoveragePathMsg(route, master_field, true, header, cartesian_frame_);
+          util::toCoveragePathMsg(route, master_field, header, cartesian_frame_);
       }
     } else {
       result->coverage_path =
@@ -287,6 +290,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         swath_gen_->setStepAngle(parameter.as_double());
       } else if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
+      } else if (name == "default_tsp_d_tol") {
+        route_gen_->setTspDTol(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
         robot.setWidth(parameter.as_double());
@@ -313,10 +318,16 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         swath_gen_->setOVerlap(parameter.as_bool());
       } else if (name == "coordinates_in_cartesian_frame") {
         cartesian_frame_ = parameter.as_bool();
+      } else if (name == "default_tsp_redirect_swaths") {
+        route_gen_->setTspRedirectSwaths(parameter.as_bool());
+      } else if (name == "default_tsp_search_for_optimum") {
+        route_gen_->setTspSearchForOptimum(parameter.as_bool());
       }
     } else if (type == ParameterType::PARAMETER_INTEGER) {
       if (name == "default_spiral_n") {
         route_gen_->setSpiralN(parameter.as_int());
+      } else if (name == "default_tsp_time_limit") {
+        route_gen_->setTspTimeLimit(parameter.as_int());
       }
     } else if (type == ParameterType::PARAMETER_INTEGER_ARRAY) {
       if (name == "default_custom_order") {
