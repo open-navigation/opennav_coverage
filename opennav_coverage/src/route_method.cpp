@@ -20,10 +20,18 @@ namespace opennav_coverage
 {
 
 F2CRoute SwathOrderMethod::plan(
-  const F2CCells & /*cells*/,
+  const F2CCells & cells,
   const F2CSwathsByCells & swaths_by_cells,
   const opennav_coverage_msgs::msg::RouteMode & settings)
 {
+  // The orderers assume a single cell; multi-cell (decomposed) input breaks their
+  // ordering, so only TSP handles it. Reject rather than produce a bad route.
+  if (cells.size() > 1) {
+    throw CoverageException(
+            "Non-TSP route modes are not supported with field decomposition; "
+            "use route_mode TSP or disable decomposition.");
+  }
+
   // The F2C orderers operate on a single flat swath list.
   if (type_ == RouteType::SPIRAL) {
     dynamic_cast<f2c::rp::SpiralOrder *>(orderer_.get())->setSpiralSize(settings.spiral_n);
@@ -56,10 +64,21 @@ F2CRoute TspRouteMethod::plan(
     redirect_swaths ? "true" : "false", time_limit,
     search_for_optimum ? "true" : "false", d_tol);
 
-  // Per-cell TSP instead of one multi-cell genRoute call: F2C v2.0.0's
-  // RoutePlannerBase builds the full all-pairs path matrix, which exhausts
-  // memory (bad_alloc) on decomposed input. The cells are disconnected anyway,
-  // so solve each one alone and stitch the routes with straight-line bridges.
+  // One global genRoute keeps inter-cell connections along the shared borders/
+  // headland. Capped by swath count: F2C's all-pairs path matrix grows with the
+  // square of swath count and can run out of memory on large decompositions.
+  size_t total_swaths = 0;
+  for (size_t i = 0; i < swaths_by_cells.size(); ++i) {
+    total_swaths += swaths_by_cells.at(i).size();
+  }
+  if (total_swaths <= max_swaths_for_global_route_) {
+    f2c::rp::RoutePlannerBase rp;
+    return rp.genRoute(
+      cells, swaths_by_cells, false, d_tol, redirect_swaths, time_limit, search_for_optimum);
+  }
+
+  // Fallback for large decompositions: solve each cell alone and stitch the
+  // routes together with a straight-line bridge between cells.
   F2CRoute merged;
   for (size_t i = 0; i < cells.size(); ++i) {
     if (i >= swaths_by_cells.size() || swaths_by_cells.at(i).size() == 0) {
@@ -71,12 +90,7 @@ F2CRoute TspRouteMethod::plan(
 
     f2c::rp::RoutePlannerBase rp;
     F2CRoute cell_route = rp.genRoute(
-      cell, cell_swaths,
-      /*show_log=*/ false,
-      d_tol,
-      redirect_swaths,
-      time_limit,
-      search_for_optimum);
+      cell, cell_swaths, false, d_tol, redirect_swaths, time_limit, search_for_optimum);
     if (cell_route.isEmpty()) {
       continue;
     }
