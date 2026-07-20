@@ -47,6 +47,14 @@ public:
       node, "default_route_type", rclcpp::ParameterValue("BOUSTROPHEDON"));
     std::string type_str = node->get_parameter("default_route_type").as_string();
     default_type_ = toType(type_str);
+
+    // Global-genRoute vs per-cell-fallback threshold: raise for better routes on larger
+    // fields, lower if F2C v2.0.0's genRoute runs out of memory.
+    nav2::declare_parameter_if_not_declared(
+      node, "default_max_swaths_for_global_route", rclcpp::ParameterValue(300));
+    default_max_swaths_for_global_route_ =
+      node->get_parameter("default_max_swaths_for_global_route").as_int();
+
     default_generator_ = createGenerator(default_type_);
 
     nav2::declare_parameter_if_not_declared(
@@ -123,6 +131,7 @@ public:
   void setTspTimeLimit(const int v) {default_tsp_time_limit_ = v;}
   void setTspSearchForOptimum(const bool v) {default_tsp_search_for_optimum_ = v;}
   void setTspDTol(const double v) {default_tsp_d_tol_ = v;}
+  void setMaxSwathsForGlobalRoute(const int v) {default_max_swaths_for_global_route_ = v;}
 
 protected:
   /**
@@ -154,6 +163,7 @@ protected:
   int default_tsp_time_limit_{1};
   bool default_tsp_search_for_optimum_{false};
   double default_tsp_d_tol_{1e-4};
+  int default_max_swaths_for_global_route_{300};
   rclcpp::Logger logger_{rclcpp::get_logger("RouteGenerator")};
 };
 

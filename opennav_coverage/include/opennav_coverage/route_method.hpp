@@ -84,8 +84,8 @@ private:
 class TspRouteMethod : public RouteMethod
 {
 public:
-  explicit TspRouteMethod(const rclcpp::Logger & logger)
-  : logger_(logger) {}
+  TspRouteMethod(const rclcpp::Logger & logger, size_t max_swaths_for_global_route)
+  : logger_(logger), max_swaths_for_global_route_(max_swaths_for_global_route) {}
 
   F2CRoute plan(
     const F2CCells & cells,
@@ -94,6 +94,7 @@ public:
 
 private:
   rclcpp::Logger logger_;
+  size_t max_swaths_for_global_route_;
 };
 
 }  // namespace opennav_coverage
