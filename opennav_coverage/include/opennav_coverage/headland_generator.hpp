@@ -87,6 +87,16 @@ public:
 
 protected:
   /**
+   * @brief Resolves the generator and width to use for a request, falling back
+   *        to the configured defaults when the request leaves the mode UNKNOWN.
+   * @param settings Action request information
+   * @param width Output: the headland width to apply
+   * @return Generator to use (never null; throws CoverageException otherwise)
+   */
+  HeadlandGeneratorPtr resolveGenerator(
+    const opennav_coverage_msgs::msg::HeadlandMode & settings, double & width);
+
+  /**
    * @brief Creates generator pointer of a requested type
    * @param type Headland generator type to create
    * @return Generator to use
