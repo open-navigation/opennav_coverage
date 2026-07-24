@@ -7,7 +7,7 @@ bool generate_headland True
 bool generate_route True
 bool generate_path True
 
-# Decomposition only: corridor width on cells' shared borders. 0 = operation width.
+# Decomposition only: corridor width on cells' shared borders. 0 uses the operation width. Other values override.
 float32 route_headland_width 0.0
 
 # The field specification to use.
