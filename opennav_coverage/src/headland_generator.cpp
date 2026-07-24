@@ -80,6 +80,59 @@ F2CCells HeadlandGenerator::generateHeadlands(
   return result;
 }
 
+F2CCells HeadlandGenerator::generateHeadlandsBetweenCells(
+  const F2CCells & cells, double route_width)
+{
+  if (route_width <= 0.0) {
+    throw CoverageException("route_headland_width must be > 0 to carve inter-cell corridors.");
+  }
+
+  // kMinCellArea drops slivers left by carving: F2C's unchecked geometry casts
+  // corrupt memory on degenerate (near-zero-area) polygons.
+  const double kSharedTol = 1e-3;
+  const double kMinCellArea = 1e-3;
+
+  F2CCells result;
+  for (size_t i = 0; i < cells.size(); ++i) {
+    F2CCells swath_cell;
+    swath_cell.addGeometry(cells.getGeometry(i));
+    const Polygon ring_i = cells.getCellBorder(i);
+
+    for (size_t k = 0; k < cells.size(); ++k) {
+      if (k == i) {
+        continue;
+      }
+      const Polygon ring_k = cells.getCellBorder(k);
+      // Carve only the edges of cell_i that lie on cell_k's border: corridors
+      // exist strictly between adjacent cells, never on headland or void edges.
+      for (size_t e = 0; e + 1 < ring_i.size(); ++e) {
+        const Point a = ring_i.getGeometry(e);
+        const Point b = ring_i.getGeometry(e + 1);
+        const Point mid = (a + b) * 0.5;
+        if (ring_k.closestPointTo(a).distance(a) < kSharedTol &&
+          ring_k.closestPointTo(b).distance(b) < kSharedTol &&
+          ring_k.closestPointTo(mid).distance(mid) < kSharedTol)
+        {
+          swath_cell = swath_cell.difference(
+            Field::buffer(LineString(a, b), route_width));
+        }
+      }
+    }
+
+    for (size_t j = 0; j < swath_cell.size(); ++j) {
+      if (swath_cell.getGeometry(j).area() > kMinCellArea) {
+        result.addGeometry(swath_cell.getGeometry(j));
+      }
+    }
+  }
+
+  if (result.size() == 0) {
+    throw CoverageException(
+      "route_headland_width is too large: every sub-cell collapsed. Reduce it.");
+  }
+  return result;
+}
+
 void HeadlandGenerator::setMode(const std::string & new_mode)
 {
   default_type_ = toType(new_mode);
