@@ -1,0 +1,33 @@
+# CI'daki .github/deps.repos'un birebir kopyasi (rolling-full = CI'in yerel kopyasi).
+# Genis kapsami (tum navigation2 + bagimliliklari) kaynaktan derleyip sorunlari
+# adim adim cozeriz; cozumu bulunca .github/deps.repos + test.yml'e tasiriz.
+#
+# NOT: F2C apt'ten ALINMIYOR. ros-rolling-fields2cover sadece noble'da var;
+#   resolute(26.04) rolling'de yok. ros-jazzy-fields2cover ise noble-surumlu sistem
+#   libleri (libgdal34t64...) cektiginden 26.04'e kurulmaz. -> F2C kaynaktan.
+# NOT: slam_toolbox lyrical branch'inde droplandi (6dd784f) -> burada da yok.
+repositories:
+  Fields2Cover:
+    type: git
+    url: https://github.com/Fields2Cover/Fields2Cover.git
+    version: v2.0.0
+
+  # Rolling apt'inde yok -> kaynaktan. 'main' dali: USE_SCIP=OFF +
+  # CMAKE_POLICY_VERSION_MINIMUM=3.5 (PR #8). Yalniz F2C kaynak build'i icin gerekli.
+  ortools_vendor:
+    type: git
+    url: https://github.com/Fields2Cover/ortools_vendor.git
+    version: main
+
+  navigation2:
+    type: git
+    url: https://github.com/ros-navigation/navigation2.git
+    version: main
+
+  # nav2 main, BT.CPP'nin wakeUpSignal() getter'ini kullaniyor; bu YALNIZCA
+  # master'da var (rolling apt 4.9.0 veriyor, onda yok -- dogrulandi). Bu yuzden
+  # BT.CPP'yi master'dan derleyip dagitimin binary'sini overlay ile eziyoruz.
+  behaviortree_cpp:
+    type: git
+    url: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+    version: master

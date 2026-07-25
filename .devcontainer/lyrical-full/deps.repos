@@ -1,0 +1,30 @@
+# CI'daki .github/deps.repos'un birebir kopyasi (lyrical-full = CI'in yerel kopyasi).
+# Burada genis kapsami (tum navigation2 + bagimliliklari) kaynaktan derleyip
+# sorunlari adim adim cozuyoruz; cozumu bulunca .github/deps.repos'a tasiyoruz.
+repositories:
+  Fields2Cover:
+    type: git
+    url: https://github.com/Fields2Cover/Fields2Cover.git
+    version: v2.0.0
+
+  navigation2:
+    type: git
+    url: https://github.com/ros-navigation/navigation2.git
+    version: main
+
+  # Lyrical/Ubuntu 26.04 apt'inde yok -> kaynaktan.
+  # 'main' dali (tag 9.9.0 degil): USE_SCIP=OFF (tinycthread/GCC15 hatasini
+  # ortadan kaldirir, SCIP'in icindeydi) + OR-Tools build'ine
+  # CMAKE_POLICY_VERSION_MINIMUM=3.5 gecirir (zlib CMake4 hatasi). PR #8.
+  ortools_vendor:
+    type: git
+    url: https://github.com/Fields2Cover/ortools_vendor.git
+    version: main
+
+  # nav2 main, BT.CPP'nin wakeUpSignal() getter'ini kullaniyor; bu YALNIZCA
+  # master'da var (en son release 4.9.0'da yok, lyrical de 4.9.0 veriyor). Bu yuzden
+  # BT.CPP'yi master'dan derleyip lyrical'in 4.9.0'ini overlay ile eziyoruz.
+  behaviortree_cpp:
+    type: git
+    url: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+    version: master

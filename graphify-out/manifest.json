@@ -1,0 +1,392 @@
+{
+  ".claude/settings.local.json": {
+    "mtime": 1782669862.8611114,
+    "ast_hash": "974c54b6c060722e0e3c0a29b91a6b70",
+    "semantic_hash": "974c54b6c060722e0e3c0a29b91a6b70"
+  },
+  "opennav_coverage/include/opennav_coverage/coverage_server.hpp": {
+    "mtime": 1782638914.0860763,
+    "ast_hash": "4170eb8396c4426f2acf5538f32dba19",
+    "semantic_hash": "4170eb8396c4426f2acf5538f32dba19"
+  },
+  "opennav_coverage/include/opennav_coverage/headland_generator.hpp": {
+    "mtime": 1782638914.0860763,
+    "ast_hash": "e3ade1b964cc5a2777b5457067e4136d",
+    "semantic_hash": "e3ade1b964cc5a2777b5457067e4136d"
+  },
+  "opennav_coverage/include/opennav_coverage/path_generator.hpp": {
+    "mtime": 1782638914.0870762,
+    "ast_hash": "5d39bf0177d6c0e3d30fe8af0b216a03",
+    "semantic_hash": "5d39bf0177d6c0e3d30fe8af0b216a03"
+  },
+  "opennav_coverage/include/opennav_coverage/robot_params.hpp": {
+    "mtime": 1782638914.0870762,
+    "ast_hash": "1b4490e39653e210db81772d7980ea72",
+    "semantic_hash": "1b4490e39653e210db81772d7980ea72"
+  },
+  "opennav_coverage/include/opennav_coverage/route_generator.hpp": {
+    "mtime": 1782638914.0870762,
+    "ast_hash": "1f8969a78f48f9b31a97552e2ab6cab4",
+    "semantic_hash": "1f8969a78f48f9b31a97552e2ab6cab4"
+  },
+  "opennav_coverage/include/opennav_coverage/swath_generator.hpp": {
+    "mtime": 1782638914.0870762,
+    "ast_hash": "1eed3404484bd52f934a729f8e693209",
+    "semantic_hash": "1eed3404484bd52f934a729f8e693209"
+  },
+  "opennav_coverage/include/opennav_coverage/types.hpp": {
+    "mtime": 1782635491.5192401,
+    "ast_hash": "aeaa61086e885ac64f9c73621a6bd527",
+    "semantic_hash": "aeaa61086e885ac64f9c73621a6bd527"
+  },
+  "opennav_coverage/include/opennav_coverage/utils.hpp": {
+    "mtime": 1782638914.0870762,
+    "ast_hash": "3820b1f75dac1b3ad399fba050dce049",
+    "semantic_hash": "3820b1f75dac1b3ad399fba050dce049"
+  },
+  "opennav_coverage/include/opennav_coverage/visualizer.hpp": {
+    "mtime": 1782093482.2299256,
+    "ast_hash": "75dbdf43e8a9e62a2a1f9c0cea218934",
+    "semantic_hash": "75dbdf43e8a9e62a2a1f9c0cea218934"
+  },
+  "opennav_coverage/src/coverage_server.cpp": {
+    "mtime": 1782638914.0880764,
+    "ast_hash": "2357fe8a5ea846e9c7a8cb6522a10066",
+    "semantic_hash": "2357fe8a5ea846e9c7a8cb6522a10066"
+  },
+  "opennav_coverage/src/headland_generator.cpp": {
+    "mtime": 1782093482.2309256,
+    "ast_hash": "2204087374b8291a7054f68207025969",
+    "semantic_hash": "2204087374b8291a7054f68207025969"
+  },
+  "opennav_coverage/src/main.cpp": {
+    "mtime": 1782093482.2309256,
+    "ast_hash": "1c14827ed59dfcab001b17dea354a9ce",
+    "semantic_hash": "1c14827ed59dfcab001b17dea354a9ce"
+  },
+  "opennav_coverage/src/path_generator.cpp": {
+    "mtime": 1782635497.3992631,
+    "ast_hash": "f90d70428ea68c03b04d9555414cb15b",
+    "semantic_hash": "f90d70428ea68c03b04d9555414cb15b"
+  },
+  "opennav_coverage/src/route_generator.cpp": {
+    "mtime": 1782093482.2309256,
+    "ast_hash": "9626f3161d4935ad2815ccafb68c590a",
+    "semantic_hash": "9626f3161d4935ad2815ccafb68c590a"
+  },
+  "opennav_coverage/src/swath_generator.cpp": {
+    "mtime": 1782635497.394263,
+    "ast_hash": "f0a7d7405b35f3c98ebc0a0a1f862506",
+    "semantic_hash": "f0a7d7405b35f3c98ebc0a0a1f862506"
+  },
+  "opennav_coverage/src/visualizer.cpp": {
+    "mtime": 1782638914.0880764,
+    "ast_hash": "bb7ab896de6222dc3072d0f19402be3e",
+    "semantic_hash": "bb7ab896de6222dc3072d0f19402be3e"
+  },
+  "opennav_coverage/test/test_headland.cpp": {
+    "mtime": 1782638914.0880764,
+    "ast_hash": "49b675147df3401d1feec7940c42e9b6",
+    "semantic_hash": "49b675147df3401d1feec7940c42e9b6"
+  },
+  "opennav_coverage/test/test_path.cpp": {
+    "mtime": 1782638914.0890763,
+    "ast_hash": "14166bad0d793adf9d9e5adbeae85343",
+    "semantic_hash": "14166bad0d793adf9d9e5adbeae85343"
+  },
+  "opennav_coverage/test/test_robot.cpp": {
+    "mtime": 1782638914.0890763,
+    "ast_hash": "36608118e71f9936ab19d46885db9eb3",
+    "semantic_hash": "36608118e71f9936ab19d46885db9eb3"
+  },
+  "opennav_coverage/test/test_route.cpp": {
+    "mtime": 1782638914.0890763,
+    "ast_hash": "5f0adb51d00389f331d9d3026f7fc27f",
+    "semantic_hash": "5f0adb51d00389f331d9d3026f7fc27f"
+  },
+  "opennav_coverage/test/test_server.cpp": {
+    "mtime": 1782755267.1000638,
+    "ast_hash": "0fa198a8f8f79a3cbb1c8e0847483bf3",
+    "semantic_hash": "0fa198a8f8f79a3cbb1c8e0847483bf3"
+  },
+  "opennav_coverage/test/test_swath.cpp": {
+    "mtime": 1782638914.0900762,
+    "ast_hash": "f53bfbd43098458548c8a3a2285e9338",
+    "semantic_hash": "f53bfbd43098458548c8a3a2285e9338"
+  },
+  "opennav_coverage/test/test_utils.cpp": {
+    "mtime": 1782638914.0900762,
+    "ast_hash": "d2e5bcac6f8dd490f28106bbf8d88d29",
+    "semantic_hash": "d2e5bcac6f8dd490f28106bbf8d88d29"
+  },
+  "opennav_coverage/test/test_viz.cpp": {
+    "mtime": 1782638914.0900762,
+    "ast_hash": "3e52c352b77a8f2749af8a4627ec5432",
+    "semantic_hash": "3e52c352b77a8f2749af8a4627ec5432"
+  },
+  "opennav_coverage/test/tester.py": {
+    "mtime": 1782093482.2319255,
+    "ast_hash": "ef050cd75c84c2ae6d8c461bd070036f",
+    "semantic_hash": "ef050cd75c84c2ae6d8c461bd070036f"
+  },
+  "opennav_coverage_bt/include/opennav_coverage_bt/cancel_complete_coverage_path.hpp": {
+    "mtime": 1782638914.0910761,
+    "ast_hash": "dfb04796fcb3e85046a69fc88da2c83c",
+    "semantic_hash": "dfb04796fcb3e85046a69fc88da2c83c"
+  },
+  "opennav_coverage_bt/include/opennav_coverage_bt/compute_complete_coverage_path.hpp": {
+    "mtime": 1782638914.0910761,
+    "ast_hash": "15e5e65f283bbd91b4fcdc5e291fe877",
+    "semantic_hash": "15e5e65f283bbd91b4fcdc5e291fe877"
+  },
+  "opennav_coverage_bt/include/opennav_coverage_bt/utils.hpp": {
+    "mtime": 1782517069.5362744,
+    "ast_hash": "a719a676e9f616a57de91a5f20cc55a6",
+    "semantic_hash": "a719a676e9f616a57de91a5f20cc55a6"
+  },
+  "opennav_coverage_bt/src/cancel_complete_coverage_path.cpp": {
+    "mtime": 1782517069.5362744,
+    "ast_hash": "7ee27ab4dcbd4e97e9faa04c53888da3",
+    "semantic_hash": "7ee27ab4dcbd4e97e9faa04c53888da3"
+  },
+  "opennav_coverage_bt/src/compute_complete_coverage_path.cpp": {
+    "mtime": 1782517069.5362744,
+    "ast_hash": "7e513182fccbbdb7d4229a4cd54cbd6c",
+    "semantic_hash": "7e513182fccbbdb7d4229a4cd54cbd6c"
+  },
+  "opennav_coverage_bt/test/test_cancel_complete_coverage.cpp": {
+    "mtime": 1782638914.0920763,
+    "ast_hash": "f8a1b0f090540e48d500831d9d8ca152",
+    "semantic_hash": "f8a1b0f090540e48d500831d9d8ca152"
+  },
+  "opennav_coverage_bt/test/test_compute_coverage_path.cpp": {
+    "mtime": 1782638914.0920763,
+    "ast_hash": "6065ddbc59e63671663691f2e8bc7faf",
+    "semantic_hash": "6065ddbc59e63671663691f2e8bc7faf"
+  },
+  "opennav_coverage_demo/launch/bringup_launch.py": {
+    "mtime": 1782517069.5362744,
+    "ast_hash": "741f83c1be45898466a893b6c45f2039",
+    "semantic_hash": "741f83c1be45898466a893b6c45f2039"
+  },
+  "opennav_coverage_demo/launch/coverage_demo_launch.py": {
+    "mtime": 1782517069.5362744,
+    "ast_hash": "25469ba7e2efc73dfbb509323a06955d",
+    "semantic_hash": "25469ba7e2efc73dfbb509323a06955d"
+  },
+  "opennav_coverage_demo/launch/row_bringup_launch.py": {
+    "mtime": 1782517069.5362744,
+    "ast_hash": "7373ef8840b3cceb2a2356c37598fd9a",
+    "semantic_hash": "7373ef8840b3cceb2a2356c37598fd9a"
+  },
+  "opennav_coverage_demo/launch/row_coverage_demo_launch.py": {
+    "mtime": 1782517069.5372744,
+    "ast_hash": "69cdf1ac305ac0b4b047b849635ead82",
+    "semantic_hash": "69cdf1ac305ac0b4b047b849635ead82"
+  },
+  "opennav_coverage_demo/opennav_coverage_demo/__init__.py": {
+    "mtime": 1782093482.2329257,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "opennav_coverage_demo/opennav_coverage_demo/demo_coverage.py": {
+    "mtime": 1782093482.2329257,
+    "ast_hash": "241653b412fd7a20daf08e85b3d1275f",
+    "semantic_hash": "241653b412fd7a20daf08e85b3d1275f"
+  },
+  "opennav_coverage_demo/opennav_coverage_demo/demo_row_coverage.py": {
+    "mtime": 1782093482.2329257,
+    "ast_hash": "ce3e29ab0d21bc7cdcc8bed2c2c02213",
+    "semantic_hash": "ce3e29ab0d21bc7cdcc8bed2c2c02213"
+  },
+  "opennav_coverage_demo/setup.py": {
+    "mtime": 1782652437.4957623,
+    "ast_hash": "312dac755d00f75319a1cfe78de05624",
+    "semantic_hash": "312dac755d00f75319a1cfe78de05624"
+  },
+  "opennav_coverage_demo/test/test_copyright.py": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "fd76ea52824c1e18a239e2483d49d96a",
+    "semantic_hash": "fd76ea52824c1e18a239e2483d49d96a"
+  },
+  "opennav_coverage_demo/test/test_flake8.py": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "aa129cddddd383a922ed54000fb385e5",
+    "semantic_hash": "aa129cddddd383a922ed54000fb385e5"
+  },
+  "opennav_coverage_demo/test/test_pep257.py": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "1a5086842153d5f68611ba9f8cb7e443",
+    "semantic_hash": "1a5086842153d5f68611ba9f8cb7e443"
+  },
+  "opennav_coverage_navigator/include/opennav_coverage_navigator/coverage_navigator.hpp": {
+    "mtime": 1782638914.0930762,
+    "ast_hash": "1030947a52b81af920ae8d894ddd4c18",
+    "semantic_hash": "1030947a52b81af920ae8d894ddd4c18"
+  },
+  "opennav_coverage_navigator/src/coverage_navigator.cpp": {
+    "mtime": 1782638914.0930762,
+    "ast_hash": "38f1c66bd93cb6279828a3cc42ab8733",
+    "semantic_hash": "38f1c66bd93cb6279828a3cc42ab8733"
+  },
+  "opennav_coverage_navigator/test/test_coverage_navigator.cpp": {
+    "mtime": 1782638914.0940762,
+    "ast_hash": "a5935c4c3345e647b82cdad342f7b54a",
+    "semantic_hash": "a5935c4c3345e647b82cdad342f7b54a"
+  },
+  "opennav_row_coverage/include/opennav_row_coverage/row_coverage_server.hpp": {
+    "mtime": 1782638914.0940762,
+    "ast_hash": "195f70d93707cab3a83373c5894d95ef",
+    "semantic_hash": "195f70d93707cab3a83373c5894d95ef"
+  },
+  "opennav_row_coverage/include/opennav_row_coverage/row_swath_generator.hpp": {
+    "mtime": 1782638914.0940762,
+    "ast_hash": "4bd19506487d40f8e19f47f599ea5902",
+    "semantic_hash": "4bd19506487d40f8e19f47f599ea5902"
+  },
+  "opennav_row_coverage/include/opennav_row_coverage/types.hpp": {
+    "mtime": 1782093482.2369256,
+    "ast_hash": "f14949b5fb491f43ad873914d582dfa8",
+    "semantic_hash": "f14949b5fb491f43ad873914d582dfa8"
+  },
+  "opennav_row_coverage/include/opennav_row_coverage/utils.hpp": {
+    "mtime": 1782093482.2369256,
+    "ast_hash": "ace49b5ab58295d9546b52d8fc1d332e",
+    "semantic_hash": "ace49b5ab58295d9546b52d8fc1d332e"
+  },
+  "opennav_row_coverage/src/main.cpp": {
+    "mtime": 1782093482.2369256,
+    "ast_hash": "6d1d5f8958a2cb352bcd74d410b5317a",
+    "semantic_hash": "6d1d5f8958a2cb352bcd74d410b5317a"
+  },
+  "opennav_row_coverage/src/row_coverage_server.cpp": {
+    "mtime": 1782638914.0950763,
+    "ast_hash": "38909510e5f51a365035a0e55453ac04",
+    "semantic_hash": "38909510e5f51a365035a0e55453ac04"
+  },
+  "opennav_row_coverage/src/row_swath_generator.cpp": {
+    "mtime": 1782635497.4112632,
+    "ast_hash": "d65206a06f891fc2c21f759671f36257",
+    "semantic_hash": "d65206a06f891fc2c21f759671f36257"
+  },
+  "opennav_row_coverage/test/test_server.cpp": {
+    "mtime": 1782638914.0950763,
+    "ast_hash": "547a7fa9fd1ee0820bd8818ab5a50edf",
+    "semantic_hash": "547a7fa9fd1ee0820bd8818ab5a50edf"
+  },
+  "opennav_row_coverage/test/test_swath_generator.cpp": {
+    "mtime": 1782755269.4450717,
+    "ast_hash": "43133243bbbe4e152b1fca2b53fb9cb0",
+    "semantic_hash": "43133243bbbe4e152b1fca2b53fb9cb0"
+  },
+  "opennav_row_coverage/test/test_utils.cpp": {
+    "mtime": 1782755271.4480789,
+    "ast_hash": "743f6783901a382250c56c41067a5cde",
+    "semantic_hash": "743f6783901a382250c56c41067a5cde"
+  },
+  "opennav_row_coverage/test/tester.py": {
+    "mtime": 1782093482.2369256,
+    "ast_hash": "34bf71cb75ab9139e3df690be1a21a85",
+    "semantic_hash": "34bf71cb75ab9139e3df690be1a21a85"
+  },
+  ".github/workflows/lint.yml": {
+    "mtime": 1782638914.0840764,
+    "ast_hash": "80d855dd2de866141abde4f4607dffbe",
+    "semantic_hash": "80d855dd2de866141abde4f4607dffbe"
+  },
+  ".github/workflows/test.yml": {
+    "mtime": 1782757773.4622545,
+    "ast_hash": "016f3dbfe5c3bf2bf370d0cf376c07b1",
+    "semantic_hash": "016f3dbfe5c3bf2bf370d0cf376c07b1"
+  },
+  "README.md": {
+    "mtime": 1782755386.8008225,
+    "ast_hash": "59478bb846274c3ca23ff3a73fc2e804",
+    "semantic_hash": "59478bb846274c3ca23ff3a73fc2e804"
+  },
+  "opennav_coverage/CMakeLists.txt": {
+    "mtime": 1782755248.8510156,
+    "ast_hash": "c2471b855d3cb256fa4e8c0c0464791d",
+    "semantic_hash": "c2471b855d3cb256fa4e8c0c0464791d"
+  },
+  "opennav_coverage/README.md": {
+    "mtime": 1782093482.2299256,
+    "ast_hash": "0884c3888d5ea378ff126d83cdaae91d",
+    "semantic_hash": "0884c3888d5ea378ff126d83cdaae91d"
+  },
+  "opennav_coverage/test/CMakeLists.txt": {
+    "mtime": 1782755237.6429987,
+    "ast_hash": "f3f9594326f1aced0e9dbc72ab1e0000",
+    "semantic_hash": "f3f9594326f1aced0e9dbc72ab1e0000"
+  },
+  "opennav_coverage_bt/CMakeLists.txt": {
+    "mtime": 1782755251.6730216,
+    "ast_hash": "4b5caa66195f78ace6e77cadc29eebbc",
+    "semantic_hash": "4b5caa66195f78ace6e77cadc29eebbc"
+  },
+  "opennav_coverage_bt/README.md": {
+    "mtime": 1782093482.2319255,
+    "ast_hash": "bfb51bb81de1974e6ab0c381622bec71",
+    "semantic_hash": "bfb51bb81de1974e6ab0c381622bec71"
+  },
+  "opennav_coverage_bt/test/CMakeLists.txt": {
+    "mtime": 1782638914.0910761,
+    "ast_hash": "bd63b6411ae0cfe4e2289ebb435b363e",
+    "semantic_hash": "bd63b6411ae0cfe4e2289ebb435b363e"
+  },
+  "opennav_coverage_demo/README.md": {
+    "mtime": 1782093482.2329257,
+    "ast_hash": "bb1f94b04d0114b5945e428caaea0c59",
+    "semantic_hash": "bb1f94b04d0114b5945e428caaea0c59"
+  },
+  "opennav_coverage_demo/params/demo_params.yaml": {
+    "mtime": 1782517069.5372744,
+    "ast_hash": "e4b71500643b36ecf6118a10edfd823a",
+    "semantic_hash": "e4b71500643b36ecf6118a10edfd823a"
+  },
+  "opennav_coverage_msgs/CMakeLists.txt": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "4da24e153ced32aed4d1acca7b29bd19",
+    "semantic_hash": "4da24e153ced32aed4d1acca7b29bd19"
+  },
+  "opennav_coverage_msgs/README.md": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "11143a6186b97f2f4162dda04d6172f2",
+    "semantic_hash": "11143a6186b97f2f4162dda04d6172f2"
+  },
+  "opennav_coverage_navigator/CMakeLists.txt": {
+    "mtime": 1782755253.603026,
+    "ast_hash": "a1f490266e6ea3cf8f08c31e3e4c5525",
+    "semantic_hash": "a1f490266e6ea3cf8f08c31e3e4c5525"
+  },
+  "opennav_coverage_navigator/README.md": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "1ca31b13f1c037db1dc650aa2e709de5",
+    "semantic_hash": "1ca31b13f1c037db1dc650aa2e709de5"
+  },
+  "opennav_coverage_navigator/test/CMakeLists.txt": {
+    "mtime": 1782638914.0930762,
+    "ast_hash": "8df23b0f3b4df8fc4df23642dcb1b9b2",
+    "semantic_hash": "8df23b0f3b4df8fc4df23642dcb1b9b2"
+  },
+  "opennav_row_coverage/CMakeLists.txt": {
+    "mtime": 1782755259.4830408,
+    "ast_hash": "5b7b6a5ab9f9e0511f3719ec77f6bfbd",
+    "semantic_hash": "5b7b6a5ab9f9e0511f3719ec77f6bfbd"
+  },
+  "opennav_row_coverage/test/CMakeLists.txt": {
+    "mtime": 1782755239.0580003,
+    "ast_hash": "1eb25652356a65de64561830b185354e",
+    "semantic_hash": "1eb25652356a65de64561830b185354e"
+  },
+  "opennav_coverage_demo/test/demo.png": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "1e37535243535784c57f3a8a31173771",
+    "semantic_hash": "1e37535243535784c57f3a8a31173771"
+  },
+  "opennav_coverage_demo/test/demo_rows.png": {
+    "mtime": 1782093482.2359257,
+    "ast_hash": "8e37eb284227c91ef7de4012aa790581",
+    "semantic_hash": "8e37eb284227c91ef7de4012aa790581"
+  }
+}

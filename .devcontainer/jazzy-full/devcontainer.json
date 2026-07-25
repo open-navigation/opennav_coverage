@@ -1,0 +1,42 @@
+{
+  "name": "opennav_coverage (ROS 2 Jazzy FULL — nav2 + Gazebo + TB3 sim, jazzy-v2 branch)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // Repo'yu colcon workspace src/'i olarak bağla; build/install/log /ros_ws
+  // altında (konteyner fs) kalır → repo'yu kirletmez.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ros_ws/src/opennav_coverage,type=bind",
+  "workspaceFolder": "/ros_ws",
+  "remoteUser": "ros",
+
+  // RViz + Gazebo GUI (Linux host) için X11 passthrough.
+  // İlk seferinde host'ta bir kez:  xhost +local:docker
+  // network=host → Gazebo/ROS discovery; ipc=host → paylaşımlı bellek.
+  "runArgs": ["--network=host", "--ipc=host"],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "QT_X11_NO_MITSHM": "1"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+    // build/install/log'u named volume'e al: "Rebuild Container" sonrası bile
+    // opennav paketlerinin colcon cache'i kalır → yalnız değişen paket derlenir.
+    "source=opennav-coverage-jazzy-full-build,target=/ros_ws/build,type=volume",
+    "source=opennav-coverage-jazzy-full-install,target=/ros_ws/install,type=volume",
+    "source=opennav-coverage-jazzy-full-log,target=/ros_ws/log,type=volume"
+  ],
+
+  // İlk açılışta workspace'i otomatik derle (deps apt'te → hızlı).
+  "postCreateCommand": "bash -lc 'cd /ros_ws && colcon build --symlink-install'",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-iot.vscode-ros",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

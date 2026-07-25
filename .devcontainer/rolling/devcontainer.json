@@ -1,0 +1,38 @@
+{
+  "name": "opennav_coverage (ROS 2 Rolling + F2C v2 source build, main branch)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // Repo'yu colcon workspace'in src/'i olarak bağla.
+  // Böylece build/install/log dizinleri /ros_ws altında (container içinde) kalır,
+  // repo'yu kirletmez ve host'a yazılmaz.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ros_ws/src/opennav_coverage,type=bind",
+  "workspaceFolder": "/ros_ws/src/opennav_coverage",
+  "remoteUser": "ros",
+
+  // RViz / GUI (Linux host) için X11 passthrough — gerekmezse zararsız.
+  // İlk seferinde host'ta bir kez:  xhost +local:docker
+  "runArgs": ["--network=host", "--ipc=host"],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "QT_X11_NO_MITSHM": "1"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+  ],
+
+  // ROS bağımlılıkları artık Dockerfile'da gömülü (cache'li layer) → postCreate'e gerek yok.
+  // Container yeniden yaratılınca sıfır indirme, anında açılır.
+  // Yeni bağımlılık gerekirse Dockerfile'daki nav2 apt satırına ekle + "Rebuild Container".
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-iot.vscode-ros",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

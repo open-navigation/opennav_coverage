@@ -1,0 +1,43 @@
+{
+  "name": "opennav_coverage (ROS 2 Rolling FULL / broad scope = CI mirror, resolute 26.04)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // Repo'yu colcon workspace src/'i olarak bagla. Kaynak deps'i (navigation2/F2C/
+  // ortools/behaviortree) container icinde interaktif `vcs import src/deps` ile
+  // alacagiz. build/install/log /ros_ws altinda (konteyner fs) kalir -> konteyner
+  // yeniden baslayinca colcon cache korunur.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ros_ws/src/opennav_coverage,type=bind",
+  "workspaceFolder": "/ros_ws",
+  "remoteUser": "ros",
+
+  "runArgs": ["--network=host", "--ipc=host"],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "QT_X11_NO_MITSHM": "1"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+    // build/install/log'u named volume'e al: container silinip yeniden
+    // olusturulsa bile (Rebuild Container) nav2/F2C/ortools/BT.CPP'nin
+    // colcon build cache'i kalir -> agir deps'ler bastan derlenmez, sadece
+    // degisen opennav paketleri incremental derlenir.
+    "source=opennav-coverage-rolling-full-build,target=/ros_ws/build,type=volume",
+    "source=opennav-coverage-rolling-full-install,target=/ros_ws/install,type=volume",
+    "source=opennav-coverage-rolling-full-log,target=/ros_ws/log,type=volume"
+  ],
+
+  // Genis kapsami container icinde interaktif derleyip iterasyon yapariz.
+  // Calistirilacak adimlar Dockerfile sonundaki "INTERAKTIF ADIMLAR" blokunda.
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-iot.vscode-ros",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

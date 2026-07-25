@@ -1,0 +1,41 @@
+{
+  "name": "opennav_coverage (ROS 2 Lyrical FULL / broad scope = CI mirror)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // Repo'yu, image'in clone'ladigi navigation2/F2C/ortools/slam paketlerinin
+  // YANINA, colcon workspace src/'i olarak bagla. Boylece runtime'da src =
+  // {navigation2, Fields2Cover, ortools_vendor, slam_toolbox} (image) +
+  // opennav_coverage (mount). build/install/log /ros_ws altinda (konteyner fs)
+  // kalir -> konteyner yeniden baslayinca colcon cache korunur.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ros_ws/src/opennav_coverage,type=bind",
+  "workspaceFolder": "/ros_ws",
+  "remoteUser": "ros",
+
+  "runArgs": ["--network=host", "--ipc=host"],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "QT_X11_NO_MITSHM": "1"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+  ],
+
+  // Genis kapsami (CI ile ayni paket seti) burada interaktif derleyip iterasyon
+  // yapariz; ilk build uzun, sonraki seferler cache'li. Calistirilacak komut:
+  //   colcon build --packages-up-to \
+  //     nav2_bt_navigator nav2_behavior_tree opennav_coverage opennav_coverage_bt \
+  //     opennav_coverage_demo opennav_coverage_msgs opennav_coverage_navigator \
+  //     opennav_row_coverage --event-handlers=console_cohesion+
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-iot.vscode-ros",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}
