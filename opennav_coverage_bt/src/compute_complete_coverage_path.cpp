@@ -53,6 +53,14 @@ void ComputeCoveragePathAction::on_tick()
   getInput("tsp_search_for_optimum", goal_.route_mode.tsp_search_for_optimum);
   getInput("tsp_d_tol", goal_.route_mode.tsp_d_tol);
 
+  // TSP start/return point
+  getInput("use_start_pose", goal_.use_start_pose);
+  geometry_msgs::msg::Point start_pose;
+  if (getInput("start_pose", start_pose)) {
+    goal_.start_pose.axis1 = start_pose.x;
+    goal_.start_pose.axis2 = start_pose.y;
+  }
+
   // Get the field to get coverage for
   std::string gml_filename;
   if (getInput("file_field", gml_filename)) {

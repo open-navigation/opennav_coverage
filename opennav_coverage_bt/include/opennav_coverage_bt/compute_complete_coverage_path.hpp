@@ -22,6 +22,7 @@
 #include "opennav_coverage_msgs/action/compute_coverage_path.hpp"
 #include "nav2_behavior_tree/bt_action_node.hpp"
 #include "geometry_msgs/msg/polygon.hpp"
+#include "geometry_msgs/msg/point.hpp"
 #include "opennav_coverage_bt/utils.hpp"
 
 namespace opennav_coverage_bt
@@ -95,6 +96,9 @@ public:
         BT::InputPort<int>("tsp_time_limit", 1, "TSP: OR-Tools time limit in seconds"),
         BT::InputPort<bool>("tsp_search_for_optimum", false, "TSP: guided local search"),
         BT::InputPort<double>("tsp_d_tol", 0.0001, "TSP: distance tolerance for OR-Tools"),
+        BT::InputPort<bool>("use_start_pose", false, "TSP: start/return route at start_pose"),
+        BT::InputPort<geometry_msgs::msg::Point>(
+          "start_pose", "TSP: route start/return point, in the polygons' frame"),
 
         BT::InputPort<std::string>("file_field", "Filepath to field GML file"),
         BT::InputPort<int>("file_field_id", 0, "Ordered ID of which field to use in GML File"),
