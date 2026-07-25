@@ -339,6 +339,22 @@ inline F2CField getFieldFromGoal(
 }
 
 /**
+ * @brief Converts a goal-frame point into the frame the field's swaths/cells live in
+ * @param pt Point in the goal frame (cartesian or GPS)
+ * @param field Field already transformed to its working frame
+ * @param is_cartesian Whether the goal coordinates are cartesian
+ * @return Point in the field's local frame
+ */
+inline F2CPoint toFieldFrame(const F2CPoint & pt, const F2CField & field, bool is_cartesian)
+{
+  // F2CField always stores geometry with its ref point subtracted, so the start point needs
+  // the same ref point removed (and, for GPS, projecting to UTM first).
+  F2CPoint abs = is_cartesian ?
+    pt : f2c::Transform::transform(pt, field.getPrevCRS(), field.getCRS());
+  return abs - field.getRefPoint();
+}
+
+/**
  * @brief Converts a string to uppercase
  * @param string String to change to uppercase
  */
