@@ -57,6 +57,20 @@ public:
   }
 };
 
+// Deterministic square field so B.9 start-point assertions aren't subject to random geometry
+static F2CCells makeSquareCells(double s)
+{
+  F2CLinearRing ring;
+  ring.addPoint(0.0, 0.0);
+  ring.addPoint(s, 0.0);
+  ring.addPoint(s, s);
+  ring.addPoint(0.0, s);
+  ring.addPoint(0.0, 0.0);
+  F2CCells cells;
+  cells.addGeometry(F2CCell(ring));
+  return cells;
+}
+
 TEST(RouteTests, TestrouteUtils)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");
@@ -217,6 +231,89 @@ TEST(RouteTests, TestSwathOrderWrappedAsRoute)
     total_out += route.getVectorSwaths()[i].size();
   }
   EXPECT_EQ(sbc.sizeTotal(), total_out);
+}
+
+TEST(RouteTests, TestTSPStartPointHonored)
+{
+  // On the global route path, the route starts and returns at the given point
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeSquareCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "TSP";
+
+  F2CPoint start(0.0, 0.0);
+  F2CRoute route = generator.generateRoute(cells, sbc, settings, start);
+  EXPECT_FALSE(route.isEmpty());
+  EXPECT_NEAR(route.startPoint().getX(), start.getX(), 1e-2);
+  EXPECT_NEAR(route.startPoint().getY(), start.getY(), 1e-2);
+  EXPECT_NEAR(route.endPoint().getX(), start.getX(), 1e-2);
+  EXPECT_NEAR(route.endPoint().getY(), start.getY(), 1e-2);
+}
+
+TEST(RouteTests, TestTSPNoStartPointRegression)
+{
+  // No start point still produces a valid route
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeSquareCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "TSP";
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+  EXPECT_FALSE(route.isEmpty());
+}
+
+TEST(RouteTests, TestNonTSPStartPointIgnored)
+{
+  // Orderer modes ignore the start point, producing an identical route
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeSquareCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "BOUSTROPHEDON";
+  F2CRoute without = generator.generateRoute(cells, sbc, settings);
+  F2CRoute with = generator.generateRoute(cells, sbc, settings, F2CPoint(0.0, 0.0));
+
+  EXPECT_EQ(without.asLineString().size(), with.asLineString().size());
+  EXPECT_NEAR(without.length(), with.length(), 1e-6);
+}
+
+TEST(RouteTests, TestTSPStitchIgnoresStartPoint)
+{
+  // The stitched fallback drops the start point but still produces a valid route
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeSquareCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  generator.setMaxSwathsForGlobalRoute(0);  // force the stitched fallback
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "TSP";
+  F2CRoute route = generator.generateRoute(cells, sbc, settings, F2CPoint(0.0, 0.0));
+  EXPECT_FALSE(route.isEmpty());
 }
 
 }  // namespace opennav_coverage
