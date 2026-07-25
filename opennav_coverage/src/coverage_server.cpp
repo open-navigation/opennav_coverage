@@ -196,6 +196,13 @@ void CoverageServer::computeCoveragePath()
     // (1) Build the cells to cover: remove the headland, optionally decomposing first
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
+    // Reject non-TSP+decomp up front; the deep check only fires after all the geometry work.
+    if (do_decomp && goal->generate_route && !route_gen_->resolvesToTsp(goal->route_mode)) {
+      throw CoverageException(
+              "Non-TSP route modes are not supported with field decomposition; "
+              "use route_mode TSP or disable decomposition.");
+    }
+
     Field field_no_headland = field;
     // route_cells: travel graph for the route planner. swath_cells: cells swaths
     // are generated from. Differ only when decomposing with a headland.
