@@ -62,6 +62,14 @@ public:
       node, "default_turn_point_distance", rclcpp::ParameterValue(0.1));
     default_turn_point_distance_ = node->get_parameter("default_turn_point_distance").as_double();
 
+    nav2_util::declare_parameter_if_not_declared(
+      node, "default_reduce_path", rclcpp::ParameterValue(false));
+    reduce_path_ = node->get_parameter("default_reduce_path").as_bool();
+
+    nav2_util::declare_parameter_if_not_declared(
+      node, "default_reduce_min_dist", rclcpp::ParameterValue(0.1));
+    reduce_min_dist_ = node->get_parameter("default_reduce_min_dist").as_double();
+
     // Path Generator requires no changes at runtime
     generator_ = std::make_unique<f2c::pp::PathPlanning>();
     default_curve_ = createCurve(default_type_, default_continuity_type_);
@@ -96,6 +104,18 @@ public:
 
   float getTurnPointDistance() {return default_turn_point_distance_;}
 
+  /**
+   * @brief Enables/disables removing near-duplicate points from the path
+   * @param setting bool to enable path reduction
+   */
+  void setReducePath(const bool & setting) {reduce_path_ = setting;}
+
+  /**
+   * @brief Sets the minimum distance threshold used when reducing the path
+   * @param setting double minimum distance between kept points
+   */
+  void setReduceMinDist(const double & setting) {reduce_min_dist_ = setting;}
+
 protected:
   /**
    * @brief Creates generator pointer of a requested type
@@ -127,6 +147,8 @@ protected:
   PathType default_type_;
   PathContinuityType default_continuity_type_;
   float default_turn_point_distance_;
+  bool reduce_path_;
+  double reduce_min_dist_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
   RobotParams * robot_params_;
