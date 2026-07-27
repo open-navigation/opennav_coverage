@@ -103,7 +103,11 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         output='screen',
-        arguments=['5.0', '5.0', '0', '0', '0', '0', 'map', 'odom'],
+        arguments=[
+            '--x', '5.0', '--y', '5.0', '--z', '0',
+            '--yaw', '0', '--pitch', '0', '--roll', '0',
+            '--frame-id', 'map', '--child-frame-id', 'odom',
+        ],
     )
 
     # start the demo task

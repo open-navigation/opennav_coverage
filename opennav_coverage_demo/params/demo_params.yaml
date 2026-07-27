@@ -38,7 +38,7 @@ bt_navigator:
     navigators: ['navigate_complete_coverage']
     navigate_complete_coverage:
       plugin: "opennav_coverage_navigator/CoverageNavigator"
-    error_code_names: ["compute_path_error_code", "follow_path_error_code", "compute_coverage_error_code"]
+    error_code_name_prefixes: ["compute_path", "follow_path", "compute_coverage"]
     plugin_lib_names:
       - opennav_compute_complete_coverage_action_bt_node
       - opennav_cancel_complete_coverage_action_bt_node
