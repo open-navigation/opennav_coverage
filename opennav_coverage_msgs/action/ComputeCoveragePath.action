@@ -23,6 +23,10 @@ opennav_coverage_msgs/RowSwathMode row_swath_mode
 opennav_coverage_msgs/RouteMode route_mode
 opennav_coverage_msgs/PathMode path_mode
 
+# TSP-only: start and return the route at this point, in the same frame as polygons
+bool use_start_pose False
+opennav_coverage_msgs/Coordinate start_pose
+
 ---
 #result definition
 
