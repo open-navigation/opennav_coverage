@@ -80,12 +80,20 @@ def generate_launch_description():
             package='tf2_ros',
             executable='static_transform_publisher',
             output='screen',
-            arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'])
+            arguments=[
+                '--x', '0', '--y', '0', '--z', '0',
+                '--yaw', '0', '--pitch', '0', '--roll', '0',
+                '--frame-id', 'map', '--child-frame-id', 'odom',
+            ])
     fake_gps_cmd = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             output='screen',
-            arguments=['0', '0', '0', '0', '0', '0', 'EPSG:4258', 'map'])
+            arguments=[
+                '--x', '0', '--y', '0', '--z', '0',
+                '--yaw', '0', '--pitch', '0', '--roll', '0',
+                '--frame-id', 'EPSG:4258', '--child-frame-id', 'map',
+            ])
 
     # start the demo task
     demo_cmd = Node(

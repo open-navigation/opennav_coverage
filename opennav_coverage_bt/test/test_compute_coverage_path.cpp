@@ -19,6 +19,7 @@
 
 #include "nav_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/point.hpp"
 
 #include "behaviortree_cpp_v3/bt_factory.h"
 
@@ -221,6 +222,40 @@ TEST_F(ComputeCoveragePathActionTestFixture, test_tsp_ports)
   EXPECT_EQ(goal.route_mode.tsp_time_limit, 3u);
   EXPECT_TRUE(goal.route_mode.tsp_search_for_optimum);
   EXPECT_NEAR(goal.route_mode.tsp_d_tol, 0.0005, 1e-9);
+
+  tree_->haltTree();
+}
+
+TEST_F(ComputeCoveragePathActionTestFixture, test_start_pose_ports)
+{
+  // use_start_pose and start_pose flow from BT XML/blackboard to the goal
+  geometry_msgs::msg::Point start;
+  start.x = 5.0;
+  start.y = 7.0;
+  config_->blackboard->set<geometry_msgs::msg::Point>("start_pt", start);
+
+  std::string xml_txt =
+    R"(
+      <root BTCPP_format="4" main_tree_to_execute="MainTree">
+        <BehaviorTree ID="MainTree">
+            <ComputeCoveragePath
+              nav_path="{path}"
+              use_start_pose="true"
+              start_pose="{start_pt}"/>
+        </BehaviorTree>
+      </root>)";
+
+  tree_ = std::make_shared<BT::Tree>(factory_->createTreeFromText(xml_txt, config_->blackboard));
+
+  while (tree_->rootNode()->status() != BT::NodeStatus::SUCCESS) {
+    tree_->rootNode()->executeTick();
+  }
+  EXPECT_EQ(tree_->rootNode()->status(), BT::NodeStatus::SUCCESS);
+
+  const auto & goal = action_server_->getReceivedGoal();
+  EXPECT_TRUE(goal.use_start_pose);
+  EXPECT_NEAR(goal.start_pose.axis1, 5.0, 1e-6);
+  EXPECT_NEAR(goal.start_pose.axis2, 7.0, 1e-6);
 
   tree_->haltTree();
 }

@@ -46,6 +46,7 @@ public:
     this->on_configure(state);
     cartesian_frame_ = false;  // Test files in GPS
   }
+  void setCartesianFrame(bool v) {cartesian_frame_ = v;}
   void activate(const rclcpp_lifecycle::State & state) {this->on_activate(state);}
   void deactivate(const rclcpp_lifecycle::State & state) {this->on_deactivate(state);}
   void cleanup(const rclcpp_lifecycle::State & state) {this->on_cleanup(state);}
@@ -380,6 +381,7 @@ TEST(ServerTest, testTSPNoDecompPath)
   goal_msg.route_mode.mode = "TSP";
   goal_msg.route_mode.tsp_time_limit = 1;
   goal_msg.generate_path = true;
+  goal_msg.use_start_pose = false;  // baseline: start point unset
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   const std::filesystem::path share_dir =
@@ -405,6 +407,113 @@ TEST(ServerTest, testTSPNoDecompPath)
   EXPECT_FALSE(result.result->coverage_path.swaths.empty());
   EXPECT_TRUE(result.result->coverage_path.contains_turns);
   EXPECT_TRUE(std::isfinite(result.result->task_time));
+}
+
+TEST(ServerTest, testTSPStartPose)
+{
+  // TSP with use_start_pose starts the path at the given GPS point
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_tsp_startpose");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.use_gml_file = true;
+  goal_msg.generate_decomp = false;
+  goal_msg.generate_headland = true;
+  goal_msg.generate_route = true;
+  goal_msg.route_mode.mode = "TSP";
+  goal_msg.route_mode.tsp_time_limit = 1;
+  goal_msg.generate_path = true;
+  goal_msg.use_start_pose = true;
+  // First outer-boundary vertex of test_field.xml (GPS); the route/path must begin here.
+  goal_msg.start_pose.axis1 = 4.26199990317851;
+  goal_msg.start_pose.axis2 = 51.7859704975047;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  const std::filesystem::path share_dir =
+    ament_index_cpp::get_package_share_directory("opennav_coverage");
+#pragma GCC diagnostic pop
+  goal_msg.gml_field = (share_dir / "test_field.xml").string();
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+  ASSERT_FALSE(result.result->nav_path.poses.empty());
+  // Output is GPS, so the first pose should sit at the requested start vertex
+  EXPECT_NEAR(result.result->nav_path.poses.front().pose.position.x, 4.26199990317851, 1e-4);
+  EXPECT_NEAR(result.result->nav_path.poses.front().pose.position.y, 51.7859704975047, 1e-4);
+}
+
+TEST(ServerTest, testTSPStartPoseCartesian)
+{
+  // Cartesian start pose must land at (5,5), not shifted by the field ref point
+  auto node = std::make_shared<ServerShim>();
+  rclcpp_lifecycle::State state;
+  node->configure(state);
+  node->setCartesianFrame(true);
+  node->activate(state);
+  auto node_thread = std::make_unique<nav2_util::NodeThread>(node);
+
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_tsp_startpose_cart");
+  auto action_client =
+    rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
+    client_node, "compute_coverage_path");
+  action_client->wait_for_action_server();
+
+  auto goal_msg = opennav_coverage_msgs::action::ComputeCoveragePath::Goal();
+  goal_msg.frame_id = "map";
+  goal_msg.generate_headland = false;
+  goal_msg.generate_route = true;
+  goal_msg.generate_path = true;
+  goal_msg.route_mode.mode = "TSP";
+  goal_msg.route_mode.tsp_time_limit = 1;
+  goal_msg.use_start_pose = true;
+  goal_msg.start_pose.axis1 = 5.0;
+  goal_msg.start_pose.axis2 = 5.0;
+  goal_msg.polygons.resize(1);
+  for (const auto & xy : {std::pair<double, double>{5.0, 5.0}, {45.0, 5.0}, {45.0, 45.0},
+      {5.0, 45.0}, {5.0, 5.0}})
+  {
+    opennav_coverage_msgs::msg::Coordinate c;
+    c.axis1 = xy.first;
+    c.axis2 = xy.second;
+    goal_msg.polygons[0].coordinates.push_back(c);
+  }
+
+  auto future_goal_handle = action_client->async_send_goal(goal_msg);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_goal_handle),
+    rclcpp::FutureReturnCode::SUCCESS);
+  auto goal_handle = future_goal_handle.get();
+
+  auto future_result = action_client->async_get_result(goal_handle);
+  EXPECT_EQ(
+    rclcpp::spin_until_future_complete(client_node, future_result),
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto result = future_result.get();
+  EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
+  ASSERT_FALSE(result.result->nav_path.poses.empty());
+  EXPECT_NEAR(result.result->nav_path.poses.front().pose.position.x, 5.0, 1e-3);
+  EXPECT_NEAR(result.result->nav_path.poses.front().pose.position.y, 5.0, 1e-3);
 }
 
 TEST(ServerTest, testDynamicParams)

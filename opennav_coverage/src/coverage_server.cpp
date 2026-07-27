@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cmath>
+#include <optional>
 
 #include "opennav_coverage/coverage_server.hpp"
 
@@ -242,7 +243,13 @@ void CoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      F2CRoute route = route_gen_->generateRoute(route_cells, swaths_by_cells, goal->route_mode);
+      std::optional<F2CPoint> start_end_point;
+      if (goal->use_start_pose) {
+        start_end_point = util::toFieldFrame(
+          F2CPoint(goal->start_pose.axis1, goal->start_pose.axis2), master_field, cartesian_frame_);
+      }
+      F2CRoute route =
+        route_gen_->generateRoute(route_cells, swaths_by_cells, goal->route_mode, start_end_point);
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
       }
@@ -309,6 +316,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         swath_gen_->setStepAngle(parameter.as_double());
       } else if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
+      } else if (name == "default_reduce_min_dist") {
+        path_gen_->setReduceMinDist(parameter.as_double());
       } else if (name == "default_tsp_d_tol") {
         route_gen_->setTspDTol(parameter.as_double());
       } else if (name == "robot_width") {
@@ -341,6 +350,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         route_gen_->setTspRedirectSwaths(parameter.as_bool());
       } else if (name == "default_tsp_search_for_optimum") {
         route_gen_->setTspSearchForOptimum(parameter.as_bool());
+      } else if (name == "default_reduce_path") {
+        path_gen_->setReducePath(parameter.as_bool());
       }
     } else if (type == ParameterType::PARAMETER_INTEGER) {
       if (name == "default_spiral_n") {
