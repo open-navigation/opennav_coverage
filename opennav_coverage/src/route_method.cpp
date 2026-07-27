@@ -60,15 +60,13 @@ F2CRoute reversedRoute(const F2CRoute & route)
 }  // namespace
 
 F2CRoute SwathOrderMethod::plan(
-  const F2CCells & travel_cells,
+  const F2CCells & /*travel_cells*/,
   const F2CCells & swath_cells,
   const F2CSwathsByCells & swaths_by_cells,
   const opennav_coverage_msgs::msg::RouteMode & settings,
-  const std::optional<F2CPoint> & start_end)
+  // start_end is a TSP-only concept; the generator already warns the user, so it is ignored here
+  const std::optional<F2CPoint> & /*start_end*/)
 {
-  (void)travel_cells;
-  (void)start_end;  // TSP-only concept; the generator already warns the user
-
   // These orderers assume a single cell; multi-cell input breaks their ordering.
   if (swath_cells.size() > 1) {
     throw CoverageException(
