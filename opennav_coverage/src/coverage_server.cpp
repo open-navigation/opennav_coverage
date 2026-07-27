@@ -210,9 +210,8 @@ void CoverageServer::computeCoveragePath()
     F2CCells route_cells;
     F2CCells swath_cells;
     if (do_decomp) {
-      // Headland-first: remove the headland from the whole field, decompose that into
-      // border-sharing cells (the travel graph), then remove the headland again per
-      // cell for the swaths, so connections run along the shared headland.
+      // Headland-first: remove the headland once from the whole field, then
+      // decompose that into border-sharing cells (the travel graph).
       Field travel_ring = field;
       if (goal->generate_headland) {
         travel_ring = headland_gen_->generateHeadlands(field, goal->headland_mode);
@@ -221,8 +220,14 @@ void CoverageServer::computeCoveragePath()
       F2CCells travel_ring_cells;
       travel_ring_cells.addGeometry(travel_ring);
       route_cells = decomp_gen_->decompose(travel_ring_cells, goal->decomp_mode);
-      swath_cells = goal->generate_headland ?
-        headland_gen_->generateHeadlands(route_cells, goal->headland_mode) : route_cells;
+      if (!goal->generate_headland) {
+        swath_cells = route_cells;
+      } else {
+        // Headland already removed before decomposing; only carve the inter-cell corridor here.
+        const double route_w = goal->route_headland_width > 0.0 ?
+          goal->route_headland_width : robot_params_->getOperationWidth();
+        swath_cells = headland_gen_->generateHeadlandsBetweenCells(route_cells, route_w);
+      }
     } else {
       // No decomposition: remove the headland from the single field cell
       if (goal->generate_headland) {
