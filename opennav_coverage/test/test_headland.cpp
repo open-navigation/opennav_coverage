@@ -140,6 +140,47 @@ TEST(HeadlandTests, TestheadlandMultiCellCollapseSkipped)
   EXPECT_GT(result.getGeometry(0).area(), 0.0);
 }
 
+TEST(HeadlandTests, TestheadlandBetweenCells)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  auto generator = HeadlandShim(node);
+
+  // Two 50x100 cells sharing the x=50 border, inside a 100x100 outer boundary.
+  F2CCell left(F2CLinearRing(
+    {
+      F2CPoint(0, 0), F2CPoint(50, 0), F2CPoint(50, 100), F2CPoint(0, 100), F2CPoint(0, 0)}));
+  F2CCell right(F2CLinearRing(
+    {
+      F2CPoint(50, 0), F2CPoint(100, 0), F2CPoint(100, 100),
+      F2CPoint(50, 100), F2CPoint(50, 0)}));
+  F2CCells cells;
+  cells.addGeometry(left);
+  cells.addGeometry(right);
+
+  F2CCells result = generator.generateHeadlandsBetweenCells(cells, 2.0);
+
+  EXPECT_EQ(result.size(), 2u);
+  // Only x=50 is carved (~48x100 each): total > full-border-buffer case (8832)
+  // but < the original (10000).
+  EXPECT_GT(result.area(), 9000.0);
+  EXPECT_LT(result.area(), 9999.0);
+
+  // Width larger than the cells collapses everything -> throws.
+  EXPECT_THROW(generator.generateHeadlandsBetweenCells(cells, 60.0), CoverageException);
+
+  // Cells facing each other across a void share no border, so nothing may be
+  // carved (route headland only ever goes between truly adjacent cells).
+  F2CCell far_right(F2CLinearRing(
+    {
+      F2CPoint(60, 0), F2CPoint(110, 0), F2CPoint(110, 100),
+      F2CPoint(60, 100), F2CPoint(60, 0)}));
+  F2CCells apart;
+  apart.addGeometry(left);
+  apart.addGeometry(far_right);
+  F2CCells untouched = generator.generateHeadlandsBetweenCells(apart, 2.0);
+  EXPECT_NEAR(untouched.area(), apart.area(), 1e-3);
+}
+
 TEST(HeadlandTests, TestheadlandMultiCellAllCollapseThrows)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");
