@@ -132,6 +132,7 @@ protected:
   std::unique_ptr<Visualizer> visualizer_;
   bool cartesian_frame_;
   bool default_generate_decomp_{false};
+  bool default_generate_headland_swaths_{false};
 };
 
 }  // namespace opennav_coverage
