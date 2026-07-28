@@ -538,8 +538,8 @@ TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity)
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
-  // HL_SWATH state: velocity=1.5, direction=FORWARD, passes through as one point
-  // (discretizeSwath does not densify HL_SWATH, only SWATH)
+  // HL_SWATH state: velocity=1.5, direction=FORWARD. Now densified like SWATH
+  // (discretizeSwathLike splits HL_SWATH too), so every sub-point keeps vel/dir.
   EXPECT_NEAR(vels[0], 1.5, 1e-6);
   EXPECT_FALSE(dirs[0]);
   // TURN state: velocity=0.5, direction=BACKWARD
@@ -578,6 +578,53 @@ TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch)
   // SWATH poses are forward; TURN poses are backward
   EXPECT_FALSE(dirs[0]);
   EXPECT_TRUE(dirs.back());
+}
+
+// HL_SWATH must be densified, not passed through as a single waypoint.
+TEST(UtilsTests, TesttoNavPathMsgHLSwathDensified)
+{
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  Path path_in;
+
+  PathState hl_swath;
+  hl_swath.type = f2c::types::PathSectionType::HL_SWATH;
+  hl_swath.point = Point(0.0, 0.0);
+  hl_swath.len = 1.0;
+  hl_swath.angle = 0.0;
+  hl_swath.velocity = 1.0;
+  hl_swath.dir = f2c::types::PathDirection::FORWARD;
+  path_in.addState(hl_swath);
+
+  F2CField field;
+  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f);
+
+  // len 1.0 at 0.1 spacing -> ~10 sub-points
+  EXPECT_GT(nav_path.poses.size(), 5u);
+}
+
+// Headland perimeter loop is built from a field boundary as HL_SWATH states,
+// starting at the boundary vertex closest to the given anchor.
+TEST(UtilsTests, TesttoHeadlandPerimeterPath)
+{
+  F2CLinearRing ring;
+  ring.addPoint(0.0, 0.0);
+  ring.addPoint(10.0, 0.0);
+  ring.addPoint(10.0, 10.0);
+  ring.addPoint(0.0, 10.0);
+  ring.addPoint(0.0, 0.0);
+  Field area(ring);
+
+  // Anchor closest to (10, 10) -> loop should start there.
+  Path path = util::toHeadlandPerimeterPath(area, 1.0, Point(9.0, 9.0));
+
+  EXPECT_EQ(path.size(), 4u);
+  for (const auto & s : path.getStates()) {
+    EXPECT_EQ(s.type, f2c::types::PathSectionType::HL_SWATH);
+    EXPECT_NEAR(s.velocity, 1.0, 1e-6);
+  }
+  EXPECT_NEAR(path[0].point.getX(), 10.0, 1e-6);
+  EXPECT_NEAR(path[0].point.getY(), 10.0, 1e-6);
 }
 
 }  // namespace opennav_coverage

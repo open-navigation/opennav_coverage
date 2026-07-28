@@ -48,6 +48,10 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
     node, "default_generate_decomp", rclcpp::ParameterValue(false));
   get_parameter("default_generate_decomp", default_generate_decomp_);
 
+  nav2::declare_parameter_if_not_declared(
+    node, "default_generate_headland_swaths", rclcpp::ParameterValue(false));
+  get_parameter("default_generate_headland_swaths", default_generate_headland_swaths_);
+
   // If in GPS coordinates, we must convert to a CRS to compute coverage
   // Then, reconvert back to GPS for the user.
   nav2::declare_parameter_if_not_declared(
@@ -246,6 +250,16 @@ void CoverageServer::computeCoveragePath()
     header.stamp = now();
     header.frame_id = frame_id;
     Path path;
+    Path headland_path;  // kept for visualization after being spliced into path
+    // Optional: also drive the headland perimeter; needs the full route+path pipeline.
+    const bool do_headland_swaths =
+      goal->generate_headland_swaths || default_generate_headland_swaths_;
+    if (do_headland_swaths && !(goal->generate_route && goal->generate_path)) {
+      RCLCPP_WARN(
+        get_logger(),
+        "generate_headland_swaths needs generate_route and generate_path; "
+        "skipping the headland perimeter pass.");
+    }
     if (goal->generate_route) {
       std::optional<F2CPoint> start_end;
       if (goal->use_start_pose) {
@@ -263,6 +277,34 @@ void CoverageServer::computeCoveragePath()
       // Converts UTM back to GPS, if necessary, for action returns
       if (goal->generate_path) {
         path = path_gen_->generatePath(route, goal->path_mode);
+
+        // Prepend/append the headland pass(es); loops start near the route to minimize the jump.
+        if (do_headland_swaths) {
+          const double cruise_vel = robot_params_->getRobot().getCruiseVel();
+          if (goal->headland_full_coverage) {
+            // Concentric passes (outer to inner) sweeping the whole band
+            const auto rings = headland_gen_->generateHeadlandSwaths(
+              field, robot_params_->getOperationWidth(), goal->headland_mode);
+            for (const auto & ring : rings) {
+              for (size_t c = 0; c < ring.size(); ++c) {
+                headland_path += util::toHeadlandPerimeterPath(
+                  ring.getGeometry(c), cruise_vel, path[0].point);
+              }
+            }
+          } else {
+            // Single perimeter pass along the headland's inner boundary
+            headland_path = util::toHeadlandPerimeterPath(
+              field_no_headland, cruise_vel, path[0].point);
+          }
+          if (goal->headland_first) {
+            Path combined = headland_path;
+            combined += path;
+            path = combined;
+          } else {
+            path += headland_path;
+          }
+        }
+
         result->coverage_path =
           util::toCoveragePathMsg(path, master_field, header, cartesian_frame_);
         result->nav_path = util::toNavPathMsg(
@@ -287,7 +329,7 @@ void CoverageServer::computeCoveragePath()
     visualizer_->visualize(
       field, field_no_headland, master_field.getRefPoint(),
       util::toCartesianNavPathMsg(path, header, path_gen_->getTurnPointDistance()),
-      swaths, header);
+      swaths, header, headland_path);
     action_server_->succeeded_current(result);
   } catch (CoverageException & e) {
     RCLCPP_ERROR(get_logger(), "Invalid mode set: %s", e.what());
@@ -357,6 +399,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         route_gen_->setTspSearchForOptimum(parameter.as_bool());
       } else if (name == "default_reduce_path") {
         path_gen_->setReducePath(parameter.as_bool());
+      } else if (name == "default_generate_headland_swaths") {
+        default_generate_headland_swaths_ = parameter.as_bool();
       }
     } else if (type == ParameterType::PARAMETER_INTEGER) {
       if (name == "default_spiral_n") {
