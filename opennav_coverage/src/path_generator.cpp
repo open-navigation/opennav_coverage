@@ -100,6 +100,24 @@ void PathGenerator::appendConnection(
     return;
   }
 
+  // Drop attachment spikes: a bridge point past the endpoint that doubles back.
+  bool changed = true;
+  while (changed && pts.size() > 2) {
+    changed = false;
+    for (const size_t i : {size_t{1}, pts.size() - 2}) {
+      const Point & a = pts[i - 1];
+      const Point & b = pts[i];
+      const Point & c = pts[i + 1];
+      const double dot = (b.getX() - a.getX()) * (c.getX() - b.getX()) +
+        (b.getY() - a.getY()) * (c.getY() - b.getY());
+      if (dot < 0.0 && a.distance(b) < a.distance(c)) {
+        pts.erase(pts.begin() + i);
+        changed = true;
+        break;
+      }
+    }
+  }
+
   double polyline_len = 0.0;
   for (size_t i = 0; i + 1 < pts.size(); ++i) {
     polyline_len += pts[i].distance(pts[i + 1]);

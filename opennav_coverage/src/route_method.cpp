@@ -13,7 +13,10 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "opennav_coverage/route_method.hpp"
@@ -139,25 +142,35 @@ F2CRoute TspRouteMethod::plan(
     return F2CRoute();
   }
 
-  // Visit cells in nearest-neighbor order, entering each from whichever end of
-  // its route is closer (reversing the cell route when needed), so the bridges
-  // between cells stay short instead of jumping across the field.
+  // Nearest-neighbor cell order; entry cost also penalizes heading mismatch to avoid S-maneuvers.
+  const auto angDiff = [](double a, double b) {
+      return std::fabs(std::atan2(std::sin(a - b), std::cos(a - b)));
+    };
   const auto pickNearest =
-    [&cell_routes, &remaining](const F2CPoint & from, bool & reversed) {
+    [&cell_routes, &remaining, &angDiff](
+    const F2CPoint & from, const std::optional<double> & from_angle, bool & reversed) {
       size_t best_idx = remaining[0];
-      double best_dist = std::numeric_limits<double>::max();
+      double best_cost = std::numeric_limits<double>::max();
       for (const size_t idx : remaining) {
-        const double d_fwd = from.distance(cell_routes[idx].startPoint());
-        const double d_rev = from.distance(cell_routes[idx].endPoint());
-        if (d_fwd < best_dist) {
-          best_dist = d_fwd;
-          best_idx = idx;
-          reversed = false;
-        }
-        if (d_rev < best_dist) {
-          best_dist = d_rev;
-          best_idx = idx;
-          reversed = true;
+        const auto & groups = cell_routes[idx].getVectorSwaths();
+        const F2CSwath & first_swath = groups.front().at(0);
+        const F2CSwath & last_swath = groups.back().back();
+        const std::array<std::pair<F2CPoint, double>, 2> entries = {
+          std::make_pair(cell_routes[idx].startPoint(), first_swath.getInAngle()),
+          std::make_pair(cell_routes[idx].endPoint(), last_swath.getOutAngle() + M_PI)};
+        for (size_t e = 0; e < entries.size(); ++e) {
+          const double dist = from.distance(entries[e].first);
+          double cost = dist;
+          if (from_angle && dist > 1e-6) {
+            const double bearing = (entries[e].first - from).getAngleFromPoint();
+            cost += first_swath.getWidth() *
+              (angDiff(*from_angle, bearing) + angDiff(bearing, entries[e].second));
+          }
+          if (cost < best_cost) {
+            best_cost = cost;
+            best_idx = idx;
+            reversed = (e == 1);
+          }
         }
       }
       return best_idx;
@@ -170,7 +183,7 @@ F2CRoute TspRouteMethod::plan(
       logger_,
       "Multi-cell route: start_pose picks the nearest cell; the route starts at "
       "that cell's own start, not at the exact point.");
-    current = pickNearest(*start_end, current_reversed);
+    current = pickNearest(*start_end, std::nullopt, current_reversed);
   }
 
   // Bridges follow the travel-cell pair's border graph, not a line that could cut a void.
@@ -243,7 +256,10 @@ F2CRoute TspRouteMethod::plan(
     if (remaining.empty()) {
       break;
     }
-    current = pickNearest(merged.endPoint(), current_reversed);
+    current = pickNearest(
+      merged.endPoint(),
+      last_swath ? std::optional<double>(last_swath->getOutAngle()) : std::nullopt,
+      current_reversed);
   }
   return merged;
 }
