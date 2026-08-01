@@ -62,6 +62,45 @@ F2CRoute reversedRoute(const F2CRoute & route)
 // Fallback matches RouteMode.msg's tsp_d_tol default; the stitch needs a positive tolerance.
 constexpr double kDefaultDTol = 1e-4;
 
+// Joins consecutive swaths along the cell's border graph. A naked turn ignores
+// the boundary, so a SNAKE/SPIRAL skip cuts across already-covered ground.
+F2CRoute routeThroughCell(
+  const Field & cell_geom, const Swaths & ordered, double d_tol,
+  const rclcpp::Logger & logger)
+{
+  F2CCells cell;
+  cell.addGeometry(cell_geom);
+  F2CSwathsByCells cell_swaths;
+  cell_swaths.emplace_back(ordered);
+
+  try {
+    f2c::rp::RoutePlannerBase rp;
+    F2CGraph2D graph = rp.createShortestGraph(cell, cell_swaths, d_tol);
+
+    // Per-pair fallback: shortestPath throws on a non-node endpoint, and one such
+    // pair must not cost the whole cell its connections.
+    F2CRoute route;
+    for (size_t i = 0; i < ordered.size(); ++i) {
+      if (i > 0) {
+        std::vector<F2CPoint> conn;
+        try {
+          conn = graph.shortestPath(route.endPoint(), ordered.at(i).startPoint());
+        } catch (const std::exception &) {
+          conn.clear();
+        }
+        route.addConnection(conn);
+      }
+      route.addSwath(ordered.at(i));
+    }
+    return route;
+  } catch (const std::exception & e) {
+    RCLCPP_WARN(logger, "Cell border graph failed (%s); using plain turns.", e.what());
+    F2CRoute plain;
+    plain.addConnectedSwaths(F2CMultiPoint(), ordered);
+    return plain;
+  }
+}
+
 // Orders per-cell routes nearest-neighbour (heading-aware) and bridges them along
 // the travel-cell border graph. Independent of how each cell route was planned.
 F2CRoute stitchCellRoutes(
@@ -105,15 +144,17 @@ F2CRoute SwathOrderMethod::plan(
 
   // Multi-cell: order each cell alone. Flattening first would collide the
   // per-cell swath ids that genSortedSwaths sorts on, interleaving the cells.
+  const double d_tol = settings.tsp_d_tol > 0.0 ? settings.tsp_d_tol : kDefaultDTol;
   std::vector<F2CRoute> cell_routes(swath_cells.size());
   for (size_t i = 0; i < swath_cells.size() && i < swaths_by_cells.size(); ++i) {
     if (swaths_by_cells.at(i).size() == 0) {
       continue;
     }
-    cell_routes[i].addConnectedSwaths(
-      F2CMultiPoint(), orderer_->genSortedSwaths(swaths_by_cells.at(i)));
+    cell_routes[i] = routeThroughCell(
+      swath_cells.getGeometry(i), orderer_->genSortedSwaths(swaths_by_cells.at(i)),
+      d_tol, logger_);
   }
-  return stitchCellRoutes(travel_cells, cell_routes, start_end, settings.tsp_d_tol, logger_);
+  return stitchCellRoutes(travel_cells, cell_routes, start_end, d_tol, logger_);
 }
 
 F2CRoute TspRouteMethod::plan(

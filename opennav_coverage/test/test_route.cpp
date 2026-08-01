@@ -363,9 +363,8 @@ TEST(RouteTests, TestTSPMultiCellStartPoint)
 
 TEST(RouteTests, TestSwathOrderMultiCellNotInterleaved)
 {
-  // Regression: non-TSP multi-cell must finish one cell before starting the
-  // other. Membership is geometric (midpoint side of x=s), not swath id,
-  // since ids are per-cell and collide across cells.
+  // Cells must not interleave. Membership is geometric, not by swath id: ids are
+  // per-cell and collide across cells.
   auto node = std::make_shared<rclcpp::Node>("test_node");
   RobotParams robot_params(node);
   SwathGenerator swath_gen(node, &robot_params);
@@ -437,6 +436,27 @@ TEST(RouteTests, TestSwathOrderMultiCellBridged)
     }
   }
   EXPECT_TRUE(has_bridge);
+}
+
+TEST(RouteTests, TestSwathOrderMultiCellConnectsWithinCell)
+{
+  // Transitions inside a cell must follow its border graph, which puts every
+  // swath in its own connected group.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeTwoAdjacentCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "SPIRAL";
+  settings.spiral_n = 2;
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+
+  EXPECT_EQ(route.sizeVectorSwaths(), sbc.sizeTotal());
 }
 
 TEST(RouteTests, TestSwathOrderMultiCellModes)

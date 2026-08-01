@@ -59,11 +59,8 @@ public:
 /**
  * @class SwathOrderMethod
  * @brief Adapts the F2C swath-ordering modes (BOUSTROPHEDON, SNAKE, SPIRAL,
- *        CUSTOM). Single-cell input orders the flattened swaths with the wrapped
- *        `SingleCellSwathsOrderBase`. Multi-cell input is ordered per cell and
- *        stitched with the shared stitch layer (see route_method.cpp), the same
- *        one `TspRouteMethod` uses. CUSTOM is rejected for multi-cell: its order
- *        vector cannot be split across cells.
+ *        CUSTOM). Multi-cell input is ordered per cell and stitched; CUSTOM is
+ *        rejected there, as its order vector cannot be split across cells.
  */
 class SwathOrderMethod : public RouteMethod
 {
