@@ -118,6 +118,28 @@ public:
 
 protected:
   /**
+   * @brief Assemble the full path: swath groups via F2C planPath, connections
+   *        via appendConnection (see there for why connections aren't just
+   *        handed to F2C's own route-level planPath).
+   * @param route Route with ordered swath groups and connections
+   * @param curve Curve generator for turns
+   * @return Full path
+   */
+  Path assemblePath(const F2CRoute & route, f2c::pp::TurningBase & curve);
+
+  /**
+   * @brief Append one connection between swath groups to the path
+   * @param path Path to append to
+   * @param prev Previous swath group (may be empty at the route start)
+   * @param connection Connection waypoints from the route (may be empty)
+   * @param next Next swath group (may be empty at the route end)
+   * @param curve Curve generator used when there is no polyline to follow
+   */
+  void appendConnection(
+    Path & path, const Swaths & prev, const F2CMultiPoint & connection,
+    const Swaths & next, f2c::pp::TurningBase & curve);
+
+  /**
    * @brief Creates generator pointer of a requested type
    * @param type curve generator type to create
    * @return Generator to use
