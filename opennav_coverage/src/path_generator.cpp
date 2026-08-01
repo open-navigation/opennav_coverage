@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 #include <string>
@@ -20,6 +21,25 @@
 
 namespace opennav_coverage
 {
+
+namespace
+{
+
+// Perpendicular distance from p to the segment [a, b].
+double distanceToSegment(const Point & p, const Point & a, const Point & b)
+{
+  const double dx = b.getX() - a.getX();
+  const double dy = b.getY() - a.getY();
+  const double len2 = dx * dx + dy * dy;
+  if (len2 < 1e-12) {
+    return p.distance(a);
+  }
+  const double t = std::clamp(
+    ((p.getX() - a.getX()) * dx + (p.getY() - a.getY()) * dy) / len2, 0.0, 1.0);
+  return std::hypot(p.getX() - (a.getX() + t * dx), p.getY() - (a.getY() + t * dy));
+}
+
+}  // namespace
 
 Path PathGenerator::generatePath(
   const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings)
@@ -118,15 +138,16 @@ void PathGenerator::appendConnection(
     }
   }
 
-  double polyline_len = 0.0;
-  for (size_t i = 0; i + 1 < pts.size(); ++i) {
-    polyline_len += pts[i].distance(pts[i + 1]);
+  // Deviation, not length ratio: rounding a long cell's corner is only ~20%
+  // longer than cutting its diagonal, yet shares no ground with it.
+  double max_dev = 0.0;
+  for (size_t i = 1; i + 1 < pts.size(); ++i) {
+    max_dev = std::max(max_dev, distanceToSegment(pts[i], pts.front(), pts.back()));
   }
-  const double direct_len = pts.front().distance(pts.back());
 
-  // Near-straight hop between two swath groups: one curve (the u-turn). Boundary
-  // connections (to/from a TSP start point) fall through to keep that point.
-  if (has_prev && has_next && polyline_len < 1.3 * std::max(direct_len, 1e-6)) {
+  // Straight hop: the ordinary headland u-turn, leave it to the curve planner.
+  // A real bend means the graph routed around something worth keeping.
+  if (has_prev && has_next && max_dev < 0.5 * robot_params_->getOperationWidth()) {
     path += curve.createTurn(
       robot, prev.back().endPoint(), prev.back().getOutAngle(),
       next[0].startPoint(), next[0].getInAngle());
