@@ -124,18 +124,18 @@ public:
   }
 
   /**
-   * @brief Whether the request (or the default it falls back to) is TSP.
-   *        Used to reject non-TSP + decomposition before any geometry work.
-   * @param settings Action request information
-   * @return true when the route mode resolves to TSP
+   * @brief Whether the goal's route mode resolves to CUSTOM, the one mode whose
+   *        absolute order vector cannot be split across decomposed cells
+   * @param settings Route mode settings from the action goal
+   * @return True if the effective mode is CUSTOM
    */
-  bool resolvesToTsp(const opennav_coverage_msgs::msg::RouteMode & settings)
+  bool resolvesToCustom(const opennav_coverage_msgs::msg::RouteMode & settings)
   {
     RouteType type = toType(settings.mode);
     if (type == RouteType::UNKNOWN) {
       type = default_type_;
     }
-    return type == RouteType::TSP;
+    return type == RouteType::CUSTOM;
   }
 
   /**

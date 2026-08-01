@@ -16,6 +16,8 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -57,21 +59,33 @@ F2CRoute reversedRoute(const F2CRoute & route)
   return out;
 }
 
+// Fallback matches RouteMode.msg's tsp_d_tol default; the stitch needs a positive tolerance.
+constexpr double kDefaultDTol = 1e-4;
+
+// Orders per-cell routes nearest-neighbour (heading-aware) and bridges them along
+// the travel-cell border graph. Independent of how each cell route was planned.
+F2CRoute stitchCellRoutes(
+  const F2CCells & travel_cells,
+  const std::vector<F2CRoute> & cell_routes,
+  const std::optional<F2CPoint> & start_end,
+  double d_tol,
+  const rclcpp::Logger & logger);
+
 }  // namespace
 
 F2CRoute SwathOrderMethod::plan(
-  const F2CCells & /*travel_cells*/,
+  const F2CCells & travel_cells,
   const F2CCells & swath_cells,
   const F2CSwathsByCells & swaths_by_cells,
   const opennav_coverage_msgs::msg::RouteMode & settings,
-  // start_end is a TSP-only concept; the generator already warns the user, so it is ignored here
-  const std::optional<F2CPoint> & /*start_end*/)
+  const std::optional<F2CPoint> & start_end)
 {
-  // These orderers assume a single cell; multi-cell input breaks their ordering.
-  if (swath_cells.size() > 1) {
+  // CUSTOM indexes swaths absolutely and validates the vector length, so one
+  // order vector cannot be split across cells.
+  if (type_ == RouteType::CUSTOM && swath_cells.size() > 1) {
     throw CoverageException(
-            "Non-TSP route modes are not supported with field decomposition; "
-            "use route_mode TSP or disable decomposition.");
+            "CUSTOM route mode is not supported with field decomposition; the order "
+            "vector cannot be split across cells. Use another route mode or disable it.");
   }
 
   if (type_ == RouteType::SPIRAL) {
@@ -81,12 +95,25 @@ F2CRoute SwathOrderMethod::plan(
     dynamic_cast<f2c::rp::CustomOrder *>(orderer_.get())->setCustomOrder(custom_order);
   }
 
-  F2CSwaths ordered = orderer_->genSortedSwaths(swaths_by_cells.flatten());
+  // Single cell: unchanged behaviour, one genSortedSwaths call over the flattened swaths.
+  if (swath_cells.size() <= 1) {
+    F2CSwaths ordered = orderer_->genSortedSwaths(swaths_by_cells.flatten());
+    F2CRoute route;
+    route.addConnectedSwaths(F2CMultiPoint(), ordered);
+    return route;
+  }
 
-  // Wrap ordered swaths in a single-group route so every mode returns F2CRoute.
-  F2CRoute route;
-  route.addConnectedSwaths(F2CMultiPoint(), ordered);
-  return route;
+  // Multi-cell: order each cell alone. Flattening first would collide the
+  // per-cell swath ids that genSortedSwaths sorts on, interleaving the cells.
+  std::vector<F2CRoute> cell_routes(swath_cells.size());
+  for (size_t i = 0; i < swath_cells.size() && i < swaths_by_cells.size(); ++i) {
+    if (swaths_by_cells.at(i).size() == 0) {
+      continue;
+    }
+    cell_routes[i].addConnectedSwaths(
+      F2CMultiPoint(), orderer_->genSortedSwaths(swaths_by_cells.at(i)));
+  }
+  return stitchCellRoutes(travel_cells, cell_routes, start_end, settings.tsp_d_tol, logger_);
 }
 
 F2CRoute TspRouteMethod::plan(
@@ -131,6 +158,21 @@ F2CRoute TspRouteMethod::plan(
     cell_routes[i] = rp.genRoute(
       cell, cell_swaths, false, d_tol, redirect_swaths, time_limit, search_for_optimum);
   }
+
+  return stitchCellRoutes(travel_cells, cell_routes, start_end, d_tol, logger_);
+}
+
+namespace
+{
+
+F2CRoute stitchCellRoutes(
+  const F2CCells & travel_cells,
+  const std::vector<F2CRoute> & cell_routes,
+  const std::optional<F2CPoint> & start_end,
+  double d_tol,
+  const rclcpp::Logger & logger)
+{
+  const double tol = d_tol > 0.0 ? d_tol : kDefaultDTol;
 
   std::vector<size_t> remaining;
   for (size_t i = 0; i < cell_routes.size(); ++i) {
@@ -180,7 +222,7 @@ F2CRoute TspRouteMethod::plan(
   bool current_reversed = false;
   if (start_end) {
     RCLCPP_WARN(
-      logger_,
+      logger,
       "Multi-cell route: start_pose picks the nearest cell; the route starts at "
       "that cell's own start, not at the exact point.");
     current = pickNearest(*start_end, std::nullopt, current_reversed);
@@ -188,7 +230,7 @@ F2CRoute TspRouteMethod::plan(
 
   // Bridges follow the travel-cell pair's border graph, not a line that could cut a void.
   const auto buildBridge =
-    [&travel_cells, d_tol](
+    [&travel_cells, tol](
     const F2CSwath & from_swath, const F2CSwath & to_swath,
     const F2CPoint & from, const F2CPoint & to) {
       F2CSwaths end_swaths;
@@ -198,11 +240,11 @@ F2CRoute TspRouteMethod::plan(
       bridge_swaths.emplace_back(end_swaths);
 
       const auto viaGraph =
-        [&bridge_swaths, d_tol, &from, &to](const F2CCells & graph_cells) {
+        [&bridge_swaths, tol, &from, &to](const F2CCells & graph_cells) {
           std::vector<F2CPoint> pts;
           try {
             f2c::rp::RoutePlannerBase rp;
-            F2CGraph2D graph = rp.createShortestGraph(graph_cells, bridge_swaths, d_tol);
+            F2CGraph2D graph = rp.createShortestGraph(graph_cells, bridge_swaths, tol);
             pts = graph.shortestPath(from, to);
           } catch (const std::exception &) {
             pts.clear();
@@ -263,5 +305,7 @@ F2CRoute TspRouteMethod::plan(
   }
   return merged;
 }
+
+}  // namespace
 
 }  // namespace opennav_coverage

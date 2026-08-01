@@ -59,16 +59,19 @@ public:
 /**
  * @class SwathOrderMethod
  * @brief Adapts the F2C swath-ordering modes (BOUSTROPHEDON, SNAKE, SPIRAL,
- *        CUSTOM). Flattens the per-cell swaths, orders them with the wrapped
- *        `SingleCellSwathsOrderBase`, and wraps the ordered swaths into a
- *        single-group `F2CRoute` (no connections) so the output type matches TSP.
+ *        CUSTOM). Single-cell input orders the flattened swaths with the wrapped
+ *        `SingleCellSwathsOrderBase`. Multi-cell input is ordered per cell and
+ *        stitched with the shared stitch layer (see route_method.cpp), the same
+ *        one `TspRouteMethod` uses. CUSTOM is rejected for multi-cell: its order
+ *        vector cannot be split across cells.
  */
 class SwathOrderMethod : public RouteMethod
 {
 public:
   SwathOrderMethod(
-    RouteType type, std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> orderer)
-  : type_(type), orderer_(std::move(orderer)) {}
+    const rclcpp::Logger & logger, RouteType type,
+    std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> orderer)
+  : logger_(logger), type_(type), orderer_(std::move(orderer)) {}
 
   F2CRoute plan(
     const F2CCells & travel_cells,
@@ -78,6 +81,7 @@ public:
     const std::optional<F2CPoint> & start_end_point = std::nullopt) override;
 
 private:
+  rclcpp::Logger logger_;
   RouteType type_;
   std::shared_ptr<f2c::rp::SingleCellSwathsOrderBase> orderer_;
 };

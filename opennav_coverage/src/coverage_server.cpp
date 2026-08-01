@@ -200,11 +200,11 @@ void CoverageServer::computeCoveragePath()
     // (1) Build the cells to cover: remove the headland, optionally decomposing first
     const bool do_decomp = goal->generate_decomp || default_generate_decomp_;
 
-    // Reject non-TSP+decomp up front; the deep check only fires after all the geometry work.
-    if (do_decomp && goal->generate_route && !route_gen_->resolvesToTsp(goal->route_mode)) {
+    // Reject CUSTOM+decomp up front; the deep check only fires after all the geometry work.
+    if (do_decomp && goal->generate_route && route_gen_->resolvesToCustom(goal->route_mode)) {
       throw CoverageException(
-              "Non-TSP route modes are not supported with field decomposition; "
-              "use route_mode TSP or disable decomposition.");
+              "CUSTOM route mode is not supported with field decomposition; the order "
+              "vector cannot be split across cells. Use another route mode or disable it.");
     }
 
     Field field_no_headland = field;
