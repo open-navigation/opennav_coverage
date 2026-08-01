@@ -110,6 +110,21 @@ public:
     const std::optional<F2CPoint> & start_end_point = std::nullopt);
 
   /**
+   * @brief Whether the request (or the default it falls back to) is TSP.
+   *        Used to reject non-TSP + decomposition before any geometry work.
+   * @param settings Action request information
+   * @return true when the route mode resolves to TSP
+   */
+  bool resolvesToTsp(const opennav_coverage_msgs::msg::RouteMode & settings)
+  {
+    RouteType type = toType(settings.mode);
+    if (type == RouteType::UNKNOWN) {
+      type = default_type_;
+    }
+    return type == RouteType::TSP;
+  }
+
+  /**
    * @brief Sets the mode manually of the Route for dynamic parameters
    * @param mode String for mode to use
    */
