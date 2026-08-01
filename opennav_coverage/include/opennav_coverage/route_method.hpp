@@ -41,14 +41,16 @@ public:
 
   /**
    * @brief Plan an ordered route over the swaths.
-   * @param cells Travel cells whose borders the route connections may follow
-   * @param swaths_by_cells Per-cell swaths to be covered
+   * @param travel_cells Border-sharing cells the inter-cell bridges may follow
+   * @param swath_cells Cells the swaths were generated from (carved corridors)
+   * @param swaths_by_cells Per-cell swaths, indexed like swath_cells
    * @param settings Fully-resolved RouteMode (server has already applied defaults)
    * @param start_end_point Optional start/end point for the route (used by TSP only)
    * @return Ordered route: swath groups plus any headland connections
    */
   virtual F2CRoute plan(
-    const F2CCells & cells,
+    const F2CCells & travel_cells,
+    const F2CCells & swath_cells,
     const F2CSwathsByCells & swaths_by_cells,
     const opennav_coverage_msgs::msg::RouteMode & settings,
     const std::optional<F2CPoint> & start_end_point = std::nullopt) = 0;
@@ -69,7 +71,8 @@ public:
   : type_(type), orderer_(std::move(orderer)) {}
 
   F2CRoute plan(
-    const F2CCells & cells,
+    const F2CCells & travel_cells,
+    const F2CCells & swath_cells,
     const F2CSwathsByCells & swaths_by_cells,
     const opennav_coverage_msgs::msg::RouteMode & settings,
     const std::optional<F2CPoint> & start_end_point = std::nullopt) override;
@@ -81,18 +84,20 @@ private:
 
 /**
  * @class TspRouteMethod
- * @brief Adapts F2C's `RoutePlannerBase` (OR-Tools TSP). Solves each cell
- *        separately and stitches the per-cell routes in sweep order, avoiding the
- *        all-pairs path matrix that exhausts memory on decomposed multi-cell input.
+ * @brief Adapts F2C's `RoutePlannerBase` (OR-Tools TSP). Single-cell input is one
+ *        genRoute call. Multi-cell input is solved per cell and stitched in
+ *        nearest-neighbor order (see route_method.cpp), keeping cells contiguous.
  */
 class TspRouteMethod : public RouteMethod
 {
 public:
+  // max_swaths_for_global_route: unused, kept for ABI/call-site stability
   TspRouteMethod(const rclcpp::Logger & logger, size_t max_swaths_for_global_route)
   : logger_(logger), max_swaths_for_global_route_(max_swaths_for_global_route) {}
 
   F2CRoute plan(
-    const F2CCells & cells,
+    const F2CCells & travel_cells,
+    const F2CCells & swath_cells,
     const F2CSwathsByCells & swaths_by_cells,
     const opennav_coverage_msgs::msg::RouteMode & settings,
     const std::optional<F2CPoint> & start_end_point = std::nullopt) override;

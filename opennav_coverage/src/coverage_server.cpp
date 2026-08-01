@@ -247,13 +247,14 @@ void CoverageServer::computeCoveragePath()
     header.frame_id = frame_id;
     Path path;
     if (goal->generate_route) {
-      std::optional<F2CPoint> start_end_point;
+      std::optional<F2CPoint> start_end;
       if (goal->use_start_pose) {
-        start_end_point = util::toFieldFrame(
+        start_end = util::toFieldFrame(
           F2CPoint(goal->start_pose.axis1, goal->start_pose.axis2), master_field, cartesian_frame_);
       }
-      F2CRoute route =
-        route_gen_->generateRoute(route_cells, swaths_by_cells, goal->route_mode, start_end_point);
+      // Per-cell routes pair with swath_cells; bridges travel route_cells to detour voids.
+      F2CRoute route = route_gen_->generateRoute(
+        route_cells, swath_cells, swaths_by_cells, goal->route_mode, start_end);
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
       }
