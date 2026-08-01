@@ -303,8 +303,10 @@ F2CRoute stitchCellRoutes(
         pair_cells.addGeometry(cell_b);
       }
 
+      // Both endpoints must have landed in a cell: a one-cell graph still returns
+      // a plausible path, reaching the far endpoint by jumping off that border.
       std::vector<F2CPoint> bridge;
-      if (pair_cells.size() > 0) {
+      if (pair_cells.size() == 2) {
         bridge = viaGraph(pair_cells);
       }
       if (bridge.size() < 2) {
