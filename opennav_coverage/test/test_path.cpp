@@ -161,4 +161,44 @@ TEST(PathTests, TestpathGenerationFromF2CRoute)
   EXPECT_TRUE(std::isfinite(path.getTaskTime()));
 }
 
+TEST(PathTests, TestpathGenerationMultiCellConnections)
+{
+  // A multi-cell TSP route carries inter-cell connections; assemblePath must
+  // stitch them without dropping swaths or the connection track.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteGenerator route_gen(node);
+  PathShim generator(node, &robot_params);
+
+  F2CCells cells;
+  cells.addGeometry(
+    F2CCell(
+      F2CLinearRing(
+    {
+      F2CPoint(0, 0), F2CPoint(100, 0), F2CPoint(100, 100),
+      F2CPoint(0, 100), F2CPoint(0, 0)})));
+  cells.addGeometry(
+    F2CCell(
+      F2CLinearRing(
+    {
+      F2CPoint(100, 0), F2CPoint(200, 0), F2CPoint(200, 100),
+      F2CPoint(100, 100), F2CPoint(100, 0)})));
+
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode rt_settings;
+  rt_settings.mode = "TSP";
+  rt_settings.tsp_time_limit = 1;
+  F2CRoute route = route_gen.generateRoute(cells, sbc, rt_settings);
+  ASSERT_FALSE(route.isEmpty());
+  ASSERT_GE(route.sizeConnections(), 1u);
+
+  opennav_coverage_msgs::msg::PathMode path_settings;
+  auto path = generator.generatePath(route, path_settings);
+  EXPECT_GT(path.size(), 0u);
+  EXPECT_TRUE(std::isfinite(path.getTaskTime()));
+}
+
 }  // namespace opennav_coverage
