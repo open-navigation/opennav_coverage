@@ -97,17 +97,46 @@ public:
 
   /**
    * @brief Generate an ordered route for any mode (orderers or TSP).
-   * @param cells Travel cells whose borders route connections may follow
+   * @param travel_cells Border-sharing cells inter-cell bridges may follow
+   * @param swath_cells Cells the swaths were generated from (carved corridors)
    * @param swaths_by_cells Per-cell swaths from generateSwathsByCells
    * @param settings Action request information
    * @param start_end_point Optional start/end point for the route (TSP mode only)
    * @return F2CRoute (ordered swath groups plus any connections)
    */
   F2CRoute generateRoute(
-    const F2CCells & cells,
+    const F2CCells & travel_cells,
+    const F2CCells & swath_cells,
     const F2CSwathsByCells & swaths_by_cells,
     const opennav_coverage_msgs::msg::RouteMode & settings,
     const std::optional<F2CPoint> & start_end_point = std::nullopt);
+
+  /**
+   * @brief Convenience overload when the travel and swath cells are the same
+   */
+  F2CRoute generateRoute(
+    const F2CCells & cells,
+    const F2CSwathsByCells & swaths_by_cells,
+    const opennav_coverage_msgs::msg::RouteMode & settings,
+    const std::optional<F2CPoint> & start_end = std::nullopt)
+  {
+    return generateRoute(cells, cells, swaths_by_cells, settings, start_end);
+  }
+
+  /**
+   * @brief Whether the request (or the default it falls back to) is TSP.
+   *        Used to reject non-TSP + decomposition before any geometry work.
+   * @param settings Action request information
+   * @return true when the route mode resolves to TSP
+   */
+  bool resolvesToTsp(const opennav_coverage_msgs::msg::RouteMode & settings)
+  {
+    RouteType type = toType(settings.mode);
+    if (type == RouteType::UNKNOWN) {
+      type = default_type_;
+    }
+    return type == RouteType::TSP;
+  }
 
   /**
    * @brief Sets the mode manually of the Route for dynamic parameters

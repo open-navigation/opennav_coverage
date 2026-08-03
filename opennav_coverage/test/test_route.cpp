@@ -71,6 +71,19 @@ static F2CCells makeSquareCells(double s)
   return cells;
 }
 
+// Two s x s cells sharing the x=s edge, to exercise the multi-cell TSP stitch.
+static F2CCells makeTwoAdjacentCells(double s)
+{
+  F2CCells cells;
+  cells.addGeometry(F2CCell(F2CLinearRing({
+      F2CPoint(0.0, 0.0), F2CPoint(s, 0.0), F2CPoint(s, s),
+      F2CPoint(0.0, s), F2CPoint(0.0, 0.0)})));
+  cells.addGeometry(F2CCell(F2CLinearRing({
+      F2CPoint(s, 0.0), F2CPoint(2 * s, 0.0), F2CPoint(2 * s, s),
+      F2CPoint(s, s), F2CPoint(s, 0.0)})));
+  return cells;
+}
+
 TEST(RouteTests, TestrouteUtils)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");
@@ -296,22 +309,52 @@ TEST(RouteTests, TestNonTSPStartPointIgnored)
   EXPECT_NEAR(without.length(), with.length(), 1e-6);
 }
 
-TEST(RouteTests, TestTSPStitchIgnoresStartPoint)
+TEST(RouteTests, TestTSPMultiCellStitch)
 {
-  // The stitched fallback drops the start point but still produces a valid route
+  // Two cells route per-cell and stitch: every cell stays contiguous, swaths are
+  // preserved, and at least one inter-cell connection (bridge) is produced.
   auto node = std::make_shared<rclcpp::Node>("test_node");
   RobotParams robot_params(node);
   SwathGenerator swath_gen(node, &robot_params);
   RouteShim generator(node);
 
-  F2CCells cells = makeSquareCells(100.0);
+  F2CCells cells = makeTwoAdjacentCells(100.0);
   opennav_coverage_msgs::msg::SwathMode sw_settings;
   F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
-
-  generator.setMaxSwathsForGlobalRoute(0);  // force the stitched fallback
+  ASSERT_GE(sbc.size(), 2u);  // one swath group per cell
 
   opennav_coverage_msgs::msg::RouteMode settings;
   settings.mode = "TSP";
+  settings.tsp_time_limit = 1;
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+
+  EXPECT_FALSE(route.isEmpty());
+  EXPECT_GE(route.sizeVectorSwaths(), 2u);
+  EXPECT_GE(route.sizeConnections(), 1u);
+
+  size_t total_out = 0;
+  for (size_t i = 0; i < route.sizeVectorSwaths(); ++i) {
+    total_out += route.getVectorSwaths()[i].size();
+  }
+  EXPECT_EQ(sbc.sizeTotal(), total_out);
+}
+
+TEST(RouteTests, TestTSPMultiCellStartPoint)
+{
+  // On the multi-cell path the exact start point isn't honored (the nearest cell
+  // is chosen and warned), but the route stays valid.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeTwoAdjacentCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "TSP";
+  settings.tsp_time_limit = 1;
   F2CRoute route = generator.generateRoute(cells, sbc, settings, F2CPoint(0.0, 0.0));
   EXPECT_FALSE(route.isEmpty());
 }

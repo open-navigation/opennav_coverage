@@ -41,14 +41,31 @@ public:
   ServerShim()
   : CoverageServer()
   {}
+  ~ServerShim()
+  {
+    // Deactivate blocks until the worker thread finishes, so members aren't destroyed under it.
+    if (activated_) {
+      rclcpp_lifecycle::State state;
+      this->on_deactivate(state);
+      this->on_cleanup(state);
+    }
+  }
   void configure(const rclcpp_lifecycle::State & state)
   {
     this->on_configure(state);
     cartesian_frame_ = false;  // Test files in GPS
   }
   void setCartesianFrame(bool v) {cartesian_frame_ = v;}
-  void activate(const rclcpp_lifecycle::State & state) {this->on_activate(state);}
-  void deactivate(const rclcpp_lifecycle::State & state) {this->on_deactivate(state);}
+  void activate(const rclcpp_lifecycle::State & state)
+  {
+    this->on_activate(state);
+    activated_ = true;
+  }
+  void deactivate(const rclcpp_lifecycle::State & state)
+  {
+    this->on_deactivate(state);
+    activated_ = false;
+  }
   void cleanup(const rclcpp_lifecycle::State & state) {this->on_cleanup(state);}
   void shutdown(const rclcpp_lifecycle::State & state) {this->on_shutdown(state);}
 
@@ -56,6 +73,9 @@ public:
   {
     return validateGoal(req);
   }
+
+private:
+  bool activated_{false};
 };
 
 TEST(ServerTest, LifecycleTest)
