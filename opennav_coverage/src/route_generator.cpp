@@ -51,8 +51,10 @@ F2CRoute RouteGenerator::generateRoute(
             "No valid route mode set! Options: BOUSTROPHEDON, SNAKE, SPIRAL, CUSTOM, TSP.");
   }
 
-  if (start_end && action_type != RouteType::TSP) {
-    RCLCPP_WARN(logger_, "start_pose ignored: only used in TSP route mode.");
+  // Multi-cell non-TSP honours start_end via the stitch layer (nearest cell only);
+  // single-cell orderers have no way to use it.
+  if (start_end && action_type != RouteType::TSP && swath_cells.size() <= 1) {
+    RCLCPP_WARN(logger_, "start_pose ignored: single-cell non-TSP route modes cannot use it.");
   }
 
   RCLCPP_DEBUG(logger_, "Generating route: %s", toString(action_type).c_str());
@@ -70,16 +72,16 @@ RouteGeneratorPtr RouteGenerator::createGenerator(const RouteType & type)
   switch (type) {
     case RouteType::BOUSTROPHEDON:
       return std::make_shared<SwathOrderMethod>(
-        type, std::make_shared<f2c::rp::BoustrophedonOrder>());
+        logger_, type, std::make_shared<f2c::rp::BoustrophedonOrder>());
     case RouteType::SNAKE:
       return std::make_shared<SwathOrderMethod>(
-        type, std::make_shared<f2c::rp::SnakeOrder>());
+        logger_, type, std::make_shared<f2c::rp::SnakeOrder>());
     case RouteType::SPIRAL:
       return std::make_shared<SwathOrderMethod>(
-        type, std::make_shared<f2c::rp::SpiralOrder>());
+        logger_, type, std::make_shared<f2c::rp::SpiralOrder>());
     case RouteType::CUSTOM:
       return std::make_shared<SwathOrderMethod>(
-        type, std::make_shared<f2c::rp::CustomOrder>());
+        logger_, type, std::make_shared<f2c::rp::CustomOrder>());
     case RouteType::TSP:
       return std::make_shared<TspRouteMethod>(
         logger_, static_cast<size_t>(default_max_swaths_for_global_route_));
