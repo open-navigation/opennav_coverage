@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage/robot_params.hpp"
@@ -357,6 +359,164 @@ TEST(RouteTests, TestTSPMultiCellStartPoint)
   settings.tsp_time_limit = 1;
   F2CRoute route = generator.generateRoute(cells, sbc, settings, F2CPoint(0.0, 0.0));
   EXPECT_FALSE(route.isEmpty());
+}
+
+TEST(RouteTests, TestSwathOrderMultiCellNotInterleaved)
+{
+  // Cells must not interleave. Membership is geometric, not by swath id: ids are
+  // per-cell and collide across cells.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  const double s = 100.0;
+  F2CCells cells = makeTwoAdjacentCells(s);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+  ASSERT_GE(sbc.size(), 2u);  // one swath group per cell
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "BOUSTROPHEDON";
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+
+  EXPECT_FALSE(route.isEmpty());
+  EXPECT_GE(route.sizeVectorSwaths(), 2u);
+
+  std::vector<int> sides;
+  size_t total_out = 0;
+  for (size_t g = 0; g < route.sizeVectorSwaths(); ++g) {
+    for (const auto & swath : route.getVectorSwaths()[g]) {
+      const double mid_x = (swath.startPoint().getX() + swath.endPoint().getX()) / 2.0;
+      sides.push_back(mid_x < s ? 0 : 1);
+      ++total_out;
+    }
+  }
+  EXPECT_EQ(sbc.sizeTotal(), total_out);
+
+  // Both cells must actually appear, or the no-crossing-back check below is vacuous.
+  ASSERT_TRUE(
+    std::any_of(sides.begin(), sides.end(), [](int v) {return v == 0;}) &&
+    std::any_of(sides.begin(), sides.end(), [](int v) {return v == 1;}));
+
+  // Once the route crosses to the other cell, it must never cross back.
+  size_t switch_idx = sides.size();
+  for (size_t i = 1; i < sides.size(); ++i) {
+    if (sides[i] != sides[0]) {
+      switch_idx = i;
+      break;
+    }
+  }
+  for (size_t i = switch_idx; i < sides.size(); ++i) {
+    EXPECT_EQ(sides[i], sides[switch_idx]) << "cells interleaved at swath index " << i;
+  }
+}
+
+TEST(RouteTests, TestSwathOrderMultiCellBridged)
+{
+  // Multi-cell non-TSP must bridge cells via the stitch layer, not leave a gap.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeTwoAdjacentCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "BOUSTROPHEDON";
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+
+  bool has_bridge = false;
+  for (const auto & conn : route.getConnections()) {
+    if (conn.size() > 0) {
+      has_bridge = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(has_bridge);
+}
+
+TEST(RouteTests, TestSwathOrderMultiCellConnectsWithinCell)
+{
+  // Transitions inside a cell must follow its border graph, which puts every
+  // swath in its own connected group.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeTwoAdjacentCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "SPIRAL";
+  settings.spiral_n = 2;
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+
+  EXPECT_EQ(route.sizeVectorSwaths(), sbc.sizeTotal());
+}
+
+TEST(RouteTests, TestSwathOrderMultiCellModes)
+{
+  // SNAKE and SPIRAL must also plan multi-cell without throwing, like BOUSTROPHEDON.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeTwoAdjacentCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "SNAKE";
+  F2CRoute snake_route = generator.generateRoute(cells, sbc, settings);
+  EXPECT_FALSE(snake_route.isEmpty());
+
+  settings.mode = "SPIRAL";
+  settings.spiral_n = 2;
+  F2CRoute spiral_route = generator.generateRoute(cells, sbc, settings);
+  EXPECT_FALSE(spiral_route.isEmpty());
+}
+
+TEST(RouteTests, TestCustomOrderMultiCellRejected)
+{
+  // CUSTOM's order vector can't be split across cells; multi-cell must throw.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeTwoAdjacentCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "CUSTOM";
+  EXPECT_THROW(generator.generateRoute(cells, sbc, settings), CoverageException);
+}
+
+TEST(RouteTests, TestSwathOrderSingleCellUnchanged)
+{
+  // Guards the single-cell fast path: still one group with the full swath count.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  SwathGenerator swath_gen(node, &robot_params);
+  RouteShim generator(node);
+
+  F2CCells cells = makeSquareCells(100.0);
+  opennav_coverage_msgs::msg::SwathMode sw_settings;
+  F2CSwathsByCells sbc = swath_gen.generateSwathsByCells(cells, sw_settings);
+
+  opennav_coverage_msgs::msg::RouteMode settings;
+  settings.mode = "BOUSTROPHEDON";
+  F2CRoute route = generator.generateRoute(cells, sbc, settings);
+
+  EXPECT_EQ(route.sizeVectorSwaths(), 1u);
+  EXPECT_EQ(route.getVectorSwaths()[0].size(), sbc.sizeTotal());
 }
 
 }  // namespace opennav_coverage
