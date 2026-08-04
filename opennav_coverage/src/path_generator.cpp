@@ -342,6 +342,8 @@ Path PathGenerator::generatePath(
   if (!curve) {
     throw CoverageException("No valid path mode set!");
   }
+  // The corner maths sizes its turns off this, and it is only resolved here.
+  active_continuity_type_ = action_continuity_type;
 
   RCLCPP_INFO(
     logger_,
