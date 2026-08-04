@@ -393,4 +393,143 @@ TEST(PathTests, TestUnroundableCornerKeepsTheTrack)
   EXPECT_LT(distanceToPath(path, F2CPoint(30, 40)), 0.1);
 }
 
+TEST(PathTests, TestSwathHeadingRoundsTheJunction)
+{
+  // The junction with a swath is a corner: the connection need not leave along
+  // the heading the swath holds. Without that heading it is not seen as one.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  PathShim generator(node, &robot_params);
+
+  // Swath runs east and ends where the connection sets off north.
+  F2CSwaths first, second;
+  first.emplace_back(F2CSwath(F2CLineString({F2CPoint(-20, 20), F2CPoint(0, 20)})));
+  second.emplace_back(F2CSwath(F2CLineString({F2CPoint(30, 20), F2CPoint(30, 0)})));
+
+  F2CRoute route;
+  route.addConnectedSwaths(F2CMultiPoint(), first);
+  route.addConnectedSwaths(
+    F2CMultiPoint({F2CPoint(0, 20), F2CPoint(0, 40), F2CPoint(30, 40), F2CPoint(30, 20)}),
+    second);
+
+  opennav_coverage_msgs::msg::PathMode path_settings;
+  auto path = generator.generatePath(route, path_settings);
+  ASSERT_GT(path.size(), 2u);
+
+  EXPECT_LT(maxHeadingStep(path), 1.0);  // driven straight off, a ~1.57 rad step
+
+  // Starts on the swath's own end pose, not up the leg at the next vertex.
+  const auto & turns = generator.getConnectionTurns();
+  ASSERT_FALSE(turns.empty());
+  EXPECT_NEAR(turns.front()[0].point.getX(), 0.0, 1e-3);
+  EXPECT_NEAR(turns.front()[0].point.getY(), 20.0, 1e-3);
+}
+
+TEST(PathTests, TestOpenEndedConnectionFollowsTheTrack)
+{
+  // Route-end connections have a swath on one side only. The open end holds no
+  // heading, so it is no corner, and nothing may be read off it.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  PathShim generator(node, &robot_params);
+
+  F2CSwaths swaths;
+  swaths.emplace_back(F2CSwath(F2CLineString({F2CPoint(0, 0), F2CPoint(0, 20)})));
+
+  // A lead-in from off the field, and a lead-out back off it.
+  F2CRoute route;
+  route.addConnectedSwaths(
+    F2CMultiPoint({F2CPoint(-20, -20), F2CPoint(0, -20), F2CPoint(0, 0)}), swaths);
+  route.addConnection(
+    F2CMultiPoint({F2CPoint(0, 20), F2CPoint(0, 40), F2CPoint(-20, 40)}));
+
+  opennav_coverage_msgs::msg::PathMode path_settings;
+  auto path = generator.generatePath(route, path_settings);
+  ASSERT_GT(path.size(), 2u);
+
+  EXPECT_LT(maxHeadingStep(path), 1.0);
+
+  // One corner each; the open ends are driven through.
+  EXPECT_EQ(generator.getConnectionTurns().size(), 2u);
+
+  EXPECT_LT(distanceToPath(path, F2CPoint(-10, -20)), 0.5);
+  EXPECT_LT(distanceToPath(path, F2CPoint(0, 30)), 0.5);
+}
+
+TEST(PathTests, TestShallowCornerKeepsAnApproach)
+{
+  // A shallow corner's fillet tangent collapses with it. The floor under that
+  // is what leaves the planner a maneuver rather than two poses 6cm apart.
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  PathShim generator(node, &robot_params);
+
+  F2CSwaths swaths;
+  swaths.emplace_back(F2CSwath(F2CLineString({F2CPoint(0, 0), F2CPoint(0, 20)})));
+
+  // Lead-out bending 15deg at (0, 50), well over the ~3deg driven straight.
+  const double bend = 15.0 * M_PI / 180.0;
+  const F2CPoint corner(0, 50);
+  const F2CPoint tip(30.0 * std::sin(bend), 50.0 + 30.0 * std::cos(bend));
+
+  F2CRoute route;
+  route.addConnectedSwaths(F2CMultiPoint(), swaths);
+  route.addConnection(F2CMultiPoint({F2CPoint(0, 20), corner, tip}));
+
+  opennav_coverage_msgs::msg::PathMode path_settings;
+  auto path = generator.generatePath(route, path_settings);
+  ASSERT_GT(path.size(), 2u);
+
+  // Rounded rather than left sharp, and the only corner on the route.
+  const auto & turns = generator.getConnectionTurns();
+  ASSERT_EQ(turns.size(), 1u);
+
+  // 6cm of tangent here, nothing to turn in: it must start further back.
+  EXPECT_GT(turns.front()[0].point.distance(corner), 0.15);
+
+  EXPECT_LT(distanceToPath(path, F2CPoint(0, 35)), 0.5);  // leg in followed
+  // The leg out is one state with no point at its end, so check its heading.
+  EXPECT_NEAR(path[path.size() - 1].angle, M_PI / 2.0 - bend, 1e-3);
+}
+
+TEST(PathTests, TestTightCornersAreFoldedIntoOneTurn)
+{
+  // Corners too close to round one at a time: rounding the first leaves the
+  // second no approach, so the pair has to be taken as one S.
+  //
+  // The radius sets how close is too close. At the default 0.4m the jog would
+  // be small enough to pass as a straight hop and never reach the rounding.
+  rclcpp::NodeOptions options;
+  options.parameter_overrides(
+    {rclcpp::Parameter("min_turning_radius", 2.0),
+      rclcpp::Parameter("operation_width", 2.5)});
+  auto node = std::make_shared<rclcpp::Node>("test_node", options);
+  RobotParams robot_params(node);
+  PathShim generator(node, &robot_params);
+
+  F2CSwaths first, second;
+  first.emplace_back(F2CSwath(F2CLineString({F2CPoint(0, 0), F2CPoint(0, 20)})));
+  second.emplace_back(F2CSwath(F2CLineString({F2CPoint(3, 63), F2CPoint(3, 83)})));
+
+  // Corners at (0,40) and (3,43): 4.24m apart, inside the 4.8m a turn needs.
+  F2CRoute route;
+  route.addConnectedSwaths(F2CMultiPoint(), first);
+  route.addConnectedSwaths(
+    F2CMultiPoint({F2CPoint(0, 20), F2CPoint(0, 40), F2CPoint(3, 43), F2CPoint(3, 63)}),
+    second);
+
+  opennav_coverage_msgs::msg::PathMode path_settings;
+  auto path = generator.generatePath(route, path_settings);
+  ASSERT_GT(path.size(), 2u);
+
+  // Taken one at a time they would each round here, and leave two.
+  EXPECT_EQ(generator.getConnectionTurns().size(), 1u);
+
+  // Their deflections cancel, so nothing bounds the fold by the corner it cuts.
+  // It still has to make the jog: this is the midpoint of the leg between them.
+  EXPECT_LT(distanceToPath(path, F2CPoint(1.5, 41.5)), 0.5);
+
+  EXPECT_LT(maxHeadingStep(path), 0.2);  // square corners leave ~0.79 rad
+}
+
 }  // namespace opennav_coverage
