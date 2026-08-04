@@ -30,13 +30,15 @@ void Visualizer::deactivate()
   planning_field_pub_.reset();
   swaths_pub_.reset();
   headland_swaths_pub_.reset();
+  connection_turns_pub_.reset();
 }
 
 void Visualizer::visualize(
   const Field & total_field, const Field & no_headland_field,
   const Point & ref_pt, const nav_msgs::msg::Path & nav_path,
   const Swaths swaths, const std_msgs::msg::Header & header,
-  const Path & headland_path)
+  const Path & headland_path,
+  const std::vector<Path> & connection_turns)
 {
   // F2C strips out reference point of all data, so we need to readd it
   // so that our visualizations mirror the true transformed output
@@ -130,6 +132,69 @@ void Visualizer::visualize(
     }
 
     headland_swaths_pub_->publish(std::move(output_hl));
+  }
+
+  // The turns planned between swath groups, drawn on their own so a rounded
+  // corner can be told apart from one left square. Each carries the label the
+  // planner logs for it.
+  if (connection_turns_pub_->get_subscription_count() > 0) {
+    auto msg = std::make_unique<visualization_msgs::msg::MarkerArray>();
+
+    visualization_msgs::msg::Marker clear;
+    clear.header.stamp = header.stamp;
+    clear.header.frame_id = GLOBAL_FRAME;
+    clear.action = visualization_msgs::msg::Marker::DELETEALL;
+    msg->markers.push_back(clear);
+
+    if (!connection_turns.empty()) {
+      visualization_msgs::msg::Marker lines;
+      lines.header.stamp = header.stamp;
+      lines.header.frame_id = GLOBAL_FRAME;
+      lines.ns = "turns";
+      lines.action = visualization_msgs::msg::Marker::ADD;
+      // LINE_LIST, not LINE_STRIP: the turns are disjoint and a strip would
+      // draw a line across the field between each pair of them.
+      lines.type = visualization_msgs::msg::Marker::LINE_LIST;
+      lines.pose.orientation.w = 1.0;
+      lines.scale.x = 0.05;
+      lines.color.r = 0.7;
+      lines.color.b = 1.0;
+      lines.color.a = 1.0;
+
+      for (size_t t = 0; t != connection_turns.size(); t++) {
+        const auto & turn = connection_turns[t];
+        if (turn.size() == 0) {
+          continue;
+        }
+        for (size_t i = 0; i + 1 < turn.size(); i++) {
+          lines.points.push_back(util::pointToPoint32(util::toMsg(turn[i].point + ref_pt)));
+          lines.points.push_back(util::pointToPoint32(util::toMsg(turn[i + 1].point + ref_pt)));
+        }
+        lines.points.push_back(util::pointToPoint32(util::toMsg(turn.back().point + ref_pt)));
+        lines.points.push_back(util::pointToPoint32(util::toMsg(turn.back().atEnd() + ref_pt)));
+
+        visualization_msgs::msg::Marker label;
+        label.header.stamp = header.stamp;
+        label.header.frame_id = GLOBAL_FRAME;
+        label.ns = "turn_labels";
+        label.id = static_cast<int>(t);
+        label.action = visualization_msgs::msg::Marker::ADD;
+        label.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+        label.pose.orientation.w = 1.0;
+        label.pose.position =
+          util::pointToPoint32(util::toMsg(turn[turn.size() / 2].point + ref_pt));
+        label.scale.z = 0.4;
+        label.color.r = 1.0;
+        label.color.g = 1.0;
+        label.color.b = 1.0;
+        label.color.a = 1.0;
+        label.text = util::turnLabel(t);
+        msg->markers.push_back(label);
+      }
+      msg->markers.push_back(lines);
+    }
+
+    connection_turns_pub_->publish(std::move(msg));
   }
 }
 

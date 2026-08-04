@@ -267,6 +267,8 @@ RowCoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> para
     if (type == ParameterType::PARAMETER_DOUBLE) {
       if (name == "default_turn_point_distance") {
         path_gen_->setTurnPointDistance(parameter.as_double());
+      } else if (name == "corner_cut_tolerance") {
+        path_gen_->setCornerCutTolerance(parameter.as_double());
       } else if (name == "robot_width") {
         auto & robot = robot_params_->getRobot();
         robot.setWidth(parameter.as_double());
