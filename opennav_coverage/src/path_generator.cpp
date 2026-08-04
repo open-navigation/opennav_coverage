@@ -278,9 +278,13 @@ size_t appendRoundedTrack(
           track.push_back(poly[k]);
         }
         track.push_back(exit);
+        // A u-turn swings past the vertices by up to the diameter it turns on,
+        // so it is allowed the corridor plus that rather than exempted.
         const double dev = util::deviationFromTrack(arc, track);
-        if (!uturn && dev > cut_tol) {
-          report("strays dev/max", back_off, dev, cut_tol);
+        const double dev_max = uturn ?
+          cut_tol + 2.0 * turnRadius(robot, net, continuous) : cut_tol;
+        if (dev > dev_max) {
+          report("strays dev/max", back_off, dev, dev_max);
           continue;
         }
 
