@@ -70,6 +70,12 @@ public:
       node, "default_reduce_min_dist", rclcpp::ParameterValue(0.1));
     reduce_min_dist_ = node->get_parameter("default_reduce_min_dist").as_double();
 
+    // Defaults to the ground the implement already covers either side of a swath.
+    nav2::declare_parameter_if_not_declared(
+      node, "corner_cut_tolerance",
+      rclcpp::ParameterValue(0.5 * robot_params->getOperationWidth()));
+    corner_cut_tol_ = node->get_parameter("corner_cut_tolerance").as_double();
+
     // Path Generator requires no changes at runtime
     generator_ = std::make_unique<f2c::pp::PathPlanning>();
     default_curve_ = createCurve(default_type_, default_continuity_type_);
@@ -127,6 +133,12 @@ public:
    * @param setting double minimum distance between kept points
    */
   void setReduceMinDist(const double & setting) {reduce_min_dist_ = setting;}
+
+  /**
+   * @brief Sets how far rounding a connection's corner may leave the track
+   * @param setting double tolerance in meters
+   */
+  void setCornerCutTolerance(const double & setting) {corner_cut_tol_ = setting;}
 
 protected:
   /**
@@ -186,6 +198,7 @@ protected:
   float default_turn_point_distance_;
   bool reduce_path_;
   double reduce_min_dist_;
+  double corner_cut_tol_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
   RobotParams * robot_params_;

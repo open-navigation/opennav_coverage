@@ -32,7 +32,6 @@ namespace
 // Fractions of the operation width.
 constexpr double kDirectHopDev = 0.25;  // under this a connection is a plain u-turn
 constexpr double kSimplifyTol = 0.1;    // points this close to the track are dropped
-constexpr double kCornerCutTol = 0.5;   // how far a rounded corner may leave the track
 
 constexpr double kLegShare = 0.5;       // a leg is split evenly between its two corners
 constexpr double kMinSweep = 0.05;      // corners under ~3deg are driven straight through
@@ -82,12 +81,11 @@ double turnRadius(const Robot & robot, double sweep, bool continuous)
 // Returns the corners left sharp because no maneuver fit within `cut_tol`.
 size_t appendRoundedTrack(
   Path & path, const std::vector<Point> & poly, Robot & robot,
-  f2c::pp::TurningBase & curve, double op_width, bool continuous,
+  f2c::pp::TurningBase & curve, double op_width, double cut_tol, bool continuous,
   const std::optional<double> & start_angle, const std::optional<double> & end_angle,
   const rclcpp::Logger & logger, std::vector<Path> * turns)
 {
   const double radius = robot.getMinTurningRadius();
-  const double cut_tol = kCornerCutTol * op_width;
   const size_t n = poly.size();
   const auto legAngle = [&poly](size_t a, size_t b) {
       return std::atan2(poly[b].getY() - poly[a].getY(), poly[b].getX() - poly[a].getX());
@@ -355,8 +353,9 @@ Path PathGenerator::generatePath(
     RCLCPP_WARN(
       logger_,
       "%zu connection corner(s) left sharp: no turn fits within %.2fm of the track. "
-      "Widen operation_width or lower min_turning_radius if the controller cannot hold them.",
-      sharp_corners, kCornerCutTol * robot_params_->getOperationWidth());
+      "Raise corner_cut_tolerance or lower min_turning_radius if the controller cannot "
+      "hold them.",
+      sharp_corners, corner_cut_tol_);
   }
 
   // Optionally thin out near-duplicate points (e.g. in turns)
@@ -483,7 +482,7 @@ size_t PathGenerator::appendConnection(
   const std::optional<double> end_angle = has_next ?
     std::optional<double>(next[0].getInAngle()) : std::nullopt;
   return appendRoundedTrack(
-    path, poly, robot, curve, op_width, continuous, start_angle, end_angle,
+    path, poly, robot, curve, op_width, corner_cut_tol_, continuous, start_angle, end_angle,
     logger_, &connection_turns_);
 }
 

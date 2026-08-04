@@ -369,6 +369,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "default_reduce_min_dist") {
         path_gen_->setReduceMinDist(parameter.as_double());
+      } else if (name == "corner_cut_tolerance") {
+        path_gen_->setCornerCutTolerance(parameter.as_double());
       } else if (name == "default_tsp_d_tol") {
         route_gen_->setTspDTol(parameter.as_double());
       } else if (name == "robot_width") {
