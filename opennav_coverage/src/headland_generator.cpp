@@ -50,7 +50,13 @@ Field HeadlandGenerator::generateHeadlands(
 {
   double width = 0.0;
   HeadlandGeneratorPtr generator = resolveGenerator(settings, width);
-  return generator->generateHeadlands(Fields(field), width).getGeometry(0);
+  F2CCells cells = generator->generateHeadlands(Fields(field), width);
+  if (cells.size() == 0) {
+    throw CoverageException(
+      "Headland width is too large for the field: nothing remains after removing it. "
+      "Reduce the headland width.");
+  }
+  return cells.getGeometry(0);
 }
 
 F2CCells HeadlandGenerator::generateHeadlands(
