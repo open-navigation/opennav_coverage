@@ -63,13 +63,14 @@ public:
     default_spiral_n_ = node->get_parameter("default_spiral_n").as_int();
 
     nav2::declare_parameter_if_not_declared(
-      node, "default_custom_order", rclcpp::PARAMETER_INTEGER_ARRAY);
-    try {
-      // Get the custom order and cast to size_t
-      auto order = node->get_parameter("default_custom_order").as_integer_array();
+      node, "default_custom_order",
+      rclcpp::ParameterValue(std::vector<int64_t>{}));
+    // Get the custom order and cast to size_t
+    auto order = node->get_parameter("default_custom_order").as_integer_array();
+    if (!order.empty()) {
       default_custom_order_ = std::vector<size_t>(order.begin(), order.end());
-    } catch (...) {
-      RCLCPP_WARN(
+    } else {
+      RCLCPP_INFO(
         node->get_logger(),
         "default_custom_order was not set! "
         "If using Custom Route mode, the custom order must be set per-request!");
