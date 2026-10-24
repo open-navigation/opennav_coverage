@@ -70,6 +70,12 @@ public:
       node, "default_reduce_min_dist", rclcpp::ParameterValue(0.1));
     reduce_min_dist_ = node->get_parameter("default_reduce_min_dist").as_double();
 
+    // Defaults to the ground the implement already covers either side of a swath.
+    nav2::declare_parameter_if_not_declared(
+      node, "corner_cut_tolerance",
+      rclcpp::ParameterValue(0.5 * robot_params->getOperationWidth()));
+    corner_cut_tol_ = node->get_parameter("corner_cut_tolerance").as_double();
+
     // Path Generator requires no changes at runtime
     generator_ = std::make_unique<f2c::pp::PathPlanning>();
     default_curve_ = createCurve(default_type_, default_continuity_type_);
@@ -83,6 +89,18 @@ public:
    */
   Path generatePath(
     const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings);
+
+  /**
+   * @brief Turns planned for the connections of the last generatePath call, one
+   *        Path per maneuver, for debug visualization
+   * @return Connection turns, empty if the connections were all straight
+   */
+  const std::vector<Path> & getConnectionTurns() const {return connection_turns_;}
+
+  /**
+   * @brief Drops the turns held for visualization, for a request that plans no path
+   */
+  void clearConnectionTurns() {connection_turns_.clear();}
 
   /**
    * @brief Sets the mode manually of the paths for dynamic parameters
@@ -116,6 +134,12 @@ public:
    */
   void setReduceMinDist(const double & setting) {reduce_min_dist_ = setting;}
 
+  /**
+   * @brief Sets how far rounding a connection's corner may leave the track
+   * @param setting double tolerance in meters
+   */
+  void setCornerCutTolerance(const double & setting) {corner_cut_tol_ = setting;}
+
 protected:
   /**
    * @brief Assemble the full path: swath groups via F2C planPath, connections
@@ -123,9 +147,11 @@ protected:
    *        handed to F2C's own route-level planPath).
    * @param route Route with ordered swath groups and connections
    * @param curve Curve generator for turns
+   * @param sharp_corners Out: connection corners no turn could be fitted through
    * @return Full path
    */
-  Path assemblePath(const F2CRoute & route, f2c::pp::TurningBase & curve);
+  Path assemblePath(
+    const F2CRoute & route, f2c::pp::TurningBase & curve, size_t & sharp_corners);
 
   /**
    * @brief Append one connection between swath groups to the path
@@ -133,9 +159,10 @@ protected:
    * @param prev Previous swath group (may be empty at the route start)
    * @param connection Connection waypoints from the route (may be empty)
    * @param next Next swath group (may be empty at the route end)
-   * @param curve Curve generator used when there is no polyline to follow
+   * @param curve Curve generator for the u-turn, or for the polyline's corners
+   * @return Corners left sharp because no turn fit within the track's corridor
    */
-  void appendConnection(
+  size_t appendConnection(
     Path & path, const Swaths & prev, const F2CMultiPoint & connection,
     const Swaths & next, f2c::pp::TurningBase & curve);
 
@@ -171,9 +198,13 @@ protected:
   float default_turn_point_distance_;
   bool reduce_path_;
   double reduce_min_dist_;
+  double corner_cut_tol_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
   RobotParams * robot_params_;
+  // Continuity of the curve in use, which sets how tight a turn can actually be
+  PathContinuityType active_continuity_type_{PathContinuityType::UNKNOWN};
+  std::vector<Path> connection_turns_;
   rclcpp::Logger logger_{rclcpp::get_logger("SwathGenerator")};
 };
 

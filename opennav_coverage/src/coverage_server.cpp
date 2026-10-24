@@ -174,6 +174,10 @@ void CoverageServer::computeCoveragePath()
   }
 
   try {
+    // A request that plans no path draws no turns; the last one's are otherwise
+    // still held and would be published over the new field.
+    path_gen_->clearConnectionTurns();
+
     // (0) Obtain field to use
     Field field;
     F2CField master_field;
@@ -329,7 +333,7 @@ void CoverageServer::computeCoveragePath()
     visualizer_->visualize(
       field, field_no_headland, master_field.getRefPoint(),
       util::toCartesianNavPathMsg(path, header, path_gen_->getTurnPointDistance()),
-      swaths, header, headland_path);
+      swaths, header, headland_path, path_gen_->getConnectionTurns());
     action_server_->succeeded_current(result);
   } catch (CoverageException & e) {
     RCLCPP_ERROR(get_logger(), "Invalid mode set: %s", e.what());
@@ -365,6 +369,8 @@ CoverageServer::dynamicParametersCallback(std::vector<rclcpp::Parameter> paramet
         path_gen_->setTurnPointDistance(parameter.as_double());
       } else if (name == "default_reduce_min_dist") {
         path_gen_->setReduceMinDist(parameter.as_double());
+      } else if (name == "corner_cut_tolerance") {
+        path_gen_->setCornerCutTolerance(parameter.as_double());
       } else if (name == "default_tsp_d_tol") {
         route_gen_->setTspDTol(parameter.as_double());
       } else if (name == "robot_width") {

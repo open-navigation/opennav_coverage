@@ -28,6 +28,7 @@
 #include "geometry_msgs/msg/polygon_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
 #include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 namespace opennav_coverage
 {
@@ -59,6 +60,9 @@ public:
     headland_swaths_pub_ = rclcpp::create_publisher<visualization_msgs::msg::Marker>(
       node->get_node_topics_interface(),
       "coverage_server/headland_swaths", rclcpp::QoS(1));
+    connection_turns_pub_ = rclcpp::create_publisher<visualization_msgs::msg::MarkerArray>(
+      node->get_node_topics_interface(),
+      "coverage_server/connection_turns", rclcpp::QoS(1));
   }
 
   void deactivate();
@@ -67,13 +71,15 @@ public:
     const Field & total_field, const Field & no_headland_field,
     const Point & ref_pt, const nav_msgs::msg::Path & path,
     const Swaths swaths, const std_msgs::msg::Header & header,
-    const Path & headland_path = Path());
+    const Path & headland_path = Path(),
+    const std::vector<Path> & connection_turns = {});
 
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr nav_plan_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr headlands_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr planning_field_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr swaths_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr headland_swaths_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr connection_turns_pub_;
 };
 
 }  // namespace opennav_coverage
