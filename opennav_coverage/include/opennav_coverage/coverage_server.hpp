@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "fields2cover.h" // NOLINT
 
@@ -24,6 +25,7 @@
 #include "nav2_ros_common/lifecycle_node.hpp"
 #include "nav2_ros_common/node_utils.hpp"
 #include "nav2_ros_common/simple_action_server.hpp"
+#include "nav2_ros_common/tf2_factories.hpp"
 #include "opennav_coverage/decomp_generator.hpp"
 #include "opennav_coverage/headland_generator.hpp"
 #include "opennav_coverage/swath_generator.hpp"
@@ -133,6 +135,11 @@ protected:
   bool cartesian_frame_;
   bool default_generate_decomp_{false};
   bool default_generate_headland_swaths_{false};
+
+  nav2::TransformBuffer::SharedPtr tf_;
+  nav2::TransformListener::SharedPtr tf_listener_;
+  std::string robot_base_frame_;
+  std::string tool_frame_;
 };
 
 }  // namespace opennav_coverage
