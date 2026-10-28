@@ -16,6 +16,7 @@
 #define OPENNAV_COVERAGE__UTILS_HPP_
 
 #include <cmath>
+#include <limits>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -34,6 +35,147 @@ namespace opennav_coverage
 
 namespace util
 {
+
+/**
+ * @brief Spreadsheet-style label for a connection turn: A..Z, then AA, AB, ...
+ *        Names a turn the same way in the debug log and in RViz
+ * @param idx Index of the turn
+ * @return Label
+ */
+inline std::string turnLabel(size_t idx)
+{
+  std::string label;
+  do {
+    label.insert(label.begin(), static_cast<char>('A' + idx % 26));
+    idx = idx / 26;
+  } while (idx-- > 0);
+  return label;
+}
+
+/**
+ * @brief Magnitude of the turn from one heading to another, wrapped to [0, pi]
+ * @param from Heading turned from
+ * @param to Heading turned to
+ * @return Turn magnitude
+ */
+inline double sweepBetween(double from, double to)
+{
+  const double d = to - from;
+  return std::fabs(std::atan2(std::sin(d), std::cos(d)));
+}
+
+/**
+ * @brief Perpendicular distance from a point to a segment
+ * @param p Point measured
+ * @param a Start of the segment
+ * @param b End of the segment
+ * @return Distance, to the nearer end when the segment is degenerate
+ */
+inline double distanceToSegment(const Point & p, const Point & a, const Point & b)
+{
+  const double dx = b.getX() - a.getX();
+  const double dy = b.getY() - a.getY();
+  const double len2 = dx * dx + dy * dy;
+  if (len2 < 1e-12) {
+    return p.distance(a);
+  }
+  const double t = std::clamp(
+    ((p.getX() - a.getX()) * dx + (p.getY() - a.getY()) * dy) / len2, 0.0, 1.0);
+  return std::hypot(p.getX() - (a.getX() + t * dx), p.getY() - (a.getY() + t * dy));
+}
+
+/**
+ * @brief Point a given distance from one point towards another
+ * @param from Point measured from
+ * @param to Point measured towards
+ * @param dist Distance along
+ * @return Point, or `from` when the two coincide
+ */
+inline Point pointAlong(const Point & from, const Point & to, double dist)
+{
+  const double len = from.distance(to);
+  if (len < 1e-9) {
+    return from;
+  }
+  return Point(
+    from.getX() + (to.getX() - from.getX()) * dist / len,
+    from.getY() + (to.getY() - from.getY()) * dist / len);
+}
+
+/**
+ * @brief Drops repeated points and those that only subdivide a straight run
+ *
+ * Douglas-Peucker, so every dropped point stays within `tol` of what is kept.
+ * Iterative rather than recursive: the depth would follow the point count on a
+ * staircase, which is what a decomposed field's border rings are.
+ * @param pts Polyline to thin
+ * @param tol Furthest a dropped point may sit from what is kept
+ * @return Thinned polyline, ends preserved
+ */
+inline std::vector<Point> simplifyPolyline(const std::vector<Point> & pts, double tol)
+{
+  std::vector<Point> uniq;
+  for (const auto & p : pts) {
+    if (uniq.empty() || uniq.back().distance(p) > 1e-6) {
+      uniq.push_back(p);
+    }
+  }
+  if (uniq.size() < 3) {
+    return uniq;
+  }
+
+  std::vector<bool> keep(uniq.size(), false);
+  keep.front() = true;
+  keep.back() = true;
+  std::vector<std::pair<size_t, size_t>> ranges{{0, uniq.size() - 1}};
+  while (!ranges.empty()) {
+    const size_t lo = ranges.back().first;
+    const size_t hi = ranges.back().second;
+    ranges.pop_back();
+
+    double worst = 0.0;
+    size_t split = lo;
+    for (size_t i = lo + 1; i < hi; ++i) {
+      const double dev = distanceToSegment(uniq[i], uniq[lo], uniq[hi]);
+      if (dev > worst) {
+        worst = dev;
+        split = i;
+      }
+    }
+    if (worst > tol) {
+      keep[split] = true;
+      ranges.push_back({lo, split});
+      ranges.push_back({split, hi});
+    }
+  }
+
+  std::vector<Point> out;
+  for (size_t i = 0; i < uniq.size(); ++i) {
+    if (keep[i]) {
+      out.push_back(uniq[i]);
+    }
+  }
+  return out;
+}
+
+/**
+ * @brief Furthest any state of a path strays from the polyline it stands in for
+ * @param arc Path measured
+ * @param track Polyline it replaces
+ * @return Worst deviation
+ */
+inline double deviationFromTrack(const Path & arc, const std::vector<Point> & track)
+{
+  double worst = 0.0;
+  for (const auto & s : arc.getStates()) {
+    double nearest = std::numeric_limits<double>::max();
+    for (size_t k = 0; k + 1 < track.size(); ++k) {
+      nearest = std::min(nearest, distanceToSegment(s.point, track[k], track[k + 1]));
+    }
+    worst = std::max(worst, nearest);
+  }
+  return worst;
+}
 
 /**
  * @brief Converts F2C Point to ROS Point32
