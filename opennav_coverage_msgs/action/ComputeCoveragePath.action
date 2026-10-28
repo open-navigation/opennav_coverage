@@ -48,6 +48,7 @@ uint16 INTERNAL_F2C_ERROR=801
 uint16 INVALID_MODE_SET=802
 uint16 INVALID_REQUEST=803
 uint16 INVALID_COORDS=803
+uint16 TF_ERROR=804
 
 nav_msgs/Path nav_path
 opennav_coverage_msgs/PathComponents coverage_path
