@@ -71,6 +71,8 @@ The result returns a `result.nav_path` -- which is a `nav_msgs/Path` containing 
 
 It also returns an error code, if any error occurred and the total planning time for metrics analysis.
 
+If your tool is not at the robot's base, for example a mower deck in front of the robot, set `tool_frame` to a frame at the center of the tool on the ground, rigidly attached to `robot_base_frame` (default `base_link`). When `generate_route` is `true`, the server looks up the tool's x and y offset via TF and moves each swath by this offset, rotated to the swath's direction of travel, so that `result.coverage_path` and `result.nav_path` are for the robot's base while the tool covers the swaths. If the transform is not available, the request fails with `TF_ERROR`. When `generate_route` is `false`, the swaths are returned for the tool. By default, `tool_frame` is `robot_base_frame`, which gives no shift.
+
 Note that `SwathMode` settings are to be paired with the `opennav_coverage` server with polygons, while the `RowSwathMode` settings are to be paired with the `opennav_row_coverage` server based on annotated rows.
 
 ### NavigateCompleteCoverage
@@ -97,6 +99,8 @@ The complete set of options are exposed as both dynamic parameters and through t
 | operation_width  | Width of implement or task for coverage  | double |
 | min_turning_radius  | Minimum turning radius for path planning  | double |
 | linear_curv_change  | Max linear curvature change | double |
+| robot_base_frame  | Robot's base frame. Only for `opennav_coverage` | String |
+| tool_frame  | Frame at the center of the tool on the ground. Only for `opennav_coverage` | String |
 | default_allow_overlap  | Whether to allow some coverage overlap in final pass to fill space by default. Only for `opennav_coverage`  | bool |
 | default_custom_order  | Default custom order of swaths -> route in CUSTOM mode | `vector<int>` |
 | default_headland_type  | Default headland mode. Option: CONSTANT. Only for `opennav_coverage`  | String |

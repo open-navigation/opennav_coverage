@@ -437,6 +437,69 @@ inline F2CPoint toFieldFrame(const F2CPoint & pt, const F2CField & field, bool i
 }
 
 /**
+ * @brief Converts a route for the tool into a route for the robot base. Each swath moves
+ * by the tool offset, turned to the start-to-end heading of the swath. Each connection
+ * point moves with the swath that is nearer along the connection.
+ * @param route Route with straight swaths, each in its driving direction
+ * @param tool_offset Tool position (x forward, y left) in the robot base frame
+ * @return Route for the robot base
+ */
+inline F2CRoute toBaseFrame(const F2CRoute & route, const Point & tool_offset)
+{
+  auto toolShift = [&tool_offset](const Swath & swath) {
+      const double yaw = std::atan2(
+        swath.endPoint().getY() - swath.startPoint().getY(),
+        swath.endPoint().getX() - swath.startPoint().getX());
+      return Point(0, 0).rotateFromPoint(yaw, tool_offset);
+    };
+
+  F2CRoute base_route = route;
+  for (size_t i = 0; i < route.sizeVectorSwaths(); ++i) {
+    Swaths base_swaths;
+    for (const Swath & swath : route.getSwaths(i)) {
+      const Point shift = toolShift(swath);
+      std::vector<Point> points;
+      for (const Point & point : swath.getPath()) {
+        points.push_back(point - shift);
+      }
+      // A Swath copy shares its geometry with the input route, so moveTo would change the input
+      Swath base_swath = swath;
+      base_swath.setPath(LineString(points));
+      base_swaths.push_back(base_swath);
+    }
+    base_route.setSwaths(i, base_swaths);
+  }
+
+  // Connection i comes before swath group i. An end point with no swath next to it (the start
+  // pose) stays
+  const size_t num_groups = route.sizeVectorSwaths();
+  for (size_t i = 0; i < route.sizeConnections(); ++i) {
+    const F2CMultiPoint & connection = route.getConnection(i);
+    std::vector<Point> points;
+    std::vector<double> length{0.0};
+    for (const Point & point : connection) {
+      if (!points.empty()) {
+        length.push_back(length.back() + points.back().distance(point));
+      }
+      points.push_back(point);
+    }
+    const bool has_prev = i > 0 && route.getSwaths(i - 1).size() > 0;
+    const bool has_next = i < num_groups && route.getSwaths(i).size() > 0;
+    const Point prev_shift = has_prev ? toolShift(route.getSwaths(i - 1).back()) : Point(0, 0);
+    const Point next_shift = has_next ? toolShift(route.getSwaths(i)[0]) : Point(0, 0);
+    for (size_t j = 0; j < points.size(); ++j) {
+      if ((j == 0 && !has_prev) || (j + 1 == points.size() && !has_next)) {
+        continue;
+      }
+      const bool nearer_prev = has_prev && (!has_next || length[j] < 0.5 * length.back());
+      points[j] = points[j] - (nearer_prev ? prev_shift : next_shift);
+    }
+    base_route.setConnection(i, F2CMultiPoint(points));
+  }
+  return base_route;
+}
+
+/**
  * @brief Converts a string to uppercase
  * @param string String to change to uppercase
  */

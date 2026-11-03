@@ -16,6 +16,7 @@
 #include <optional>
 
 #include "opennav_coverage/coverage_server.hpp"
+#include "nav2_util/robot_utils.hpp"
 
 using namespace std::chrono_literals;
 using rcl_interfaces::msg::ParameterType;
@@ -51,6 +52,15 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
   nav2::declare_parameter_if_not_declared(
     node, "default_generate_headland_swaths", rclcpp::ParameterValue(false));
   get_parameter("default_generate_headland_swaths", default_generate_headland_swaths_);
+
+  nav2::declare_parameter_if_not_declared(
+    node, "robot_base_frame", rclcpp::ParameterValue(std::string("base_link")));
+  get_parameter("robot_base_frame", robot_base_frame_);
+  nav2::declare_parameter_if_not_declared(
+    node, "tool_frame", rclcpp::ParameterValue(robot_base_frame_));
+  get_parameter("tool_frame", tool_frame_);
+  tf_ = nav2::create_transform_buffer(this);
+  tf_listener_ = nav2::create_transform_listener(*tf_, this, true);
 
   // If in GPS coordinates, we must convert to a CRS to compute coverage
   // Then, reconvert back to GPS for the user.
@@ -113,6 +123,8 @@ CoverageServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   headland_gen_.reset();
   decomp_gen_.reset();
   robot_params_.reset();
+  tf_listener_.reset();
+  tf_.reset();
   return nav2::CallbackReturn::SUCCESS;
 }
 
@@ -171,6 +183,16 @@ void CoverageServer::computeCoveragePath()
     RCLCPP_WARN(get_logger(), "Goal contained invalid configurations!");
     result->error_code = ComputeCoveragePath::Result::INVALID_REQUEST;
     action_server_->terminate_current(result);
+  }
+
+  // Tool position in the robot base frame. Only x and y are used: the tool rotation is ignored
+  geometry_msgs::msg::TransformStamped tool_to_base;
+  if (goal->generate_route && !nav2_util::getTransform(
+      tool_frame_, robot_base_frame_, tf2::durationFromSec(0.1), tf_, tool_to_base))
+  {
+    result->error_code = ComputeCoveragePath::Result::TF_ERROR;
+    action_server_->terminate_current(result);
+    return;
   }
 
   try {
@@ -271,6 +293,12 @@ void CoverageServer::computeCoveragePath()
         route_cells, swath_cells, swaths_by_cells, goal->route_mode, start_end);
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
+      }
+      route = util::toBaseFrame(
+        route, Point(tool_to_base.transform.translation.x, tool_to_base.transform.translation.y));
+      if (do_headland_swaths && tool_frame_ != robot_base_frame_) {
+        RCLCPP_WARN(
+          get_logger(), "The headland pass is not moved for the tool frame: it is for the base.");
       }
 
       // (4) Optional: Generate connection turns between ordered swaths
