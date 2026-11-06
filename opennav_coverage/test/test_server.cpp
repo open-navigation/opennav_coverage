@@ -193,9 +193,9 @@ TEST(ServerTest, testDecompPath)
   EXPECT_EQ(result.code, rclcpp_action::ResultCode::SUCCEEDED);
 }
 
-TEST(ServerTest, testDecompNonTSPRouteRejected)
+TEST(ServerTest, testDecompCustomRouteRejected)
 {
-  // Non-TSP route modes only handle a single cell, so combining one with
+  // CUSTOM's order vector can't be split across cells, so combining it with
   // decomposition (multi-cell) must be rejected with INVALID_MODE_SET.
   auto node = std::make_shared<ServerShim>();
   rclcpp_lifecycle::State state;
@@ -203,7 +203,7 @@ TEST(ServerTest, testDecompNonTSPRouteRejected)
   node->activate(state);
   auto node_thread = std::make_unique<nav2::NodeThread>(node);
 
-  auto client_node = std::make_shared<rclcpp::Node>("my_node_decomp_nontsp");
+  auto client_node = std::make_shared<rclcpp::Node>("my_node_decomp_custom");
   auto action_client =
     rclcpp_action::create_client<opennav_coverage_msgs::action::ComputeCoveragePath>(
     client_node, "compute_coverage_path");
@@ -215,7 +215,7 @@ TEST(ServerTest, testDecompNonTSPRouteRejected)
   goal_msg.decomp_mode.mode = "TRAPEZOIDAL";
   goal_msg.generate_headland = true;
   goal_msg.generate_route = true;
-  goal_msg.route_mode.mode = "BOUSTROPHEDON";  // non-TSP -> rejected with decomposition
+  goal_msg.route_mode.mode = "CUSTOM";  // order vector -> rejected with decomposition
   goal_msg.generate_path = true;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"

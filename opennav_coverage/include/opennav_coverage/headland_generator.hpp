@@ -15,6 +15,7 @@
 #ifndef OPENNAV_COVERAGE__HEADLAND_GENERATOR_HPP_
 #define OPENNAV_COVERAGE__HEADLAND_GENERATOR_HPP_
 
+#include <cmath>
 #include <vector>
 #include <string>
 
@@ -82,6 +83,19 @@ public:
    */
   F2CCells generateHeadlandsBetweenCells(
     const F2CCells & cells, double route_width);
+
+  /**
+   * @brief Generate concentric rings that fully sweep the headland band.
+   *        Pass count is derived from the headland width and the operation
+   *        width (round(width / operation_width), min 1).
+   * @param field Full field (before headland removal)
+   * @param operation_width Spacing between rings
+   * @param settings Action request information (headland mode/width)
+   * @return Rings ordered outer to inner; each F2CCells is one pass
+   */
+  std::vector<F2CCells> generateHeadlandSwaths(
+    const Field & field, double operation_width,
+    const opennav_coverage_msgs::msg::HeadlandMode & settings);
 
   /**
    * @brief Sets the mode manually of the Headland for dynamic parameters

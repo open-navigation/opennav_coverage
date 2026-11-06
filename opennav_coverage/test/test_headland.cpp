@@ -176,6 +176,31 @@ TEST(HeadlandTests, TestheadlandBetweenCells)
   EXPECT_NEAR(untouched.area(), apart.area(), 1e-3);
 }
 
+TEST(HeadlandTests, TestheadlandSwathRings)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  auto generator = HeadlandShim(node);
+
+  F2CCell cell(F2CLinearRing({
+      F2CPoint(0, 0), F2CPoint(100, 0), F2CPoint(100, 100),
+      F2CPoint(0, 100), F2CPoint(0, 0)}));
+
+  opennav_coverage_msgs::msg::HeadlandMode settings;  // default width 2.0 m
+  // 2.0 / 0.7 -> 3 concentric passes, ordered outer to inner
+  auto rings = generator.generateHeadlandSwaths(cell, 0.7, settings);
+
+  EXPECT_EQ(rings.size(), 3u);
+  double prev_area = cell.area();
+  for (const auto & ring : rings) {
+    ASSERT_GT(ring.size(), 0u);
+    EXPECT_LT(ring.getGeometry(0).area(), prev_area);
+    prev_area = ring.getGeometry(0).area();
+  }
+
+  // Invalid operation width must throw rather than divide by zero
+  EXPECT_THROW(generator.generateHeadlandSwaths(cell, 0.0, settings), CoverageException);
+}
+
 TEST(HeadlandTests, TestheadlandMultiCellAllCollapseThrows)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");

@@ -29,12 +29,14 @@ void Visualizer::deactivate()
   headlands_pub_.reset();
   planning_field_pub_.reset();
   swaths_pub_.reset();
+  headland_swaths_pub_.reset();
 }
 
 void Visualizer::visualize(
   const Field & total_field, const Field & no_headland_field,
   const Point & ref_pt, const nav_msgs::msg::Path & nav_path,
-  const Swaths swaths, const std_msgs::msg::Header & header)
+  const Swaths swaths, const std_msgs::msg::Header & header,
+  const Path & headland_path)
 {
   // F2C strips out reference point of all data, so we need to readd it
   // so that our visualizations mirror the true transformed output
@@ -101,6 +103,33 @@ void Visualizer::visualize(
     }
 
     swaths_pub_->publish(std::move(output_swaths));
+  }
+
+  // Headland perimeter loop, if driven, in a distinct color so it's not confused
+  // with the (identically-shaped) planning_field boundary.
+  if (headland_swaths_pub_->get_subscription_count() > 0) {
+    auto output_hl = std::make_unique<visualization_msgs::msg::Marker>();
+    output_hl->header.stamp = header.stamp;
+    output_hl->header.frame_id = GLOBAL_FRAME;
+
+    if (headland_path.size() == 0) {
+      output_hl->action = visualization_msgs::msg::Marker::DELETEALL;
+    } else {
+      output_hl->action = visualization_msgs::msg::Marker::ADD;
+      output_hl->type = visualization_msgs::msg::Marker::LINE_STRIP;
+      output_hl->pose.orientation.w = 1.0;
+      output_hl->scale.x = 0.4;
+      output_hl->color.r = 1.0;
+      output_hl->color.a = 1.0;
+
+      for (const auto & s : headland_path) {
+        output_hl->points.push_back(util::pointToPoint32(util::toMsg(s.point + ref_pt)));
+      }
+      output_hl->points.push_back(
+        util::pointToPoint32(util::toMsg(headland_path.back().atEnd() + ref_pt)));
+    }
+
+    headland_swaths_pub_->publish(std::move(output_hl));
   }
 }
 

@@ -63,13 +63,14 @@ public:
     default_spiral_n_ = node->get_parameter("default_spiral_n").as_int();
 
     nav2::declare_parameter_if_not_declared(
-      node, "default_custom_order", rclcpp::PARAMETER_INTEGER_ARRAY);
-    try {
-      // Get the custom order and cast to size_t
-      auto order = node->get_parameter("default_custom_order").as_integer_array();
+      node, "default_custom_order",
+      rclcpp::ParameterValue(std::vector<int64_t>{}));
+    // Get the custom order and cast to size_t
+    auto order = node->get_parameter("default_custom_order").as_integer_array();
+    if (!order.empty()) {
       default_custom_order_ = std::vector<size_t>(order.begin(), order.end());
-    } catch (...) {
-      RCLCPP_WARN(
+    } else {
+      RCLCPP_INFO(
         node->get_logger(),
         "default_custom_order was not set! "
         "If using Custom Route mode, the custom order must be set per-request!");
@@ -124,18 +125,18 @@ public:
   }
 
   /**
-   * @brief Whether the request (or the default it falls back to) is TSP.
-   *        Used to reject non-TSP + decomposition before any geometry work.
-   * @param settings Action request information
-   * @return true when the route mode resolves to TSP
+   * @brief Whether the goal's route mode resolves to CUSTOM, the one mode whose
+   *        absolute order vector cannot be split across decomposed cells
+   * @param settings Route mode settings from the action goal
+   * @return True if the effective mode is CUSTOM
    */
-  bool resolvesToTsp(const opennav_coverage_msgs::msg::RouteMode & settings)
+  bool resolvesToCustom(const opennav_coverage_msgs::msg::RouteMode & settings)
   {
     RouteType type = toType(settings.mode);
     if (type == RouteType::UNKNOWN) {
       type = default_type_;
     }
-    return type == RouteType::TSP;
+    return type == RouteType::CUSTOM;
   }
 
   /**
