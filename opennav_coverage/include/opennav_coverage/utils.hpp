@@ -356,6 +356,7 @@ inline nav_msgs::msg::Path toNavPathMsg(
 
   for (const auto & state : path) {
     msg.poses.push_back(toMsg(state));
+    msg.poses.back().header = header;
     if (out_velocities) {out_velocities->push_back(state.velocity);}
     if (out_is_backward) {
       out_is_backward->push_back(state.dir == f2c::types::PathDirection::BACKWARD);
