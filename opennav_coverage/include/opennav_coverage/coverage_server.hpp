@@ -17,7 +17,6 @@
 
 #include <vector>
 #include <memory>
-#include <string>
 
 #include "fields2cover.h" // NOLINT
 
@@ -138,8 +137,6 @@ protected:
 
   nav2::TransformBuffer::SharedPtr tf_;
   nav2::TransformListener::SharedPtr tf_listener_;
-  std::string robot_base_frame_;
-  std::string tool_frame_;
 };
 
 }  // namespace opennav_coverage

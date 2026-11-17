@@ -53,12 +53,6 @@ CoverageServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
     node, "default_generate_headland_swaths", rclcpp::ParameterValue(false));
   get_parameter("default_generate_headland_swaths", default_generate_headland_swaths_);
 
-  nav2::declare_parameter_if_not_declared(
-    node, "robot_base_frame", rclcpp::ParameterValue(std::string("base_link")));
-  get_parameter("robot_base_frame", robot_base_frame_);
-  nav2::declare_parameter_if_not_declared(
-    node, "tool_frame", rclcpp::ParameterValue(robot_base_frame_));
-  get_parameter("tool_frame", tool_frame_);
   tf_ = nav2::create_transform_buffer(this);
   tf_listener_ = nav2::create_transform_listener(*tf_, this, true);
 
@@ -189,12 +183,15 @@ void CoverageServer::computeCoveragePath()
   // Tool position in the robot base frame. Only x and y are used: the tool rotation is ignored
   geometry_msgs::msg::TransformStamped tool_to_base;
   if (goal->generate_route && !nav2_util::getTransform(
-      tool_frame_, robot_base_frame_, tf2::durationFromSec(0.1), tf_, tool_to_base))
+      robot_params_->getToolFrame(), robot_params_->getBaseFrame(),
+      tf2::durationFromSec(0.1), tf_, tool_to_base))
   {
     result->error_code = ComputeCoveragePath::Result::TF_ERROR;
     action_server_->terminate_current(result);
     return;
   }
+  const Point tool_offset(
+    tool_to_base.transform.translation.x, tool_to_base.transform.translation.y);
 
   try {
     // (0) Obtain field to use
@@ -235,6 +232,7 @@ void CoverageServer::computeCoveragePath()
     // are generated from. Differ only when decomposing with a headland.
     F2CCells route_cells;
     F2CCells swath_cells;
+    double route_w = 0.0;  // swath ends from the border between decomposed cells
     if (do_decomp) {
       // Headland-first: remove the headland once from the whole field, then
       // decompose that into border-sharing cells (the travel graph).
@@ -250,7 +248,7 @@ void CoverageServer::computeCoveragePath()
         swath_cells = route_cells;
       } else {
         // Headland already removed before decomposing; only carve the inter-cell corridor here.
-        const double route_w = goal->route_headland_width > 0.0 ?
+        route_w = goal->route_headland_width > 0.0 ?
           goal->route_headland_width : robot_params_->getOperationWidth();
         swath_cells = headland_gen_->generateHeadlandsBetweenCells(route_cells, route_w);
       }
@@ -295,11 +293,31 @@ void CoverageServer::computeCoveragePath()
       if (route.isEmpty()) {
         throw CoverageException("Route planner returned an empty route.");
       }
-      route = util::toBaseFrame(
-        route, Point(tool_to_base.transform.translation.x, tool_to_base.transform.translation.y));
-      if (do_headland_swaths && tool_frame_ != robot_base_frame_) {
-        RCLCPP_WARN(
-          get_logger(), "The headland pass is not moved for the tool frame: it is for the base.");
+
+      // With a tool offset, the route moves from the tool to the robot base
+      if (tool_offset.getX() != 0.0 || tool_offset.getY() != 0.0) {
+        route = util::toBaseFrame(route, tool_offset);
+        for (size_t i = 0; i < route.sizeVectorSwaths(); ++i) {
+          for (const Swath & swath : route.getSwaths(i)) {
+            if (!swath.getPath().within(field)) {
+              throw CoverageException(
+                      "The tool offset moves the robot base out of the field. "
+                      "Increase the headland width.");
+            }
+          }
+        }
+        if (do_decomp && std::abs(tool_offset.getX()) > route_w) {
+          RCLCPP_WARN(
+            get_logger(),
+            "The tool is %.2f m in front of or behind the robot base, more than the distance of "
+            "the swath ends from the border between two cells (%.2f m): the robot base can turn "
+            "back where it enters or leaves a cell. Use generate_headland and increase "
+            "route_headland_width.", std::abs(tool_offset.getX()), route_w);
+        }
+        if (do_headland_swaths && goal->generate_path) {
+          RCLCPP_WARN(
+            get_logger(), "The headland pass is not shifted: it is planned for the robot base.");
+        }
       }
 
       // (4) Optional: Generate connection turns between ordered swaths
