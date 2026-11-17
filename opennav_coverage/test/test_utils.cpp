@@ -15,16 +15,16 @@
 #include <cmath>
 #include <utility>
 
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-#include "opennav_coverage/utils.hpp"
-#include "tf2/utils.h"
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include "opennav_coverage/utils.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "tf2/utils.h"
+#include "gtest/gtest.h"
 
-// Luckily, F2C has very high test coverage so we only need to test what we touch
+// Luckily, F2C has very high test coverage so we only need to test what we
+// touch
 
-class RosLockGuard
-{
+class RosLockGuard {
 public:
   RosLockGuard() {rclcpp::init(0, nullptr);}
   ~RosLockGuard() {rclcpp::shutdown();}
@@ -34,8 +34,7 @@ RosLockGuard g_rclcpp;
 namespace opennav_coverage
 {
 
-TEST(UtilsTests, TestpointToPoint32)
-{
+TEST(UtilsTests, TestpointToPoint32) {
   geometry_msgs::msg::Point32 pt_in;
   pt_in.x = 1.0;
   pt_in.y = 1.1;
@@ -46,8 +45,7 @@ TEST(UtilsTests, TestpointToPoint32)
   EXPECT_NEAR(pt_out.z, 1.2, 1e-6);
 }
 
-TEST(UtilsTests, TestToFieldFrameCartesian)
-{
+TEST(UtilsTests, TestToFieldFrameCartesian) {
   // Cartesian start point is moved into the field's ref-subtracted local frame
   F2CLinearRing ring;
   ring.addPoint(5.0, 5.0);
@@ -57,7 +55,8 @@ TEST(UtilsTests, TestToFieldFrameCartesian)
   F2CCells cells;
   cells.addGeometry(F2CCell(ring));
   F2CField field(cells);
-  ASSERT_DOUBLE_EQ(field.getRefPoint().getX(), 5.0);  // F2CField subtracts the first vertex
+  ASSERT_DOUBLE_EQ(field.getRefPoint().getX(),
+                   5.0); // F2CField subtracts the first vertex
   ASSERT_DOUBLE_EQ(field.getRefPoint().getY(), 5.0);
 
   // The field corner (5,5) maps to the local origin; (10,8) maps to (5,3)
@@ -69,8 +68,7 @@ TEST(UtilsTests, TestToFieldFrameCartesian)
   EXPECT_DOUBLE_EQ(inside.getY(), 3.0);
 }
 
-TEST(UtilsTests, TestToFieldFrameGPS)
-{
+TEST(UtilsTests, TestToFieldFrameGPS) {
   // GPS start point lands in the field's local frame
   F2CLinearRing ring;
   ring.addPoint(-1.0, 40.0);
@@ -84,14 +82,14 @@ TEST(UtilsTests, TestToFieldFrameGPS)
   field.setCRS("EPSG:4326");
   f2c::Transform::transformToUTM(field);
 
-  // The first ring vertex is the field's reference, so it maps to the local origin
+  // The first ring vertex is the field's reference, so it maps to the local
+  // origin
   F2CPoint local = util::toFieldFrame(F2CPoint(-1.0, 40.0), field, false);
   EXPECT_NEAR(local.getX(), 0.0, 1e-3);
   EXPECT_NEAR(local.getY(), 0.0, 1e-3);
 }
 
-TEST(UtilsTests, TestpointToMsg)
-{
+TEST(UtilsTests, TestpointToMsg) {
   Point pt_in{1.0, 2.0, 3.0};
   geometry_msgs::msg::Point32 pt_out = util::toMsg(pt_in);
   EXPECT_EQ(pt_out.x, 1.0);
@@ -99,8 +97,7 @@ TEST(UtilsTests, TestpointToMsg)
   EXPECT_EQ(pt_out.z, 3.0);
 }
 
-TEST(UtilsTests, TestpathStateToMsg)
-{
+TEST(UtilsTests, TestpathStateToMsg) {
   PathState state_in;
   state_in.point = Point(1.0, 2.0, 3.0);
   state_in.angle = M_PI;
@@ -112,15 +109,13 @@ TEST(UtilsTests, TestpathStateToMsg)
   EXPECT_NEAR(tf2::getYaw(pose_out.pose.orientation), M_PI, 0.01);
 }
 
-TEST(UtilsTests, TesttoUpper)
-{
+TEST(UtilsTests, TesttoUpper) {
   std::string test_str = "hi";
   util::toUpper(test_str);
   EXPECT_EQ(test_str, std::string("HI"));
 }
 
-TEST(UtilsTests, TesttoCoveragePathMsg1)
-{
+TEST(UtilsTests, TesttoCoveragePathMsg1) {
   bool ordered = false;
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
@@ -131,7 +126,8 @@ TEST(UtilsTests, TesttoCoveragePathMsg1)
   swaths_in.push_back(Swath());
   swaths_in.push_back(Swath());
 
-  auto msg = util::toCoveragePathMsg(swaths_in, field, ordered, header_in, true);
+  auto msg =
+    util::toCoveragePathMsg(swaths_in, field, ordered, header_in, true);
   EXPECT_EQ(msg.header.frame_id, "test");
   EXPECT_EQ(msg.swaths_ordered, false);
   EXPECT_EQ(msg.swaths.size(), 3u);
@@ -145,14 +141,14 @@ TEST(UtilsTests, TesttoCoveragePathMsg1)
   EXPECT_EQ(msg.contains_turns, false);
 }
 
-TEST(UtilsTests, TesttoNavPathMsg)
-{
+TEST(UtilsTests, TesttoNavPathMsg) {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
   path_in.getStates().resize(10);
   // v2 default-initializes PathState::type to SWATH; mark as TURN so each state
-  // yields one pose (consecutive SWATHs at the same point would densify to one).
+  // yields one pose (consecutive SWATHs at the same point would densify to
+  // one).
   for (auto & state : path_in.getStates()) {
     state.type = f2c::types::PathSectionType::TURN;
   }
@@ -162,17 +158,17 @@ TEST(UtilsTests, TesttoNavPathMsg)
   EXPECT_EQ(msg.header.frame_id, "test");
   EXPECT_EQ(msg.poses.size(), 10u);
 
-  // A single straight SWATH state must be densified: len 1.0 at pt_dist 0.1 -> ~10 poses.
+  // A single straight SWATH state must be densified: len 1.0 at pt_dist 0.1 ->
+  // ~10 poses.
   Path swath_path;
-  swath_path.addState(
-    Point(0.0, 0.0), 0.0, 1.0,
-    f2c::types::PathDirection::FORWARD, f2c::types::PathSectionType::SWATH);
+  swath_path.addState(Point(0.0, 0.0), 0.0, 1.0,
+                      f2c::types::PathDirection::FORWARD,
+                      f2c::types::PathSectionType::SWATH);
   auto swath_msg = util::toNavPathMsg(swath_path, field, header_in, true, 0.1);
   EXPECT_GE(swath_msg.poses.size(), 9u);
 }
 
-TEST(UtilsTests, TesttoCoveragePathMsg2)
-{
+TEST(UtilsTests, TesttoCoveragePathMsg2) {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
@@ -184,11 +180,13 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
   EXPECT_EQ(msg.contains_turns, true);
   EXPECT_EQ(msg.swaths_ordered, true);
 
-  // states are not valid (e.g. non-marked as turn or swath). SWATH/TURN/HL_SWATH
-  // are all handled now, so cast an out-of-range value to trigger the error.
+  // states are not valid (e.g. non-marked as turn or swath).
+  // SWATH/TURN/HL_SWATH are all handled now, so cast an out-of-range value to
+  // trigger the error.
   path_in.getStates().resize(10);
   path_in.getStates()[0].type = static_cast<f2c::types::PathSectionType>(99);
-  EXPECT_THROW(util::toCoveragePathMsg(path_in, field, header_in, true), std::runtime_error);
+  EXPECT_THROW(util::toCoveragePathMsg(path_in, field, header_in, true),
+               std::runtime_error);
 
   // Now lets make it valid
   using f2c::types::PathSectionType;
@@ -226,8 +224,7 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
 }
 
 // HL_SWATH states (produced by decomposition) must be handled like SWATH.
-TEST(UtilsTests, TesttoCoveragePathMsgHLSwath)
-{
+TEST(UtilsTests, TesttoCoveragePathMsgHLSwath) {
   using f2c::types::PathSectionType;
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
@@ -278,11 +275,13 @@ TEST(UtilsTests, TesttoCoveragePathMsgHLSwath)
     path_in.getStates()[6].type = PathSectionType::SWATH;
 
     auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
-    EXPECT_EQ(msg.swaths.size(), 2u);  // SWATH->HL_SWATH is a no-op (same swath block)
+    EXPECT_EQ(msg.swaths.size(),
+              2u); // SWATH->HL_SWATH is a no-op (same swath block)
     EXPECT_EQ(msg.turns.size(), 1u);
   }
 
-  // Scenario 4: start with TURN, then transition to HL_SWATH (TURN -> swath-like edge)
+  // Scenario 4: start with TURN, then transition to HL_SWATH (TURN ->
+  // swath-like edge)
   {
     Path path_in;
     path_in.getStates().resize(4);
@@ -297,8 +296,44 @@ TEST(UtilsTests, TesttoCoveragePathMsgHLSwath)
   }
 }
 
-TEST(UtilsTests, TestgetFieldFromGoal)
-{
+// A raw F2C path stores ONE state per swath (start point + heading + length).
+// The message must hold both ends of every swath, not just the start.
+TEST(UtilsTests, TesttoCoveragePathMsgSwathEndPoints) {
+  using f2c::types::PathDirection;
+  using f2c::types::PathSectionType;
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  F2CField field;
+
+  Path path_in;
+  // Swath 1: from (0, 0) heading +x, 10 m long -> ends at (10, 0)
+  path_in.addState(Point(0.0, 0.0), 0.0, 10.0, PathDirection::FORWARD,
+                   PathSectionType::SWATH);
+  // Turn between the swaths (two states)
+  path_in.addState(Point(10.0, 0.0), M_PI / 2, 0.1, PathDirection::FORWARD,
+                   PathSectionType::TURN);
+  path_in.addState(Point(10.0, 1.0), M_PI, 0.1, PathDirection::FORWARD,
+                   PathSectionType::TURN);
+  // Swath 2: from (10, 2) heading -x, 10 m long -> ends at (0, 2)
+  path_in.addState(Point(10.0, 2.0), M_PI, 10.0, PathDirection::FORWARD,
+                   PathSectionType::SWATH);
+
+  auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+  ASSERT_EQ(msg.swaths.size(), 2u);
+  ASSERT_EQ(msg.turns.size(), 1u);
+
+  EXPECT_NEAR(msg.swaths[0].start.x, 0.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[0].start.y, 0.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[0].end.x, 10.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[0].end.y, 0.0, 1e-5);
+
+  EXPECT_NEAR(msg.swaths[1].start.x, 10.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[1].start.y, 2.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[1].end.x, 0.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[1].end.y, 2.0, 1e-5);
+}
+
+TEST(UtilsTests, TestgetFieldFromGoal) {
   auto goal = std::make_shared<typename ComputeCoveragePath::Goal>();
 
   // No polygons set
@@ -328,9 +363,9 @@ TEST(UtilsTests, TestgetFieldFromGoal)
   EXPECT_EQ(field2.getField().getGeometry(0).getGeometry(1).size(), 3u);
 }
 
-TEST(UtilsTests, TesttoNavPathMsgDiscreteSwathPointCount)
-{
-  // A single SWATH state with len=1.0 at step=0.1 → n_steps = round(1.0/0.1) = 10
+TEST(UtilsTests, TesttoNavPathMsgDiscreteSwathPointCount) {
+  // A single SWATH state with len=1.0 at step=0.1 → n_steps = round(1.0/0.1) =
+  // 10
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
@@ -346,8 +381,7 @@ TEST(UtilsTests, TesttoNavPathMsgDiscreteSwathPointCount)
   EXPECT_EQ(msg.poses.size(), 10u);
 }
 
-TEST(UtilsTests, TesttoNavPathMsgTurnUnchanged)
-{
+TEST(UtilsTests, TesttoNavPathMsgTurnUnchanged) {
   // TURN states must pass through discretizeSwath unmodified (regression guard)
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
@@ -362,8 +396,7 @@ TEST(UtilsTests, TesttoNavPathMsgTurnUnchanged)
   EXPECT_EQ(msg.poses.size(), 10u);
 }
 
-TEST(UtilsTests, TestGetTaskTime)
-{
+TEST(UtilsTests, TestGetTaskTime) {
   Path path;
   PathState s;
   s.len = 5.0;
@@ -373,9 +406,9 @@ TEST(UtilsTests, TestGetTaskTime)
   EXPECT_NEAR(path.getTaskTime(), 2.5, 0.01);
 }
 
-TEST(UtilsTests, TestGetTaskTimeZeroVelocity)
-{
-  // velocity=0 → getTaskTime() returns inf; caller must guard with std::isfinite
+TEST(UtilsTests, TestGetTaskTimeZeroVelocity) {
+  // velocity=0 → getTaskTime() returns inf; caller must guard with
+  // std::isfinite
   Path path;
   PathState s;
   s.len = 1.0;
@@ -383,31 +416,33 @@ TEST(UtilsTests, TestGetTaskTimeZeroVelocity)
   path.addState(s);
 
   EXPECT_FALSE(std::isfinite(path.getTaskTime()));
-  const double guarded = std::isfinite(path.getTaskTime()) ? path.getTaskTime() : 0.0;
+  const double guarded =
+    std::isfinite(path.getTaskTime()) ? path.getTaskTime() : 0.0;
   EXPECT_NEAR(guarded, 0.0, 1e-9);
 }
 
-TEST(UtilsTests, TestGetTaskTimeEmptyPath)
-{
+TEST(UtilsTests, TestGetTaskTimeEmptyPath) {
   Path empty;
   EXPECT_NEAR(empty.getTaskTime(), 0.0, 1e-9);
 }
 
-TEST(UtilsTests, TestPathComponentsIterator)
-{
+TEST(UtilsTests, TestPathComponentsIterator) {
   opennav_coverage_msgs::msg::PathComponents msg;
 
   // Sizes don't match
   msg.swaths.resize(4);
-  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg), std::runtime_error);
+  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg),
+               std::runtime_error);
 
   // Isn't properly filled in to contain turns
   msg.turns.resize(4);
-  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg), std::runtime_error);
+  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg),
+               std::runtime_error);
 
   // Isn't properly filled in to be ordered
   msg.contains_turns = true;
-  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg), std::runtime_error);
+  EXPECT_THROW(opennav_coverage::util::PathComponentsIterator it(msg),
+               std::runtime_error);
 
   // Now should work
   msg.swaths_ordered = true;
@@ -433,23 +468,22 @@ TEST(UtilsTests, TestPathComponentsIterator)
 }
 
 // B.6-T2: empty path → velocity and is_backward vectors are empty
-TEST(UtilsTests, TesttoNavPathMsgEmptyVelocity)
-{
+TEST(UtilsTests, TesttoNavPathMsgEmptyVelocity) {
   std_msgs::msg::Header header_in;
   Path empty_path;
   F2CField field;
   std::vector<double> vels;
   std::vector<bool> dirs;
 
-  auto nav_path = util::toNavPathMsg(empty_path, field, header_in, true, 0.1f, &vels, &dirs);
+  auto nav_path = util::toNavPathMsg(empty_path, field, header_in, true, 0.1f,
+                                     &vels, &dirs);
   EXPECT_TRUE(nav_path.poses.empty());
   EXPECT_TRUE(vels.empty());
   EXPECT_TRUE(dirs.empty());
 }
 
 // B.6-T3: forward-only path → all is_backward entries are false
-TEST(UtilsTests, TesttoNavPathMsgForwardOnly)
-{
+TEST(UtilsTests, TesttoNavPathMsgForwardOnly) {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
@@ -465,7 +499,8 @@ TEST(UtilsTests, TesttoNavPathMsgForwardOnly)
 
   std::vector<double> vels;
   std::vector<bool> dirs;
-  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
+  auto nav_path =
+    util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
@@ -477,9 +512,9 @@ TEST(UtilsTests, TesttoNavPathMsgForwardOnly)
   }
 }
 
-// B.6-T1: velocity and is_backward values match PathState fields after discretizeSwath
-TEST(UtilsTests, TesttoNavPathMsgWithVelocity)
-{
+// B.6-T1: velocity and is_backward values match PathState fields after
+// discretizeSwath
+TEST(UtilsTests, TesttoNavPathMsgWithVelocity) {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
@@ -502,7 +537,8 @@ TEST(UtilsTests, TesttoNavPathMsgWithVelocity)
   F2CField field;
   std::vector<double> vels;
   std::vector<bool> dirs;
-  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
+  auto nav_path =
+    util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
@@ -514,9 +550,9 @@ TEST(UtilsTests, TesttoNavPathMsgWithVelocity)
   EXPECT_FALSE(dirs.back());
 }
 
-// HL_SWATH states must carry velocity/direction through toNavPathMsg like SWATH does.
-TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity)
-{
+// HL_SWATH states must carry velocity/direction through toNavPathMsg like SWATH
+// does.
+TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity) {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
@@ -539,12 +575,13 @@ TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity)
   F2CField field;
   std::vector<double> vels;
   std::vector<bool> dirs;
-  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
+  auto nav_path =
+    util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
-  // HL_SWATH state: velocity=1.5, direction=FORWARD, passes through as one point
-  // (discretizeSwath does not densify HL_SWATH, only SWATH)
+  // HL_SWATH state: velocity=1.5, direction=FORWARD, passes through as one
+  // point (discretizeSwath does not densify HL_SWATH, only SWATH)
   EXPECT_NEAR(vels[0], 1.5, 1e-6);
   EXPECT_FALSE(dirs[0]);
   // TURN state: velocity=0.5, direction=BACKWARD
@@ -552,9 +589,9 @@ TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity)
   EXPECT_TRUE(dirs.back());
 }
 
-// B.6+B.7 integration: poses, velocities, is_backward sizes must match after discretizeSwath
-TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch)
-{
+// B.6+B.7 integration: poses, velocities, is_backward sizes must match after
+// discretizeSwath
+TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch) {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
   Path path_in;
@@ -576,7 +613,8 @@ TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch)
   F2CField field;
   std::vector<double> vels;
   std::vector<bool> dirs;
-  auto nav_path = util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
+  auto nav_path =
+    util::toNavPathMsg(path_in, field, header_in, true, 0.1f, &vels, &dirs);
 
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
@@ -585,4 +623,4 @@ TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch)
   EXPECT_TRUE(dirs.back());
 }
 
-}  // namespace opennav_coverage
+} // namespace opennav_coverage
