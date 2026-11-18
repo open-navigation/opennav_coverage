@@ -15,18 +15,18 @@
 #ifndef OPENNAV_COVERAGE__UTILS_HPP_
 #define OPENNAV_COVERAGE__UTILS_HPP_
 
+#include <vector>
+#include <string>
 #include <algorithm>
 #include <memory>
-#include <string>
 #include <utility>
-#include <vector>
 
 #include "fields2cover.h" // NOLINT
-#include "geometry_msgs/msg/point32.hpp"
-#include "nav2_util/geometry_utils.hpp"
-#include "nav2_util/node_utils.hpp"
-#include "opennav_coverage/types.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "opennav_coverage/types.hpp"
+#include "nav2_util/node_utils.hpp"
+#include "nav2_util/geometry_utils.hpp"
+#include "geometry_msgs/msg/point32.hpp"
 
 namespace opennav_coverage
 {
@@ -39,8 +39,7 @@ namespace util
  * @param Point point
  * @return geometry_msgs Point
  */
-inline geometry_msgs::msg::Point
-pointToPoint32(const geometry_msgs::msg::Point32 & pt)
+inline geometry_msgs::msg::Point pointToPoint32(const geometry_msgs::msg::Point32 & pt)
 {
   geometry_msgs::msg::Point msg;
   msg.x = pt.x;
@@ -74,8 +73,7 @@ inline geometry_msgs::msg::PoseStamped toMsg(const PathState & state)
   msg.pose.position.x = state.point.getX();
   msg.pose.position.y = state.point.getY();
   msg.pose.position.z = state.point.getZ();
-  msg.pose.orientation =
-    nav2_util::geometry_utils::orientationAroundZAxis(state.angle);
+  msg.pose.orientation = nav2_util::geometry_utils::orientationAroundZAxis(state.angle);
   return msg;
 }
 
@@ -87,11 +85,9 @@ inline geometry_msgs::msg::PoseStamped toMsg(const PathState & state)
  * @param bool if the origional CRS is cartesian or not requiring conversion
  * @return PathComponents Info for action server to utilize
  */
-inline opennav_coverage_msgs::msg::PathComponents
-toCoveragePathMsg(
+inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   const Swaths & raw_swaths, const F2CField & field,
-  const bool ordered, const std_msgs::msg::Header & header,
-  const bool is_cartesian)
+  const bool ordered, const std_msgs::msg::Header & header, const bool is_cartesian)
 {
   opennav_coverage_msgs::msg::PathComponents msg;
   msg.contains_turns = false;
@@ -115,19 +111,16 @@ toCoveragePathMsg(
 }
 
 /**
- * @brief Converts an ordered route to coverage path message (ordered swaths
- * only)
+ * @brief Converts an ordered route to coverage path message (ordered swaths only)
  * @param route Route whose swath groups to convert
  * @param Field Field to use for conversion from UTM if necessary
  * @param header header
  * @param bool if the origional CRS is cartesian or not requiring conversion
  * @return PathComponents Info for action server to utilize
  */
-inline opennav_coverage_msgs::msg::PathComponents
-toCoveragePathMsg(
+inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   const F2CRoute & route, const F2CField & field,
-  const std_msgs::msg::Header & header,
-  const bool is_cartesian)
+  const std_msgs::msg::Header & header, const bool is_cartesian)
 {
   Swaths ordered;
   for (const auto & group : route.getVectorSwaths()) {
@@ -146,11 +139,9 @@ toCoveragePathMsg(
  * @param bool if the origional CRS is cartesian or not requiring conversion
  * @return PathComponents Info for action server to utilize
  */
-inline opennav_coverage_msgs::msg::PathComponents
-toCoveragePathMsg(
+inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   const Path & raw_path, const F2CField & field,
-  const std_msgs::msg::Header & header,
-  const bool is_cartesian)
+  const std_msgs::msg::Header & header, const bool is_cartesian)
 {
   using f2c::types::PathSectionType;
   opennav_coverage_msgs::msg::PathComponents msg;
@@ -163,7 +154,7 @@ toCoveragePathMsg(
   }
 
   Point curr_swath_start(0.0, 0.0);
-  nav_msgs::msg::Path *curr_turn = nullptr;
+  nav_msgs::msg::Path * curr_turn = nullptr;
 
   Path path = raw_path;
   if (!is_cartesian) {
@@ -177,8 +168,8 @@ toCoveragePathMsg(
   auto isSwathLike = [](PathSectionType t) {
       return t == PathSectionType::SWATH || t == PathSectionType::HL_SWATH;
     };
-
-  // End point of a swath-like state. A raw F2C path stores one state per swath
+    
+    // End point of a swath-like state. A raw F2C path stores one state per swath
   // (start point + heading + length), so state.point is the START of the swath.
   auto stateEnd = [](const PathState & s) {
       return Point(s.point.getX() + s.len * std::cos(s.angle),
@@ -227,9 +218,10 @@ toCoveragePathMsg(
 
     curr_state = path[i].type;
 
-    if (!isSwathLike(path[i].type) && path[i].type != PathSectionType::TURN) {
-      throw std::runtime_error(
-          "Unknown type of path state detected, cannot obtain path!");
+    if (!isSwathLike(path[i].type) &&
+      path[i].type != PathSectionType::TURN)
+    {
+      throw std::runtime_error("Unknown type of path state detected, cannot obtain path!");
     }
   }
 
@@ -244,36 +236,28 @@ toCoveragePathMsg(
 }
 
 /**
- * @brief Converts full path to nav_msgs/path message for action client,
- * visualization and use in direct-sending to a controller to replace the
- * planner server. Interpolates the F2C path to make it dense for following
- * semantics.
+ * @brief Converts full path to nav_msgs/path message for action client, visualization
+ * and use in direct-sending to a controller to replace the planner server. Interpolates
+ * the F2C path to make it dense for following semantics.
  * @param path Full path to convert
  * @param Field Field to use for conversion from UTM if necessary
  * @param header header
  * @param bool if the origional CRS is cartesian or not requiring conversion
- * @param out_velocities Optional: if non-null, filled with per-pose velocity
- * (m/s), parallel to poses
- * @param out_is_backward Optional: if non-null, filled with per-pose
- * reverse-direction flags
+ * @param out_velocities Optional: if non-null, filled with per-pose velocity (m/s), parallel to poses
+ * @param out_is_backward Optional: if non-null, filled with per-pose reverse-direction flags
  * @return nav_msgs/Path Path
  */
-inline nav_msgs::msg::Path
-toNavPathMsg(
+inline nav_msgs::msg::Path toNavPathMsg(
   const Path & raw_path, const F2CField & field,
   const std_msgs::msg::Header & header, const bool is_cartesian,
   const float & pt_dist,
-  std::vector<double> *out_velocities = nullptr,
-  std::vector<bool> *out_is_backward = nullptr)
+  std::vector<double> * out_velocities = nullptr,
+  std::vector<bool> * out_is_backward = nullptr)
 {
   nav_msgs::msg::Path msg;
   msg.header = header;
-  if (out_velocities) {
-    out_velocities->clear();
-  }
-  if (out_is_backward) {
-    out_is_backward->clear();
-  }
+  if (out_velocities) {out_velocities->clear();}
+  if (out_is_backward) {out_is_backward->clear();}
 
   if (raw_path.size() == 0) {
     return msg;
@@ -286,28 +270,20 @@ toNavPathMsg(
     path.moveTo(field.getRefPoint());
   }
 
-  // discretizeSwath splits only SWATH states at pt_dist intervals, leaving
-  // dense turns intact.
+  // discretizeSwath splits only SWATH states at pt_dist intervals, leaving dense turns intact.
   path = path.discretizeSwath(static_cast<double>(pt_dist));
 
   // Reserve up front so the population loop below doesn't reallocate.
   const auto n = path.size();
   msg.poses.reserve(n);
-  if (out_velocities) {
-    out_velocities->reserve(n);
-  }
-  if (out_is_backward) {
-    out_is_backward->reserve(n);
-  }
+  if (out_velocities) {out_velocities->reserve(n);}
+  if (out_is_backward) {out_is_backward->reserve(n);}
 
   for (const auto & state : path) {
     msg.poses.push_back(toMsg(state));
-    if (out_velocities) {
-      out_velocities->push_back(state.velocity);
-    }
+    if (out_velocities) {out_velocities->push_back(state.velocity);}
     if (out_is_backward) {
-      out_is_backward->push_back(state.dir ==
-                                 f2c::types::PathDirection::BACKWARD);
+      out_is_backward->push_back(state.dir == f2c::types::PathDirection::BACKWARD);
     }
   }
 
@@ -320,10 +296,9 @@ toNavPathMsg(
  * @param header header
  * @return nav_msgs/Path Path
  */
-inline nav_msgs::msg::Path
-toCartesianNavPathMsg(
-  const Path & raw_path, const std_msgs::msg::Header & header,
-  const float & pt_dist)
+inline nav_msgs::msg::Path toCartesianNavPathMsg(
+  const Path & raw_path,
+  const std_msgs::msg::Header & header, const float & pt_dist)
 {
   return toNavPathMsg(raw_path, F2CField(), header, true, pt_dist);
 }
@@ -340,18 +315,15 @@ inline F2CField getFieldFromGoal(
   auto polygons = goal->polygons;
   if (polygons.size() == 0) {
     throw std::invalid_argument("No field set in action goal!");
-  } else if (polygons[0].coordinates.front() !=
-    polygons[0].coordinates.back())
-  {
-    throw std::invalid_argument(
-        "Outer polygon malformed, first element must equal last!");
+  } else if (polygons[0].coordinates.front() != polygons[0].coordinates.back()) {
+    throw std::invalid_argument("Outer polygon malformed, first element must equal last!");
   }
 
   // Get the outer most polygon (usually the only one if no voids)
   Polygon outer_polygon;
   for (unsigned int i = 0; i != polygons[0].coordinates.size(); i++) {
-    outer_polygon.addPoint(Point(polygons[0].coordinates[i].axis1,
-                                 polygons[0].coordinates[i].axis2));
+    outer_polygon.addPoint(
+      Point(polygons[0].coordinates[i].axis1, polygons[0].coordinates[i].axis2));
   }
   Field field(outer_polygon);
 
@@ -359,14 +331,12 @@ inline F2CField getFieldFromGoal(
   for (unsigned int i = 1; i != polygons.size(); i++) {
     auto polygon = polygons[i];
     if (polygon.coordinates.front() != polygon.coordinates.back()) {
-      throw std::invalid_argument(
-          "Inner polygon malformed, first element must equal last!");
+      throw std::invalid_argument("Inner polygon malformed, first element must equal last!");
     }
 
     Polygon inner_polygon;
     for (unsigned int idx = 0; idx != polygon.coordinates.size(); idx++) {
-      inner_polygon.addPoint(Point(polygon.coordinates[idx].axis1,
-                                   polygon.coordinates[idx].axis2));
+      inner_polygon.addPoint(Point(polygon.coordinates[idx].axis1, polygon.coordinates[idx].axis2));
     }
 
     field.addRing(inner_polygon);
@@ -376,24 +346,18 @@ inline F2CField getFieldFromGoal(
 }
 
 /**
- * @brief Converts a goal-frame point into the frame the field's swaths/cells
- * live in
+ * @brief Converts a goal-frame point into the frame the field's swaths/cells live in
  * @param pt Point in the goal frame (cartesian or GPS)
  * @param field Field already transformed to its working frame
  * @param is_cartesian Whether the goal coordinates are cartesian
  * @return Point in the field's local frame
  */
-inline F2CPoint toFieldFrame(
-  const F2CPoint & pt, const F2CField & field,
-  bool is_cartesian)
+inline F2CPoint toFieldFrame(const F2CPoint & pt, const F2CField & field, bool is_cartesian)
 {
-  // F2CField always stores geometry with its ref point subtracted, so the start
-  // point needs the same ref point removed (and, for GPS, projecting to UTM
-  // first).
-  F2CPoint abs =
-    is_cartesian ?
-    pt :
-    f2c::Transform::transform(pt, field.getPrevCRS(), field.getCRS());
+  // F2CField always stores geometry with its ref point subtracted, so the start point needs
+  // the same ref point removed (and, for GPS, projecting to UTM first).
+  F2CPoint abs = is_cartesian ?
+    pt : f2c::Transform::transform(pt, field.getPrevCRS(), field.getCRS());
   return abs - field.getRefPoint();
 }
 
@@ -407,12 +371,11 @@ inline void toUpper(std::string & string)
 }
 
 /**
- * @brief A Path Components iterator object to get next turn/swath from action
- return
+ * @brief A Path Components iterator object to get next turn/swath from action return
  *
  * Example Use:
-    for (opennav_coverage::util::PathComponentsIterator it(msg); it.isValid();
- it.advance()) { auto curr_row_info = it.getNext();
+    for (opennav_coverage::util::PathComponentsIterator it(msg); it.isValid(); it.advance()) {
+      auto curr_row_info = it.getNext();
 
       // Always should be valid -- Swath
       (void)std::get<0>(curr_row_info)->start;
@@ -426,26 +389,22 @@ inline void toUpper(std::string & string)
     auto last_row_info = it.getNext();
     ASSERT(std::get<1>(last_row_info) == nullptr);
  */
-class PathComponentsIterator {
+class PathComponentsIterator
+{
 public:
   /**
    * @brief A Path Components iterator constructor
    * @param PathComponents object to iterate over
    */
-  explicit PathComponentsIterator(
-    opennav_coverage_msgs::msg::PathComponents & msg)
+  explicit PathComponentsIterator(opennav_coverage_msgs::msg::PathComponents & msg)
   : path_components_(msg), idx_(0)
   {
-    if (fabs(path_components_.swaths.size() - path_components_.turns.size()) >
-      1)
-    {
+    if (fabs(path_components_.swaths.size() - path_components_.turns.size()) > 1) {
       throw std::runtime_error("PathComponents size not valid for iteration!");
     } else if (!path_components_.contains_turns) {
-      throw std::runtime_error(
-          "PathComponents cannot be iterated over without turns!");
+      throw std::runtime_error("PathComponents cannot be iterated over without turns!");
     } else if (!path_components_.swaths_ordered) {
-      throw std::runtime_error(
-          "PathComponents cannot be iterated over without ordered swaths!");
+      throw std::runtime_error("PathComponents cannot be iterated over without ordered swaths!");
     }
 
     max_idx_ = path_components_.swaths.size();
@@ -454,12 +413,18 @@ public:
   /**
    * @brief For condition if still valid to continue iterating
    */
-  bool isValid() {return idx_ <= max_idx_;}
+  bool isValid()
+  {
+    return idx_ <= max_idx_;
+  }
 
   /**
    * @brief For loop marching
    */
-  void advance() {idx_++;}
+  void advance()
+  {
+    idx_++;
+  }
 
   /**
    * @brief Get the data of the current iteration
@@ -470,8 +435,7 @@ public:
   getNext()
   {
     if (idx_ < max_idx_ - 1) {
-      return std::make_pair(&path_components_.swaths[idx_],
-                            &path_components_.turns[idx_]);
+      return std::make_pair(&path_components_.swaths[idx_], &path_components_.turns[idx_]);
     } else {
       return std::make_pair(&path_components_.swaths[idx_], nullptr);
     }
@@ -482,8 +446,8 @@ public:
   unsigned int max_idx_;
 };
 
-} // namespace util
+}  // namespace util
 
-} // namespace opennav_coverage
+}  // namespace opennav_coverage
 
-#endif // OPENNAV_COVERAGE__UTILS_HPP_
+#endif  // OPENNAV_COVERAGE__UTILS_HPP_
