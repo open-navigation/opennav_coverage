@@ -168,7 +168,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   auto isSwathLike = [](PathSectionType t) {
       return t == PathSectionType::SWATH || t == PathSectionType::HL_SWATH;
     };
-    
+
     // End point of a swath-like state. A raw F2C path stores one state per swath
   // (start point + heading + length), so state.point is the START of the swath.
   auto stateEnd = [](const PathState & s) {
