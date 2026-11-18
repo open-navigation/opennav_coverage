@@ -52,6 +52,7 @@ uint16 INVALID_MODE_SET=802
 uint16 INVALID_REQUEST=803
 uint16 INVALID_COORDS=803
 uint16 TIMEOUT=804
+uint16 TF_ERROR=805
 
 nav_msgs/Path nav_path
 opennav_coverage_msgs/PathComponents coverage_path

@@ -57,6 +57,14 @@ public:
     nav2::declare_parameter_if_not_declared(
       node, "linear_curv_change", rclcpp::ParameterValue(2.0));
     robot_.setMaxDiffCurv(node->get_parameter("linear_curv_change").as_double());
+
+    nav2::declare_parameter_if_not_declared(
+      node, "robot_base_frame", rclcpp::ParameterValue(std::string("base_link")));
+    robot_base_frame_ = node->get_parameter("robot_base_frame").as_string();
+
+    nav2::declare_parameter_if_not_declared(
+      node, "tool_frame", rclcpp::ParameterValue(robot_base_frame_));
+    tool_frame_ = node->get_parameter("tool_frame").as_string();
   }
 
   /**
@@ -86,7 +94,27 @@ public:
     return robot_;
   }
 
+  /**
+   * @brief Get the robot's base frame, which the output path is for
+   * @return Robot base frame
+   */
+  const std::string & getBaseFrame() const
+  {
+    return robot_base_frame_;
+  }
+
+  /**
+   * @brief Get the frame at the center of the tool on the ground, rigid to the base frame
+   * @return Tool frame. By default the base frame: the tool is at the base
+   */
+  const std::string & getToolFrame() const
+  {
+    return tool_frame_;
+  }
+
   Robot robot_;
+  std::string robot_base_frame_;
+  std::string tool_frame_;
 };
 
 }  // namespace opennav_coverage

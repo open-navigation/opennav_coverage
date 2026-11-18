@@ -437,6 +437,45 @@ inline F2CPoint toFieldFrame(const F2CPoint & pt, const F2CField & field, bool i
 }
 
 /**
+ * @brief Converts a route for the tool into a route for the robot base. Each swath moves
+ * by the tool offset, turned to the heading of the swath. A swath with no length has no
+ * heading, so it does not move. The first and the last point of each connection move with
+ * the swath at that end. The other connection points do not move.
+ * @param route Route with straight swaths, each in its driving direction
+ * @param tool_offset Tool position (x forward, y left) in the robot base frame
+ * @return Route for the robot base
+ */
+inline F2CRoute toBaseFrame(const F2CRoute & route, const Point & tool_offset)
+{
+  // A copy shares its geometry with the input route, so moveTo would change the input
+  F2CRoute base_route = route.clone();
+  for (size_t i = 0; i < base_route.sizeVectorSwaths(); ++i) {
+    for (Swath & swath : base_route.getSwaths(i)) {
+      if (swath.length() >= 1e-6) {
+        swath.moveTo(Point(0, 0) - Point(0, 0).rotateFromPoint(swath.getInAngle(), tool_offset));
+      }
+    }
+  }
+
+  // Connection i comes before swath group i. An end point with no swath next to it (the start
+  // pose) stays
+  const size_t num_groups = base_route.sizeVectorSwaths();
+  for (size_t i = 0; i < base_route.sizeConnections(); ++i) {
+    F2CMultiPoint & connection = base_route.getConnection(i);
+    if (connection.size() == 0) {
+      continue;
+    }
+    if (i > 0 && base_route.getSwaths(i - 1).size() > 0) {
+      connection.setGeometry(0, base_route.getSwaths(i - 1).back().endPoint());
+    }
+    if (i < num_groups && base_route.getSwaths(i).size() > 0) {
+      connection.setGeometry(connection.size() - 1, base_route.getSwaths(i)[0].startPoint());
+    }
+  }
+  return base_route;
+}
+
+/**
  * @brief Converts a string to uppercase
  * @param string String to change to uppercase
  */
