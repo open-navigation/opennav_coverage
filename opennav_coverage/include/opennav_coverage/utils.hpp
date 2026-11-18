@@ -168,13 +168,6 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   auto isSwathLike = [](PathSectionType t) {
       return t == PathSectionType::SWATH || t == PathSectionType::HL_SWATH;
     };
-    
-    // End point of a swath-like state. A raw F2C path stores one state per swath
-  // (start point + heading + length), so state.point is the START of the swath.
-  auto stateEnd = [](const PathState & s) {
-      return Point(s.point.getX() + s.len * std::cos(s.angle),
-                 s.point.getY() + s.len * std::sin(s.angle));
-    };
 
   PathSectionType curr_state = path[0].type;
   if (isSwathLike(curr_state)) {
@@ -203,7 +196,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       // (1) Complete the existing swath
       opennav_coverage_msgs::msg::Swath swath;
       swath.start = toMsg(curr_swath_start);
-      swath.end = toMsg(stateEnd(path[i - 1]));
+      swath.end = toMsg(path[i - 1].atEnd());
       msg.swaths.push_back(swath);
       // (2) Start a new turn path
       msg.turns.push_back(nav_msgs::msg::Path());
@@ -228,7 +221,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   if (isSwathLike(curr_state)) {
     opennav_coverage_msgs::msg::Swath swath;
     swath.start = toMsg(curr_swath_start);
-    swath.end = toMsg(stateEnd(path.back()));
+    swath.end = toMsg(path.back().atEnd());
     msg.swaths.push_back(swath);
   }
 
