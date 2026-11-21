@@ -2,7 +2,7 @@ repositories:
   Fields2Cover:
     type: git
     url: https://github.com/Fields2Cover/Fields2Cover.git
-    version: v2.0.0
+    version: v2.1.1
 
   navigation2:
     type: git
