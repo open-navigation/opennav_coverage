@@ -539,7 +539,7 @@ TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity)
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
   // HL_SWATH state: velocity=1.5, direction=FORWARD. Now densified like SWATH
-  // (discretizeSwathLike splits HL_SWATH too), so every sub-point keeps vel/dir.
+  // (the path's discretizeSwath splits HL_SWATH too), so every sub-point keeps vel/dir.
   EXPECT_NEAR(vels[0], 1.5, 1e-6);
   EXPECT_FALSE(dirs[0]);
   // TURN state: velocity=0.5, direction=BACKWARD
