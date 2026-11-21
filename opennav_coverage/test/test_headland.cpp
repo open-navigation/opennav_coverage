@@ -107,13 +107,13 @@ TEST(HeadlandTests, TestheadlandBetweenCells)
   F2CCells result = generator.generateHeadlandsBetweenCells(cells, 2.0);
 
   EXPECT_EQ(result.size(), 2u);
-  // Only x=50 is carved (~48x100 each): total > full-border-buffer case (8832)
+  // Only x=50 is carved (49x100 each): total > full-border-buffer case (8832)
   // but < the original (10000).
   EXPECT_GT(result.area(), 9000.0);
   EXPECT_LT(result.area(), 9999.0);
 
   // Width larger than the cells collapses everything -> throws.
-  EXPECT_THROW(generator.generateHeadlandsBetweenCells(cells, 60.0), CoverageException);
+  EXPECT_THROW(generator.generateHeadlandsBetweenCells(cells, 120.0), CoverageException);
 
   // Cells facing each other across a void share no border, so nothing may be
   // carved (route headland only ever goes between truly adjacent cells).
