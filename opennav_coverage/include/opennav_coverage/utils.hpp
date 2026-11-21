@@ -197,7 +197,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       // (1) Complete the existing swath
       opennav_coverage_msgs::msg::Swath swath;
       swath.start = toMsg(curr_swath_start);
-      swath.end = toMsg(path[i - 1].point);
+      swath.end = toMsg(path[i - 1].atEnd());
       msg.swaths.push_back(swath);
       // (2) Start a new turn path
       msg.turns.push_back(nav_msgs::msg::Path());
@@ -222,7 +222,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   if (isSwathLike(curr_state)) {
     opennav_coverage_msgs::msg::Swath swath;
     swath.start = toMsg(curr_swath_start);
-    swath.end = toMsg(path.back().point);
+    swath.end = toMsg(path.back().atEnd());
     msg.swaths.push_back(swath);
   }
 
