@@ -539,7 +539,7 @@ TEST(UtilsTests, TesttoNavPathMsgHLSwathVelocity)
   EXPECT_EQ(nav_path.poses.size(), vels.size());
   EXPECT_EQ(nav_path.poses.size(), dirs.size());
   // HL_SWATH state: velocity=1.5, direction=FORWARD. Now densified like SWATH
-  // (discretizeSwathLike splits HL_SWATH too), so every sub-point keeps vel/dir.
+  // (the path's discretizeSwath splits HL_SWATH too), so every sub-point keeps vel/dir.
   EXPECT_NEAR(vels[0], 1.5, 1e-6);
   EXPECT_FALSE(dirs[0]);
   // TURN state: velocity=0.5, direction=BACKWARD
@@ -625,6 +625,67 @@ TEST(UtilsTests, TesttoHeadlandPerimeterPath)
   }
   EXPECT_NEAR(path[0].point.getX(), 10.0, 1e-6);
   EXPECT_NEAR(path[0].point.getY(), 10.0, 1e-6);
+}
+
+// A straight swath is a single F2C v2 state, so its message must end where the swath ends.
+TEST(UtilsTests, TesttoCoveragePathMsgSwathEnd)
+{
+  using f2c::types::PathSectionType;
+  Path path;
+  PathState swath;
+  swath.point = Point(0.0, 0.0);
+  swath.angle = 0.0;
+  swath.len = 10.0;
+  swath.dir = f2c::types::PathDirection::FORWARD;
+  swath.type = PathSectionType::SWATH;
+  path.addState(swath);
+  PathState turn = swath;
+  turn.point = Point(10.0, 0.0);
+  turn.len = 1.0;
+  turn.type = PathSectionType::TURN;
+  path.addState(turn);
+  PathState back = swath;
+  back.point = Point(10.0, 1.0);
+  back.angle = M_PI;
+  path.addState(back);
+
+  std_msgs::msg::Header header;
+  auto msg = util::toCoveragePathMsg(path, F2CField(), header, true);
+  ASSERT_EQ(msg.swaths.size(), 2u);
+  EXPECT_NEAR(msg.swaths[0].end.x, 10.0, 1e-6);
+  EXPECT_NEAR(msg.swaths[1].start.x, 10.0, 1e-6);
+  EXPECT_NEAR(msg.swaths[1].end.x, 0.0, 1e-6);
+}
+
+// In GPS mode the path is densified in meters before it is converted to degrees.
+TEST(UtilsTests, TesttoNavPathMsgGPSDensified)
+{
+  F2CLinearRing ring;
+  ring.addPoint(-1.0, 40.0);
+  ring.addPoint(-1.0, 40.001);
+  ring.addPoint(-0.999, 40.001);
+  ring.addPoint(-0.999, 40.0);
+  ring.addPoint(-1.0, 40.0);
+  F2CCells cells;
+  cells.addGeometry(F2CCell(ring));
+  F2CField field(cells);
+  field.setCRS("EPSG:4326");
+  f2c::Transform::transformToUTM(field);
+
+  Path path;
+  PathState swath;
+  swath.point = Point(0.0, 0.0);
+  swath.angle = 0.0;
+  swath.len = 10.0;
+  swath.dir = f2c::types::PathDirection::FORWARD;
+  swath.type = f2c::types::PathSectionType::SWATH;
+  path.addState(swath);
+
+  std_msgs::msg::Header header;
+  auto msg = util::toNavPathMsg(path, field, header, false, 0.1);
+  EXPECT_GE(msg.poses.size(), 100u);
+  EXPECT_NEAR(msg.poses.front().pose.position.x, -1.0, 1e-5);
+  EXPECT_NEAR(msg.poses.front().pose.position.y, 40.0, 1e-5);
 }
 
 }  // namespace opennav_coverage

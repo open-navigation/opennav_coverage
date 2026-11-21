@@ -66,19 +66,11 @@ public:
     const Field & field, const opennav_coverage_msgs::msg::HeadlandMode & settings);
 
   /**
-   * @brief Multi-cell overload: apply a separate headland to each sub-cell
-   * @param cells Cells to generate headlands from
-   * @param settings Action request information
-   * @return Cells with headlands applied per sub-cell
-   */
-  F2CCells generateHeadlands(
-    const F2CCells & cells, const opennav_coverage_msgs::msg::HeadlandMode & settings);
-
-  /**
    * @brief Carve a route corridor only on the borders cells actually share,
    *        leaving edges facing the outer boundary or a void untouched.
    * @param cells Decomposed sub-cells (share internal borders)
-   * @param route_width Corridor width carved along each shared border
+   * @param route_width Total corridor width on each shared border, carved
+   *        from the smaller of the two cells
    * @return Swath cells carved only on their internal borders
    */
   F2CCells generateHeadlandsBetweenCells(

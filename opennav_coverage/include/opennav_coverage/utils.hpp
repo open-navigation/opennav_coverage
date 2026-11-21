@@ -197,7 +197,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       // (1) Complete the existing swath
       opennav_coverage_msgs::msg::Swath swath;
       swath.start = toMsg(curr_swath_start);
-      swath.end = toMsg(path[i - 1].point);
+      swath.end = toMsg(path[i - 1].atEnd());
       msg.swaths.push_back(swath);
       // (2) Start a new turn path
       msg.turns.push_back(nav_msgs::msg::Path());
@@ -222,7 +222,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
   if (isSwathLike(curr_state)) {
     opennav_coverage_msgs::msg::Swath swath;
     swath.start = toMsg(curr_swath_start);
-    swath.end = toMsg(path.back().point);
+    swath.end = toMsg(path.back().atEnd());
     msg.swaths.push_back(swath);
   }
 
@@ -232,7 +232,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
 /**
  * @brief Build a drivable HL_SWATH loop around a field boundary, rotated to start
  * at the vertex closest to `anchor` (the route's first point) to minimize the
- * jump when spliced onto the coverage path. Density added later by discretizeSwathLike.
+ * jump when spliced onto the coverage path. Density added later by Path::discretizeSwath.
  * @param area Field/cell whose exterior boundary is driven (e.g. field_no_headland)
  * @param velocity Cruise velocity to tag each state with
  * @param anchor Point the loop's start/end should be nearest to
@@ -280,36 +280,6 @@ inline Path toHeadlandPerimeterPath(
 }
 
 /**
- * @brief Like F2C Path::discretizeSwath but also splits HL_SWATH states, so
- * headland passes become dense followable segments. F2C's discretizeSwath only
- * subdivides SWATH; HL_SWATH would otherwise pass through as a single waypoint.
- * @param path Path to densify
- * @param step_size Max spacing between emitted points
- * @return Densified path
- */
-inline Path discretizeSwathLike(const Path & path, double step_size)
-{
-  using f2c::types::PathSectionType;
-  Path out;
-  const double step = step_size > 0.0 ? step_size : 0.1;
-  for (const auto & s : path.getStates()) {
-    if (s.type == PathSectionType::SWATH || s.type == PathSectionType::HL_SWATH) {
-      double n_steps = std::max(1.0, std::round(std::fabs(s.len / step)));
-      Point start2end = s.atEnd() - s.point;
-      for (double j = 0.0; j < n_steps; j += 1.0) {
-        PathState state = s;
-        state.point = s.point + start2end * (j / n_steps);
-        state.len /= n_steps;
-        out.addState(state);
-      }
-    } else {
-      out.addState(s);
-    }
-  }
-  return out;
-}
-
-/**
  * @brief Converts full path to nav_msgs/path message for action client, visualization
  * and use in direct-sending to a controller to replace the planner server. Interpolates
  * the F2C path to make it dense for following semantics.
@@ -337,16 +307,13 @@ inline nav_msgs::msg::Path toNavPathMsg(
     return msg;
   }
 
-  Path path = raw_path;
+  // Densify before leaving the field frame: the step is in meters.
+  Path path = raw_path.discretizeSwath(pt_dist > 0.0f ? static_cast<double>(pt_dist) : 0.1);
   if (!is_cartesian) {
-    path = f2c::Transform::transformToPrevCRS(raw_path, field);
+    path = f2c::Transform::transformToPrevCRS(path, field);
   } else {
     path.moveTo(field.getRefPoint());
   }
-
-  // Split SWATH and HL_SWATH states at step_size intervals (F2C's discretizeSwath
-  // splits only SWATH, leaving headland passes as single waypoints).
-  path = discretizeSwathLike(path, static_cast<double>(pt_dist));
 
   // Reserve up front so the population loop below doesn't reallocate.
   const auto n = path.size();
