@@ -36,7 +36,7 @@ https://github.com/user-attachments/assets/e44d8f10-c5b0-4345-81ad-25f3bcd06030
 
 ### Fields2Cover Installation
 
-> **Note:** This `jazzy` branch targets **Fields2Cover v2** (verified against `v2.0.0`).
+> **Note:** This `jazzy` branch targets **Fields2Cover v2** (verified against `v2.1.1`).
 
 Fields2Cover v2 is available as a binary package on ROS 2 Jazzy — no source build required:
 
@@ -47,7 +47,7 @@ sudo apt install ros-jazzy-fields2cover
 Alternatively, build from source:
 
 ```bash
-git clone --branch v2.0.0 https://github.com/Fields2Cover/Fields2Cover.git
+git clone --branch v2.1.1 https://github.com/Fields2Cover/Fields2Cover.git
 colcon build --packages-select Fields2Cover
 ```
 
