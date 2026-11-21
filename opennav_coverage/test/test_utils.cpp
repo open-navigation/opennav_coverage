@@ -603,4 +603,34 @@ TEST(UtilsTests, TesttoNavPathMsgDensifyVelocitySizeMatch)
   EXPECT_TRUE(dirs.back());
 }
 
+// A straight swath is a single F2C v2 state, so its message must end where the swath ends.
+TEST(UtilsTests, TesttoCoveragePathMsgSwathEnd)
+{
+  using f2c::types::PathSectionType;
+  Path path;
+  PathState swath;
+  swath.point = Point(0.0, 0.0);
+  swath.angle = 0.0;
+  swath.len = 10.0;
+  swath.dir = f2c::types::PathDirection::FORWARD;
+  swath.type = PathSectionType::SWATH;
+  path.addState(swath);
+  PathState turn = swath;
+  turn.point = Point(10.0, 0.0);
+  turn.len = 1.0;
+  turn.type = PathSectionType::TURN;
+  path.addState(turn);
+  PathState back = swath;
+  back.point = Point(10.0, 1.0);
+  back.angle = M_PI;
+  path.addState(back);
+
+  std_msgs::msg::Header header;
+  auto msg = util::toCoveragePathMsg(path, F2CField(), header, true);
+  ASSERT_EQ(msg.swaths.size(), 2u);
+  EXPECT_NEAR(msg.swaths[0].end.x, 10.0, 1e-6);
+  EXPECT_NEAR(msg.swaths[1].start.x, 10.0, 1e-6);
+  EXPECT_NEAR(msg.swaths[1].end.x, 0.0, 1e-6);
+}
+
 }  // namespace opennav_coverage
