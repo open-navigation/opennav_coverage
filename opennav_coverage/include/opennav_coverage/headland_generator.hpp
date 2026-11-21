@@ -69,7 +69,8 @@ public:
    * @brief Carve a route corridor only on the borders cells actually share,
    *        leaving edges facing the outer boundary or a void untouched.
    * @param cells Decomposed sub-cells (share internal borders)
-   * @param route_width Corridor width carved along each shared border
+   * @param route_width Total corridor width on each shared border, carved
+   *        from the smaller of the two cells
    * @return Swath cells carved only on their internal borders
    */
   F2CCells generateHeadlandsBetweenCells(
