@@ -59,33 +59,6 @@ Field HeadlandGenerator::generateHeadlands(
   return cells.getGeometry(0);
 }
 
-F2CCells HeadlandGenerator::generateHeadlands(
-  const F2CCells & cells, const opennav_coverage_msgs::msg::HeadlandMode & settings)
-{
-  double width = 0.0;
-  HeadlandGeneratorPtr generator = resolveGenerator(settings, width);
-
-  // Apply the headland to each sub-cell independently: decomposed cells share
-  // borders, so buffering the whole F2CCells at once would only shrink the outer
-  // boundary and drop the inter-cell headlands.
-  F2CCells result;
-  for (size_t i = 0; i < cells.size(); ++i) {
-    // Skip sub-cells that the inward buffer collapses to empty; keep every polygon
-    // a buffer may split one cell into.
-    F2CCells cell_headland = generator->generateHeadlands(Fields(cells.getGeometry(i)), width);
-    for (size_t j = 0; j < cell_headland.size(); ++j) {
-      result.addGeometry(cell_headland.getGeometry(j));
-    }
-  }
-
-  if (result.size() == 0) {
-    throw CoverageException(
-      "Headland width is too large for the decomposed field: every sub-cell "
-      "collapsed. Reduce the headland width or disable decomposition.");
-  }
-  return result;
-}
-
 F2CCells HeadlandGenerator::generateHeadlandsBetweenCells(
   const F2CCells & cells, double route_width)
 {
