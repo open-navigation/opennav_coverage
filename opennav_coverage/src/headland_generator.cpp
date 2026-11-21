@@ -66,17 +66,7 @@ F2CCells HeadlandGenerator::generateHeadlandsBetweenCells(
     throw CoverageException("route_headland_width must be > 0 to carve inter-cell corridors.");
   }
 
-  // Decomposition can leave near-zero-area cells; drop them before swath generation.
-  const double kMinCellArea = 1e-3;
-
-  const F2CCells carved = f2c::hg::CorridorHL().generateHeadlands(cells, route_width);
-  F2CCells result;
-  for (size_t j = 0; j < carved.size(); ++j) {
-    if (carved.getGeometry(j).area() > kMinCellArea) {
-      result.addGeometry(carved.getGeometry(j));
-    }
-  }
-
+  const F2CCells result = f2c::hg::CorridorHL().generateHeadlands(cells, route_width);
   if (result.size() == 0) {
     throw CoverageException(
       "route_headland_width is too large: every sub-cell collapsed. Reduce it.");
