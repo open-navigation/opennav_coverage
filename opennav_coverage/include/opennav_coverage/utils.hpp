@@ -259,15 +259,13 @@ inline nav_msgs::msg::Path toNavPathMsg(
     return msg;
   }
 
-  Path path = raw_path;
+  // Densify before leaving the field frame: the step is in meters.
+  Path path = raw_path.discretizeSwath(pt_dist > 0.0f ? static_cast<double>(pt_dist) : 0.1);
   if (!is_cartesian) {
-    path = f2c::Transform::transformToPrevCRS(raw_path, field);
+    path = f2c::Transform::transformToPrevCRS(path, field);
   } else {
     path.moveTo(field.getRefPoint());
   }
-
-  // discretizeSwath splits only SWATH states at pt_dist intervals, leaving dense turns intact.
-  path = path.discretizeSwath(static_cast<double>(pt_dist));
 
   // Reserve up front so the population loop below doesn't reallocate.
   const auto n = path.size();
