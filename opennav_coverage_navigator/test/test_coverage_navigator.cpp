@@ -17,10 +17,9 @@
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage_navigator/coverage_navigator.hpp"
 #include "nav2_ros_common/lifecycle_node.hpp"
+#include "nav2_ros_common/tf2_factories.hpp"
 #include "tf2/utils.hpp"
 #include "tf2_ros/buffer.hpp"
-#include "tf2_ros/create_timer_ros.hpp"
-#include "tf2_ros/transform_listener.hpp"
 
 class RosLockGuard
 {
@@ -99,12 +98,9 @@ TEST(CoverageNavigatorTests, TestBasicFunctionality)
   nav2_core::NavigatorMuxer plugin_muxer;
 
   nav2_core::FeedbackUtils feedback_utils;
-  auto tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
-  auto timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
-    node->get_node_base_interface(), node->get_node_timers_interface());
-  tf->setCreateTimerInterface(timer_interface);
+  auto tf = nav2::create_transform_buffer(node);
   tf->setUsingDedicatedThread(true);
-  auto tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf, node, false);
+  auto tf_listener = nav2::create_transform_listener(*tf, node, false);
   feedback_utils.tf = tf;
   feedback_utils.global_frame = "map";
   feedback_utils.robot_frame = "base_link";
@@ -135,12 +131,9 @@ TEST(CoverageNavigatorTests, TestBasicServer)
   nav2_core::NavigatorMuxer plugin_muxer;
 
   nav2_core::FeedbackUtils feedback_utils;
-  auto tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
-  auto timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
-    node->get_node_base_interface(), node->get_node_timers_interface());
-  tf->setCreateTimerInterface(timer_interface);
+  auto tf = nav2::create_transform_buffer(node);
   tf->setUsingDedicatedThread(true);
-  auto tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf, node, false);
+  auto tf_listener = nav2::create_transform_listener(*tf, node, false);
   feedback_utils.tf = tf;
   feedback_utils.global_frame = "map";
   feedback_utils.robot_frame = "base_link";
