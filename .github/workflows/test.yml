@@ -30,8 +30,7 @@ jobs:
 
     - name: Install system dependencies
       # Deps rosdep can't (reliably) resolve on resolute: Fields2Cover build
-      # deps (gdal/eigen/geos/tinyxml2/OpenBLAS), system ompl 1.6 for nav2
-      # (the ROS ompl 2.x is dropped below), and image gap-fillers
+      # deps (gdal/eigen/geos/tinyxml2/OpenBLAS) and image gap-fillers
       # (backward-ros, vendor helper, message-filters, ament-index-cpp).
       run: |
         sudo apt-get update
@@ -43,7 +42,7 @@ jobs:
           ros-${{ matrix.ros_distro }}-ament-cmake-vendor-package \
           ros-${{ matrix.ros_distro }}-message-filters \
           ros-${{ matrix.ros_distro }}-ament-index-cpp \
-          libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev libompl-dev \
+          libgdal-dev libeigen3-dev libgeos-dev libtinyxml2-dev \
           libopenblas-dev
 
     - name: Restore source dependencies cache
@@ -107,12 +106,10 @@ jobs:
           --rosdistro ${{ matrix.ros_distro }} -r -y || true
 
     - name: Drop shadowing apt packages
-      # Both shadow what nav2 main is written against: binary behaviortree_cpp
-      # 4.9 lacks wakeUpSignal() (we build master from source); ROS ompl 2.x
-      # has a different ReedsShepp API than the system libompl-dev 1.6.
+      # Binary behaviortree_cpp 4.9 lacks the wakeUpSignal() nav2 main uses;
+      # we build master from source.
       run: |
         sudo apt-get remove -y ros-${{ matrix.ros_distro }}-behaviortree-cpp || true
-        sudo apt-get remove -y ros-${{ matrix.ros_distro }}-ompl || true
 
     - name: Shim removed ament_index_cpp header
       # ament_index_cpp 1.14 removed get_package_share_directory() (header and
