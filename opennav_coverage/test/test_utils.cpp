@@ -312,6 +312,43 @@ TEST(UtilsTests, TesttoCoveragePathMsgHLSwath)
   }
 }
 
+// A raw F2C path stores ONE state per swath (start point + heading + length).
+// The message must hold both ends of every swath, not just the start.
+TEST(UtilsTests, TesttoCoveragePathMsgSwathEndPoints) {
+  using f2c::types::PathDirection;
+  using f2c::types::PathSectionType;
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "test";
+  F2CField field;
+
+  Path path_in;
+  // Swath 1: from (0, 0) heading +x, 10 m long -> ends at (10, 0)
+  path_in.addState(Point(0.0, 0.0), 0.0, 10.0, PathDirection::FORWARD,
+                   PathSectionType::SWATH);
+  // Turn between the swaths (two states)
+  path_in.addState(Point(10.0, 0.0), M_PI / 2, 0.1, PathDirection::FORWARD,
+                   PathSectionType::TURN);
+  path_in.addState(Point(10.0, 1.0), M_PI, 0.1, PathDirection::FORWARD,
+                   PathSectionType::TURN);
+  // Swath 2: from (10, 2) heading -x, 10 m long -> ends at (0, 2)
+  path_in.addState(Point(10.0, 2.0), M_PI, 10.0, PathDirection::FORWARD,
+                   PathSectionType::SWATH);
+
+  auto msg = util::toCoveragePathMsg(path_in, field, header_in, true);
+  ASSERT_EQ(msg.swaths.size(), 2u);
+  ASSERT_EQ(msg.turns.size(), 1u);
+
+  EXPECT_NEAR(msg.swaths[0].start.x, 0.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[0].start.y, 0.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[0].end.x, 10.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[0].end.y, 0.0, 1e-5);
+
+  EXPECT_NEAR(msg.swaths[1].start.x, 10.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[1].start.y, 2.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[1].end.x, 0.0, 1e-5);
+  EXPECT_NEAR(msg.swaths[1].end.y, 2.0, 1e-5);
+}
+
 TEST(UtilsTests, TestgetFieldFromGoal)
 {
   auto goal = std::make_shared<typename ComputeCoveragePath::Goal>();
