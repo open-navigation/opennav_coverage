@@ -105,7 +105,11 @@ TEST(UtilsTests, TestpathStateToMsg)
   state_in.point = Point(1.0, 2.0, 3.0);
   state_in.angle = M_PI;
 
-  geometry_msgs::msg::PoseStamped pose_out = util::toMsg(state_in);
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "map";
+  header_in.stamp.sec = 123;
+  geometry_msgs::msg::PoseStamped pose_out = util::toMsg(state_in, header_in);
+  EXPECT_EQ(pose_out.header, header_in);
   EXPECT_EQ(pose_out.pose.position.x, 1.0);
   EXPECT_EQ(pose_out.pose.position.y, 2.0);
   EXPECT_EQ(pose_out.pose.position.z, 3.0);
@@ -149,6 +153,8 @@ TEST(UtilsTests, TesttoNavPathMsg)
 {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
+  header_in.stamp.sec = 123;
+  header_in.stamp.nanosec = 456;
   Path path_in;
   path_in.getStates().resize(10);
   // v2 default-initializes PathState::type to SWATH; mark as TURN so each state
@@ -161,6 +167,9 @@ TEST(UtilsTests, TesttoNavPathMsg)
   auto msg = util::toNavPathMsg(path_in, field, header_in, true, 0.1);
   EXPECT_EQ(msg.header.frame_id, "test");
   EXPECT_EQ(msg.poses.size(), 10u);
+  for (const auto & pose : msg.poses) {
+    EXPECT_EQ(pose.header, header_in);
+  }
 
   // A single straight SWATH state must be densified: len 1.0 at pt_dist 0.1 -> ~10 poses.
   Path swath_path;
@@ -175,6 +184,7 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
 {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
+  header_in.stamp.sec = 123;
   Path path_in;
   F2CField field;
 
@@ -205,8 +215,13 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
 
   msg = util::toCoveragePathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.swaths.size(), 3u);
-  EXPECT_EQ(msg.turns.size(), 2u);
-  EXPECT_EQ(msg.turns[0].poses.size(), 2u);
+  ASSERT_EQ(msg.turns.size(), 2u);
+  for (const auto & turn : msg.turns) {
+    ASSERT_EQ(turn.poses.size(), 2u);
+    for (const auto & pose : turn.poses) {
+      EXPECT_EQ(pose.header, header_in);
+    }
+  }
 
   path_in.getStates()[0].type = PathSectionType::TURN;
   path_in.getStates()[1].type = PathSectionType::TURN;
@@ -427,6 +442,9 @@ TEST(UtilsTests, TestPathComponentsIterator)
     }
     i++;
   }
+
+  // validate that our iteration value is equal to the size of the input swath
+  EXPECT_EQ(i, msg.swaths.size());
 
   auto last_row_info = it.getNext();
   EXPECT_EQ(std::get<1>(last_row_info), nullptr);
