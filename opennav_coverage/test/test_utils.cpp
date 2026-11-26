@@ -105,7 +105,11 @@ TEST(UtilsTests, TestpathStateToMsg)
   state_in.point = Point(1.0, 2.0, 3.0);
   state_in.angle = M_PI;
 
-  geometry_msgs::msg::PoseStamped pose_out = util::toMsg(state_in);
+  std_msgs::msg::Header header_in;
+  header_in.frame_id = "map";
+  header_in.stamp.sec = 123;
+  geometry_msgs::msg::PoseStamped pose_out = util::toMsg(state_in, header_in);
+  EXPECT_EQ(pose_out.header, header_in);
   EXPECT_EQ(pose_out.pose.position.x, 1.0);
   EXPECT_EQ(pose_out.pose.position.y, 2.0);
   EXPECT_EQ(pose_out.pose.position.z, 3.0);
@@ -172,6 +176,7 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
 {
   std_msgs::msg::Header header_in;
   header_in.frame_id = "test";
+  header_in.stamp.sec = 123;
   Path path_in;
   F2CField field;
 
@@ -202,8 +207,13 @@ TEST(UtilsTests, TesttoCoveragePathMsg2)
 
   msg = util::toCoveragePathMsg(path_in, field, header_in, true);
   EXPECT_EQ(msg.swaths.size(), 3u);
-  EXPECT_EQ(msg.turns.size(), 2u);
-  EXPECT_EQ(msg.turns[0].poses.size(), 2u);
+  ASSERT_EQ(msg.turns.size(), 2u);
+  for (const auto & turn : msg.turns) {
+    ASSERT_EQ(turn.poses.size(), 2u);
+    for (const auto & pose : turn.poses) {
+      EXPECT_EQ(pose.header, header_in);
+    }
+  }
 
   path_in.getStates()[0].type = PathSectionType::TURN;
   path_in.getStates()[1].type = PathSectionType::TURN;

@@ -64,13 +64,16 @@ inline geometry_msgs::msg::Point32 toMsg(const Point & pt)
 }
 
 /*
- * @brief Converts F2C Point to ROS Pose Stamped
- * @param Point point
- * @return geometry_msgs Point
+ * @brief Converts an F2C path state to a ROS stamped pose
+ * @param state Path state to convert
+ * @param header Frame and timestamp for the pose
+ * @return geometry_msgs PoseStamped
  */
-inline geometry_msgs::msg::PoseStamped toMsg(const PathState & state)
+inline geometry_msgs::msg::PoseStamped toMsg(
+  const PathState & state, const std_msgs::msg::Header & header)
 {
   geometry_msgs::msg::PoseStamped msg;
+  msg.header = header;
   msg.pose.position.x = state.point.getX();
   msg.pose.position.y = state.point.getY();
   msg.pose.position.z = state.point.getZ();
@@ -191,7 +194,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
     } else if (prev_turn && now_turn) {
       // Continuing a turn so...
       // (1) keep populating
-      curr_turn->poses.push_back(toMsg(path[i]));
+      curr_turn->poses.push_back(toMsg(path[i], header));
     } else if (prev_swath && now_turn) {
       // Transitioning from a swath to a turn so...
       // (1) Complete the existing swath
@@ -203,7 +206,7 @@ inline opennav_coverage_msgs::msg::PathComponents toCoveragePathMsg(
       msg.turns.push_back(nav_msgs::msg::Path());
       msg.turns.back().header = header;
       curr_turn = &msg.turns.back();
-      curr_turn->poses.push_back(toMsg(path[i]));
+      curr_turn->poses.push_back(toMsg(path[i], header));
     } else if (prev_turn && now_swath) {
       // Transitioning from a turn to a swath so...
       // (1) Update new swath starting point
@@ -355,8 +358,7 @@ inline nav_msgs::msg::Path toNavPathMsg(
   if (out_is_backward) {out_is_backward->reserve(n);}
 
   for (const auto & state : path) {
-    msg.poses.push_back(toMsg(state));
-    msg.poses.back().header = header;
+    msg.poses.push_back(toMsg(state, header));
     if (out_velocities) {out_velocities->push_back(state.velocity);}
     if (out_is_backward) {
       out_is_backward->push_back(state.dir == f2c::types::PathDirection::BACKWARD);
