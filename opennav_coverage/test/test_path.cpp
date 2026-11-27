@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage/robot_params.hpp"
@@ -163,7 +165,7 @@ TEST(PathTests, TestpathGenerationFromF2CRoute)
 
 TEST(PathTests, TestpathGenerationMultiCellConnections)
 {
-  // A multi-cell TSP route carries inter-cell connections; assemblePath must
+  // A multi-cell TSP route carries inter-cell connections; the path must
   // stitch them without dropping swaths or the connection track.
   auto node = std::make_shared<rclcpp::Node>("test_node");
   RobotParams robot_params(node);
@@ -199,6 +201,64 @@ TEST(PathTests, TestpathGenerationMultiCellConnections)
   auto path = generator.generatePath(route, path_settings);
   EXPECT_GT(path.size(), 0u);
   EXPECT_TRUE(std::isfinite(path.getTaskTime()));
+}
+
+namespace
+{
+// Widest heading change between consecutive points of the path.
+// Straight sections are split, not resampled, so corners keep their true angle.
+double widestHeadingJump(const Path & path)
+{
+  const auto line = path.discretizeSwath(0.1).toLineString();
+  double widest = 0.0;
+  for (size_t i = 1; i + 1 < line.size(); ++i) {
+    const auto a = line.getGeometry(i - 1);
+    const auto b = line.getGeometry(i);
+    const auto c = line.getGeometry(i + 1);
+    if (a.distance(b) < 1e-6 || b.distance(c) < 1e-6) {
+      continue;
+    }
+    widest = std::max(
+      widest, F2CPoint::getAngleDiffAbs(
+        (b - a).getAngleFromPoint(), (c - b).getAngleFromPoint()));
+  }
+  return widest;
+}
+}  // namespace
+
+TEST(PathTests, TestpathGenerationConnectionCorners)
+{
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  RobotParams robot_params(node);
+  PathShim generator(node, &robot_params);
+  opennav_coverage_msgs::msg::PathMode settings;
+
+  // A short reversal is one turn, not a polyline with square corners.
+  F2CRoute uturn;
+  uturn.addSwaths(F2CSwaths{F2CSwath(F2CLineString({F2CPoint(0, 0), F2CPoint(10, 0)}))});
+  uturn.addConnection(F2CMultiPoint({F2CPoint(20, 0), F2CPoint(20, 2)}));
+  uturn.addSwaths(F2CSwaths{F2CSwath(F2CLineString({F2CPoint(10, 2), F2CPoint(0, 2)}))});
+  const auto p1 = generator.generatePath(uturn, settings);
+  size_t hl = 0;
+  for (size_t i = 0; i < p1.size(); ++i) {
+    hl += p1[i].type == f2c::types::PathSectionType::HL_SWATH;
+  }
+  EXPECT_EQ(hl, 0u);
+  EXPECT_LT(widestHeadingJump(p1), 0.35);
+
+  // A real detour is kept, with its corners rounded.
+  F2CRoute detour;
+  detour.addSwaths(F2CSwaths{F2CSwath(F2CLineString({F2CPoint(0, 0), F2CPoint(10, 0)}))});
+  detour.addConnection(
+    F2CMultiPoint({F2CPoint(15, 0), F2CPoint(15, 20), F2CPoint(10, 20)}));
+  detour.addSwaths(F2CSwaths{F2CSwath(F2CLineString({F2CPoint(10, 20), F2CPoint(0, 20)}))});
+  const auto p2 = generator.generatePath(detour, settings);
+  double reach = 0.0;
+  for (size_t i = 0; i < p2.size(); ++i) {
+    reach = std::max(reach, p2[i].point.getX());
+  }
+  EXPECT_GT(reach, 14.0);
+  EXPECT_LT(widestHeadingJump(p2), 0.35);
 }
 
 }  // namespace opennav_coverage
