@@ -70,6 +70,10 @@ public:
       node, "default_reduce_min_dist", rclcpp::ParameterValue(0.1));
     reduce_min_dist_ = node->get_parameter("default_reduce_min_dist").as_double();
 
+    nav2::declare_parameter_if_not_declared(
+      node, "always_turn_between_swaths", rclcpp::ParameterValue(false));
+    always_turn_between_swaths_ = node->get_parameter("always_turn_between_swaths").as_bool();
+
     // Path Generator requires no changes at runtime
     generator_ = std::make_unique<f2c::pp::PathPlanning>();
     default_curve_ = createCurve(default_type_, default_continuity_type_);
@@ -115,6 +119,12 @@ public:
    * @param setting double minimum distance between kept points
    */
   void setReduceMinDist(const double & setting) {reduce_min_dist_ = setting;}
+
+  /**
+   * @brief Enables/disables using a turn between swath groups even for detours
+   * @param setting bool to enable
+   */
+  void setAlwaysTurnBetweenSwaths(const bool & setting) {always_turn_between_swaths_ = setting;}
 
 protected:
   /**
@@ -171,6 +181,7 @@ protected:
   float default_turn_point_distance_;
   bool reduce_path_;
   double reduce_min_dist_;
+  bool always_turn_between_swaths_;
   TurningBasePtr default_curve_;
   std::unique_ptr<f2c::pp::PathPlanning> generator_;
   RobotParams * robot_params_;

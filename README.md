@@ -87,6 +87,8 @@ Note: `NavigateCompleteCoverage` action message and `CoverageNavigator` are subj
 
 The complete set of options are exposed as both dynamic parameters and through the Action definition to be used as you prefer. Parameters are useful for consistent requests with the same configurations and actions are useful when changing parameters on a per-request basis. When any of the fields in `XYZMode.msg` messages are filled in, all must be filled in to be a complete request of a stage's mode parameters. `HeadlandMode`, `SwathMode`, `RouteMode`, and `PathMode` contain the complete parameter options for each of those stages in F2C coverage planning. The parameters given (or defaults) will be used for each stage, but any single stage can be overwritten via the Action message.
 
+`always_turn_between_swaths` is an exception: it is read at startup and is not an Action setting.
+
 ### Coverage Server
 
 
@@ -97,6 +99,7 @@ The complete set of options are exposed as both dynamic parameters and through t
 | operation_width  | Width of implement or task for coverage  | double |
 | min_turning_radius  | Minimum turning radius for path planning  | double |
 | linear_curv_change  | Max linear curvature change | double |
+| always_turn_between_swaths | Use a turn between swath groups even when the route detours; may leave the planned corridor. Startup parameter, default false. Only for `opennav_coverage` | bool |
 | default_allow_overlap  | Whether to allow some coverage overlap in final pass to fill space by default. Only for `opennav_coverage`  | bool |
 | default_custom_order  | Default custom order of swaths -> route in CUSTOM mode | `vector<int>` |
 | default_headland_type  | Default headland mode. Option: CONSTANT. Only for `opennav_coverage`  | String |
