@@ -29,36 +29,6 @@ namespace opennav_coverage
 namespace
 {
 
-F2CMultiPoint reversedConnection(const F2CMultiPoint & mp)
-{
-  std::vector<F2CPoint> pts;
-  pts.reserve(mp.size());
-  for (int i = static_cast<int>(mp.size()) - 1; i >= 0; --i) {
-    pts.emplace_back(mp[i]);
-  }
-  return F2CMultiPoint(pts);
-}
-
-// Reverses group order, each swath, and each connection so a cell can be entered from either end.
-F2CRoute reversedRoute(const F2CRoute & route)
-{
-  const auto & groups = route.getVectorSwaths();
-  const auto & conns = route.getConnections();
-  F2CRoute out;
-  for (int k = static_cast<int>(groups.size()) - 1; k >= 0; --k) {
-    F2CSwaths swaths = groups[k];
-    swaths.reverse();
-    for (size_t s = 0; s < swaths.size(); ++s) {
-      swaths.at(s).reverse();
-    }
-    const size_t conn_after = static_cast<size_t>(k) + 1;
-    out.addConnectedSwaths(
-      conn_after < conns.size() ? reversedConnection(conns[conn_after]) : F2CMultiPoint(),
-      swaths);
-  }
-  return out;
-}
-
 // Fallback matches RouteMode.msg's tsp_d_tol default; the stitch needs a positive tolerance.
 constexpr double kDefaultDTol = 1e-4;
 
@@ -322,8 +292,10 @@ F2CRoute stitchCellRoutes(
   std::optional<F2CSwath> last_swath;
   while (true) {
     remaining.erase(std::find(remaining.begin(), remaining.end(), current));
-    const F2CRoute cell_route =
-      current_reversed ? reversedRoute(cell_routes[current]) : cell_routes[current];
+    F2CRoute cell_route = cell_routes[current];
+    if (current_reversed) {
+      cell_route.reverse();
+    }
     if (!merged.isEmpty() && last_swath) {
       merged.addConnection(
         buildBridge(
