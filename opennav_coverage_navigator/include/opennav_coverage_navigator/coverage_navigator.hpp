@@ -26,7 +26,7 @@
 #include "nav2_core/behavior_tree_navigator.hpp"
 #include "nav2_util/geometry_utils.hpp"
 #include "nav2_util/odometry_utils.hpp"
-#include "nav2_util/robot_utils.hpp"
+#include "nav2_ros_common/tf_manager.hpp"
 #include "nav2_ros_common/lifecycle_node.hpp"
 #include "nav_msgs/msg/path.hpp"
 
