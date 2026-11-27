@@ -1,3 +1,4 @@
+# Versions the lyrical CI is tested against (the Lyrical binaries rosdep installs).
 repositories:
   Fields2Cover:
     type: git
@@ -10,16 +11,12 @@ repositories:
     url: https://github.com/ros-navigation/navigation2.git
     version: lyrical
 
-  # Built from source (not on the Lyrical apt repo). ortools_vendor uses 'main' for USE_SCIP=OFF + CMAKE_POLICY_VERSION_MINIMUM=3.5 (PR #8).
   ortools_vendor:
     type: git
     url: https://github.com/Fields2Cover/ortools_vendor.git
-    version: main
+    version: 9.9.1
 
-  # nav2 main uses BehaviorTree.CPP's wakeUpSignal() getter, which only exists on
-  # master (the latest release 4.9.0 -- what lyrical ships -- lacks it). Build
-  # BT.CPP from master so it overlays lyrical's 4.9.0 and nav2_behavior_tree compiles.
   behaviortree_cpp:
     type: git
     url: https://github.com/BehaviorTree/BehaviorTree.CPP.git
-    version: master
+    version: 4.10.0
