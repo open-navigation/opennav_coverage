@@ -8,6 +8,10 @@ on:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets pushes to main delete the previous ccache entry.
+      actions: write
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
@@ -94,7 +98,7 @@ jobs:
       # context is the host path in container jobs.
       run: |
         echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
-        echo "CCACHE_MAXSIZE=2G" >> "$GITHUB_ENV"
+        echo "CCACHE_MAXSIZE=500M" >> "$GITHUB_ENV"
 
     - name: Install ROS dependencies (rosdep)
       run: |
@@ -141,7 +145,8 @@ jobs:
         fi
 
     - name: Restore ccache
-      # Unique key per run so each run saves; restore-keys picks the latest.
+      # Only pushes to main save, under a new key each time; restore-keys
+      # picks the latest one, for pull requests too.
       uses: actions/cache/restore@v4
       with:
         path: .ccache
@@ -169,14 +174,36 @@ jobs:
       if: ${{ !cancelled() }}
       run: ccache -s
 
+    - name: Prune ccache
+      # Keep only what this build used. Skipped after a failed build, which
+      # never reached the later packages.
+      if: success() && github.event_name == 'push'
+      run: ccache --evict-older-than 2h
+
     - name: Save ccache
       # Before Test, and after a failed build too: entries are keyed on
       # content, so a partial cache is safe and spares the next run.
-      if: ${{ !cancelled() }}
+      id: ccache_save
+      if: ${{ !cancelled() && github.event_name == 'push' }}
       uses: actions/cache/save@v4
       with:
         path: .ccache
         key: ccache-${{ matrix.ros_distro }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+    - name: Drop older ccache entries
+      # A single entry is kept, so cache storage cannot grow.
+      if: steps.ccache_save.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const prefix = 'ccache-${{ matrix.ros_distro }}-';
+          const keep = `${prefix}${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}`;
+          const caches = await github.paginate(
+            github.rest.actions.getActionsCacheList, {...context.repo, key: prefix});
+          if (!caches.some(c => c.key === keep)) return;
+          for (const c of caches.filter(c => c.key !== keep)) {
+            await github.rest.actions.deleteActionsCacheById({...context.repo, cache_id: c.id});
+          }
 
     - name: Test
       run: |
