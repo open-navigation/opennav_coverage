@@ -108,11 +108,8 @@ F2CRoute TspRouteMethod::plan(
   }
 
   // Nearest-neighbor cell order; entry cost also penalizes heading mismatch to avoid S-maneuvers.
-  const auto angDiff = [](double a, double b) {
-      return std::fabs(std::atan2(std::sin(a - b), std::cos(a - b)));
-    };
   const auto pickNearest =
-    [&cell_routes, &remaining, &angDiff](
+    [&cell_routes, &remaining](
     const F2CPoint & from, const std::optional<double> & from_angle, bool & reversed) {
       size_t best_idx = remaining[0];
       double best_cost = std::numeric_limits<double>::max();
@@ -129,7 +126,8 @@ F2CRoute TspRouteMethod::plan(
           if (from_angle && dist > 1e-6) {
             const double bearing = (entries[e].first - from).getAngleFromPoint();
             cost += first_swath.getWidth() *
-              (angDiff(*from_angle, bearing) + angDiff(bearing, entries[e].second));
+              (F2CPoint::getAngleDiffAbs(*from_angle, bearing) +
+              F2CPoint::getAngleDiffAbs(bearing, entries[e].second));
           }
           if (cost < best_cost) {
             best_cost = cost;
@@ -185,10 +183,7 @@ F2CRoute TspRouteMethod::plan(
         pair_cells.addGeometry(cell_b);
       }
 
-      std::vector<F2CPoint> bridge;
-      if (pair_cells.size() > 0) {
-        bridge = viaGraph(pair_cells);
-      }
+      std::vector<F2CPoint> bridge = viaGraph(pair_cells);
       if (bridge.size() < 2) {
         bridge = viaGraph(travel_cells);
       }
