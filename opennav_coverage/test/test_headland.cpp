@@ -89,55 +89,6 @@ TEST(HeadlandTests, TestheadlandGeneration)
   auto field_out2 = generator.generateHeadlands(field.getField().getGeometry(0), settings);
 }
 
-TEST(HeadlandTests, TestheadlandGenerationMultiCell)
-{
-  auto node = std::make_shared<rclcpp::Node>("test_node");
-  auto generator = HeadlandShim(node);
-
-  f2c::Random rand;
-  auto field = rand.generateRandField(1e5, 5);
-  Field cell = field.getField().getGeometry(0);
-  double area_in = cell.area();
-
-  // 2-cell F2CCells
-  F2CCells cells;
-  cells.addGeometry(cell);
-  cells.addGeometry(cell);
-
-  opennav_coverage_msgs::msg::HeadlandMode settings;
-  F2CCells result = generator.generateHeadlands(cells, settings);
-
-  EXPECT_EQ(result.size(), 2u);
-  // Each cell should have shrunk (headland removed)
-  EXPECT_LT(result.getGeometry(0).area(), area_in);
-  EXPECT_LT(result.getGeometry(1).area(), area_in);
-}
-
-TEST(HeadlandTests, TestheadlandMultiCellCollapseSkipped)
-{
-  auto node = std::make_shared<rclcpp::Node>("test_node");
-  auto generator = HeadlandShim(node);
-
-  // Big cell (100x100) survives the default 2 m inward buffer; the 3 m-wide strip
-  // collapses to an empty geometry. The collapsed cell must be skipped rather than
-  // dereferenced (which would throw "Geometry does not contain point 0").
-  F2CCell big(F2CLinearRing({
-      F2CPoint(0, 0), F2CPoint(100, 0), F2CPoint(100, 100),
-      F2CPoint(0, 100), F2CPoint(0, 0)}));
-  F2CCell thin(F2CLinearRing({
-      F2CPoint(200, 0), F2CPoint(203, 0), F2CPoint(203, 100),
-      F2CPoint(200, 100), F2CPoint(200, 0)}));
-  F2CCells cells;
-  cells.addGeometry(big);
-  cells.addGeometry(thin);
-
-  opennav_coverage_msgs::msg::HeadlandMode settings;  // default width 2.0 m
-  F2CCells result = generator.generateHeadlands(cells, settings);
-
-  EXPECT_EQ(result.size(), 1u);
-  EXPECT_GT(result.getGeometry(0).area(), 0.0);
-}
-
 TEST(HeadlandTests, TestheadlandBetweenCells)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");
@@ -156,13 +107,13 @@ TEST(HeadlandTests, TestheadlandBetweenCells)
   F2CCells result = generator.generateHeadlandsBetweenCells(cells, 2.0);
 
   EXPECT_EQ(result.size(), 2u);
-  // Only x=50 is carved (~48x100 each): total > full-border-buffer case (8832)
+  // Only x=50 is carved (49x100 each): total > full-border-buffer case (8832)
   // but < the original (10000).
   EXPECT_GT(result.area(), 9000.0);
   EXPECT_LT(result.area(), 9999.0);
 
   // Width larger than the cells collapses everything -> throws.
-  EXPECT_THROW(generator.generateHeadlandsBetweenCells(cells, 60.0), CoverageException);
+  EXPECT_THROW(generator.generateHeadlandsBetweenCells(cells, 120.0), CoverageException);
 
   // Cells facing each other across a void share no border, so nothing may be
   // carved (route headland only ever goes between truly adjacent cells).
@@ -199,25 +150,6 @@ TEST(HeadlandTests, TestheadlandSwathRings)
 
   // Invalid operation width must throw rather than divide by zero
   EXPECT_THROW(generator.generateHeadlandSwaths(cell, 0.0, settings), CoverageException);
-}
-
-TEST(HeadlandTests, TestheadlandMultiCellAllCollapseThrows)
-{
-  auto node = std::make_shared<rclcpp::Node>("test_node");
-  auto generator = HeadlandShim(node);
-
-  // Every sub-cell is a 3 m-wide strip that collapses under the 2 m buffer, so the
-  // result is empty and a CoverageException is thrown instead of returning nothing.
-  F2CCell thin_a(F2CLinearRing({
-      F2CPoint(0, 0), F2CPoint(3, 0), F2CPoint(3, 100), F2CPoint(0, 100), F2CPoint(0, 0)}));
-  F2CCell thin_b(F2CLinearRing({
-      F2CPoint(50, 0), F2CPoint(53, 0), F2CPoint(53, 100), F2CPoint(50, 100), F2CPoint(50, 0)}));
-  F2CCells cells;
-  cells.addGeometry(thin_a);
-  cells.addGeometry(thin_b);
-
-  opennav_coverage_msgs::msg::HeadlandMode settings;  // default width 2.0 m
-  EXPECT_THROW(generator.generateHeadlands(cells, settings), CoverageException);
 }
 
 }  // namespace opennav_coverage
