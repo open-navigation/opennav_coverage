@@ -145,9 +145,13 @@ void PathGenerator::appendConnection(
     max_dev = std::max(max_dev, distanceToSegment(pts[i], pts.front(), pts.back()));
   }
 
-  // Straight hop: the ordinary headland u-turn, leave it to the curve planner.
-  // A real bend means the graph routed around something worth keeping.
-  if (has_prev && has_next && max_dev < 0.5 * robot_params_->getOperationWidth()) {
+  // By default, let the curve planner handle a straight hop (an ordinary
+  // headland u-turn); preserve real bends that route around something.
+  // The opt-in setting forces a turn between swath groups even for a detour,
+  // which may leave the planned corridor.
+  if (has_prev && has_next &&
+    (always_turn_between_swaths_ || max_dev < 0.5 * robot_params_->getOperationWidth()))
+  {
     path += curve.createTurn(
       robot, prev.back().endPoint(), prev.back().getOutAngle(),
       next[0].startPoint(), next[0].getInAngle());
