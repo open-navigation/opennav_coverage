@@ -12,34 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <cmath>
-#include <vector>
 #include <string>
 
 #include "opennav_coverage/path_generator.hpp"
 
 namespace opennav_coverage
 {
-
-namespace
-{
-
-// Perpendicular distance from p to the segment [a, b].
-double distanceToSegment(const Point & p, const Point & a, const Point & b)
-{
-  const double dx = b.getX() - a.getX();
-  const double dy = b.getY() - a.getY();
-  const double len2 = dx * dx + dy * dy;
-  if (len2 < 1e-12) {
-    return p.distance(a);
-  }
-  const double t = std::clamp(
-    ((p.getX() - a.getX()) * dx + (p.getY() - a.getY()) * dy) / len2, 0.0, 1.0);
-  return std::hypot(p.getX() - (a.getX() + t * dx), p.getY() - (a.getY() + t * dy));
-}
-
-}  // namespace
 
 Path PathGenerator::generatePath(
   const F2CRoute & route, const opennav_coverage_msgs::msg::PathMode & settings)
@@ -68,110 +46,13 @@ Path PathGenerator::generatePath(
     logger_,
     "Generating path with curve: %s", toString(action_type, action_continuity_type).c_str());
   curve->setDiscretization(turn_point_distance);
-  Path path = assemblePath(route, *curve);
+  Path path = generator_->planPath(robot_params_->getRobot(), route, *curve);
 
   // Optionally thin out near-duplicate points (e.g. in turns)
   if (reduce_path_) {
     path.reduce(reduce_min_dist_);
   }
   return path;
-}
-
-Path PathGenerator::assemblePath(const F2CRoute & route, f2c::pp::TurningBase & curve)
-{
-  auto & robot = robot_params_->getRobot();
-  Path path;
-  for (size_t i = 0; i < route.sizeVectorSwaths(); ++i) {
-    const Swaths prev = (i > 0) ? route.getSwaths(i - 1) : Swaths();
-    const F2CMultiPoint connection =
-      (i < route.sizeConnections()) ? route.getConnection(i) : F2CMultiPoint();
-    appendConnection(path, prev, connection, route.getSwaths(i), curve);
-    path += generator_->planPath(robot, route.getSwaths(i), curve);
-  }
-  if (route.sizeConnections() > route.sizeVectorSwaths()) {
-    appendConnection(
-      path, route.getLastSwaths(), route.getLastConnection(), Swaths(), curve);
-  }
-  return path;
-}
-
-void PathGenerator::appendConnection(
-  Path & path, const Swaths & prev, const F2CMultiPoint & connection,
-  const Swaths & next, f2c::pp::TurningBase & curve)
-{
-  auto & robot = robot_params_->getRobot();
-  const bool has_prev = prev.size() > 0;
-  const bool has_next = next.size() > 0;
-  if (!has_prev && !has_next && connection.size() < 2) {
-    return;
-  }
-
-  std::vector<Point> pts;
-  if (has_prev) {
-    pts.push_back(prev.back().endPoint());
-  }
-  for (size_t i = 0; i < connection.size(); ++i) {
-    pts.push_back(connection[i]);
-  }
-  if (has_next) {
-    pts.push_back(next[0].startPoint());
-  }
-  if (pts.size() < 2) {
-    return;
-  }
-
-  // Drop attachment spikes: a bridge point past the endpoint that doubles back.
-  bool changed = true;
-  while (changed && pts.size() > 2) {
-    changed = false;
-    for (const size_t i : {size_t{1}, pts.size() - 2}) {
-      const Point & a = pts[i - 1];
-      const Point & b = pts[i];
-      const Point & c = pts[i + 1];
-      const double dot = (b.getX() - a.getX()) * (c.getX() - b.getX()) +
-        (b.getY() - a.getY()) * (c.getY() - b.getY());
-      if (dot < 0.0 && a.distance(b) < a.distance(c)) {
-        pts.erase(pts.begin() + i);
-        changed = true;
-        break;
-      }
-    }
-  }
-
-  // Deviation, not length ratio: rounding a long cell's corner is only ~20%
-  // longer than cutting its diagonal, yet shares no ground with it.
-  double max_dev = 0.0;
-  for (size_t i = 1; i + 1 < pts.size(); ++i) {
-    max_dev = std::max(max_dev, distanceToSegment(pts[i], pts.front(), pts.back()));
-  }
-
-  // Straight hop: the ordinary headland u-turn, leave it to the curve planner.
-  // A real bend means the graph routed around something worth keeping.
-  if (has_prev && has_next && max_dev < 0.5 * robot_params_->getOperationWidth()) {
-    path += curve.createTurn(
-      robot, prev.back().endPoint(), prev.back().getOutAngle(),
-      next[0].startPoint(), next[0].getInAngle());
-    return;
-  }
-
-  // The polyline detours (e.g. around a concave notch): follow it verbatim as
-  // HL_SWATH states so the vehicle stays on the planned border/corridor track.
-  for (size_t i = 0; i + 1 < pts.size(); ++i) {
-    const double dx = pts[i + 1].getX() - pts[i].getX();
-    const double dy = pts[i + 1].getY() - pts[i].getY();
-    const double len = std::hypot(dx, dy);
-    if (len < 1e-6) {
-      continue;
-    }
-    PathState s;
-    s.point = pts[i];
-    s.angle = std::atan2(dy, dx);
-    s.len = len;
-    s.dir = f2c::types::PathDirection::FORWARD;
-    s.type = f2c::types::PathSectionType::HL_SWATH;
-    s.velocity = robot.getCruiseVel();
-    path.addState(s);
-  }
 }
 
 void PathGenerator::setPathMode(const std::string & new_mode)
