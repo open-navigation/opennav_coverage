@@ -40,13 +40,13 @@ https://github.com/user-attachments/assets/e44d8f10-c5b0-4345-81ad-25f3bcd06030
 
 On `main`, opennav_coverage works with **Fields2Cover v2** (verified against `v2.1.1`). Support for the older 1.2.1 series has been dropped on this branch.
 
-Fields2Cover is **not** available as a binary on Lyrical (rosdep cannot resolve the `fields2cover` key there), so it is built from source. The recommended way to pull F2C together with the other source dependencies is via `vcs`:
+Fields2Cover is available as a binary on Lyrical, so `rosdep` installs it together with nav2:
 
 ```bash
-vcs import src < src/opennav_coverage/.github/deps.repos
+rosdep install --from-paths src --ignore-src -y
 ```
 
-This imports Fields2Cover `v2.1.1` along with the `nav2`/`ortools_vendor`/`slam_toolbox`/`behaviortree_cpp` sources `main` builds against, then build the workspace with `colcon build`.
+CI is tested against the versions listed in [`.github/deps.repos`](.github/deps.repos).
 
 Older distributions remain on Fields2Cover 1.2.1 (or have a separate F2C v2 upgrade where a binary exists):
 
