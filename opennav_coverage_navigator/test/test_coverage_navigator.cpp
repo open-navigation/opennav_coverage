@@ -17,9 +17,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "opennav_coverage_navigator/coverage_navigator.hpp"
 #include "nav2_ros_common/lifecycle_node.hpp"
-#include "nav2_ros_common/tf2_factories.hpp"
+#include "nav2_ros_common/tf_manager.hpp"
 #include "tf2/utils.hpp"
-#include "tf2_ros/buffer.hpp"
 
 class RosLockGuard
 {
@@ -98,10 +97,7 @@ TEST(CoverageNavigatorTests, TestBasicFunctionality)
   nav2_core::NavigatorMuxer plugin_muxer;
 
   nav2_core::FeedbackUtils feedback_utils;
-  auto tf = nav2::create_transform_buffer(node);
-  tf->setUsingDedicatedThread(true);
-  auto tf_listener = nav2::create_transform_listener(*tf, node, false);
-  feedback_utils.tf = tf;
+  feedback_utils.tf_manager = nav2::create_transform_manager(node);
   feedback_utils.global_frame = "map";
   feedback_utils.robot_frame = "base_link";
   feedback_utils.transform_tolerance = 0.1;
@@ -131,10 +127,7 @@ TEST(CoverageNavigatorTests, TestBasicServer)
   nav2_core::NavigatorMuxer plugin_muxer;
 
   nav2_core::FeedbackUtils feedback_utils;
-  auto tf = nav2::create_transform_buffer(node);
-  tf->setUsingDedicatedThread(true);
-  auto tf_listener = nav2::create_transform_listener(*tf, node, false);
-  feedback_utils.tf = tf;
+  feedback_utils.tf_manager = nav2::create_transform_manager(node);
   feedback_utils.global_frame = "map";
   feedback_utils.robot_frame = "base_link";
   feedback_utils.transform_tolerance = 0.1;

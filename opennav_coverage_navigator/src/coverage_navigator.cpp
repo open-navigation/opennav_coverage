@@ -113,11 +113,14 @@ CoverageNavigator::onLoop()
   // number of recoveries, and distance remaining to goal)
   auto feedback_msg = std::make_shared<ActionT::Feedback>();
 
-  geometry_msgs::msg::PoseStamped current_pose;
-  nav2_util::getCurrentPose(
-    current_pose, *feedback_utils_.tf,
-    feedback_utils_.global_frame, feedback_utils_.robot_frame,
-    feedback_utils_.transform_tolerance);
+  std::string tf_error;
+  const auto current_pose_result = feedback_utils_.tf_manager->getLatestPose(
+    feedback_utils_.global_frame, feedback_utils_.robot_frame, 0.0, &tf_error);
+  if (!current_pose_result) {
+    RCLCPP_ERROR(logger_, "Robot pose is not available: %s", tf_error.c_str());
+    return;
+  }
+  const geometry_msgs::msg::PoseStamped & current_pose = *current_pose_result;
 
   auto blackboard = bt_action_server_->getBlackboard();
 
@@ -209,14 +212,12 @@ CoverageNavigator::onPreempt(ActionT::Goal::ConstSharedPtr goal)
 bool
 CoverageNavigator::initializeGoalPose(ActionT::Goal::ConstSharedPtr goal)
 {
-  geometry_msgs::msg::PoseStamped current_pose;
-  if (!nav2_util::getCurrentPose(
-      current_pose, *feedback_utils_.tf,
-      feedback_utils_.global_frame, feedback_utils_.robot_frame,
-      feedback_utils_.transform_tolerance))
+  std::string tf_error;
+  if (!feedback_utils_.tf_manager->getLatestPose(
+      feedback_utils_.global_frame, feedback_utils_.robot_frame, 0.0, &tf_error))
   {
     bt_action_server_->setInternalError(ActionT::Result::TF_ERROR,
-      "Initial robot pose is not available.");
+      "Initial robot pose is not available: " + tf_error);
     return false;
   }
 
